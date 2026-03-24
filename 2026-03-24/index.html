@@ -1,1 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026. 3. 24 화요일 Trend Article Digest</title>
+<style>
 
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
+  --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
+}
+html,body { width:100%; background:#fff; }
+body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:var(--text); }
+.page { width:100%; background:#fff; }
+.card { width:100%; max-width:100%; background:var(--surface); border-radius:8px; }
+.header { padding:28px 20px 24px; border-bottom:1px solid var(--line); }
+.header h1 { font-size:clamp(24px,3vw,30px); font-weight:700; line-height:1.2; letter-spacing:-0.02em; }
+.header-meta { margin-top:14px; font-size:17px; color:var(--text4); font-weight:600; line-height:1.6; }
+.article-wrap { padding:0 20px 24px; }
+.article-item { padding:24px 0 28px; border-bottom:1px solid var(--line); }
+.article-item:last-of-type { border-bottom:0; }
+.article-label { display:inline-block; margin-bottom:14px; padding:7px 10px; background:#fbfbfb; border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }
+.article-title { font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }
+.article-summary { font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }
+.image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.article-image { width:100%; height:auto; display:block; background:#fff; border:0; border-radius:8px; 
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center center;
+}
+.summary-label, .link-label { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text5); margin-bottom:10px; }
+.bullet-list { list-style:none; display:grid; gap:10px; margin-bottom:18px; }
+.bullet-item { font-size:clamp(14px,1.8vw,16px); line-height:1.72; color:var(--text2); padding-left:16px; position:relative; word-break:keep-all; }
+.bullet-item::before { content:'·'; position:absolute; left:0; top:0; color:var(--text4); font-weight:700; }
+.link-box { display:block; padding:14px 16px; border:1px solid var(--link-border); border-radius:8px; background:var(--link-bg); }
+.article-link { display:block; font-size:14px; line-height:1.75; color:var(--link-text); text-decoration:none; word-break:break-all; }
+.article-link:hover { text-decoration:underline; }
+@media (max-width:767px) { .article-summary,.bullet-item{font-size:17px;} }
+@media (min-width:768px) {
+  html,body{background:var(--page);} .page{background:var(--page);padding:28px;}
+  .card{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}
+  .header{padding:40px 32px 32px;} .article-wrap{padding:0 32px 32px;} .article-item{padding:28px 0 32px;}
+}
+@media (min-width:1200px) {
+  .page{padding:36px;}
+  .card{max-width:1320px;}
+  .header{padding:48px 40px 36px;}
+  .article-wrap{
+    padding:0 40px 40px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap: 40px;
+  }
+  .article-item{
+    padding:28px 0 32px;
+  }
+}
+
+
+/* Desktop-only thumbnail normalization */
+@media (min-width: 1200px) {
+  .image-frame {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .image-frame .article-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center center;
+  }
+}
+
+@media (max-width: 1199px) {
+  .image-frame {
+    aspect-ratio: auto;
+  }
+
+  .image-frame .article-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    object-position: center center;
+  }
+}
+
+
+/* Desktop only: remove divider on the last two article cards */
+@media (min-width: 1200px) {
+  .article-item:nth-last-child(-n+2)::after,
+  .article-item:nth-last-child(-n+2) .article-divider,
+  .article-item:nth-last-child(-n+2) hr {
+    display: none !important;
+  }
+
+  .article-item:nth-last-child(-n+2) {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+
+/* Desktop only: make the gap between two columns equal to page horizontal padding */
+@media (min-width: 1200px) {
+  .article-list {
+    column-gap: 40px !important;
+  }
+}
+
+
+/* URL text: single-line ellipsis on all viewports */
+.link-box a,
+.link-url,
+.article-link,
+.url-text {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <header class="header">
+      <h1>2026. 3. 24 화요일</h1>
+      <div class="header-meta">Trend Article Digest</div>
+    </header>
+    <main class="article-wrap article-list">
+      
+    <article class="article-item">
+      <div class="article-label">ARTICLE 01</div>
+      <h2 class="article-title">애플 WWDC26, 6월 둘째 주에 다시 열린다</h2>
+      <p class="article-summary">개발자 생태계의 연례 리셋.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://www.apple.com/newsroom/images/2026/03/apples-worldwide-developers-conference-returns-the-week-of-june-8/article/Apple-WWDC26-event-branding_big.jpg.large_2x.jpg" alt="애플 WWDC26, 6월 둘째 주에 다시 열린다">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">애플은 WWDC26을 6월 8일부터 12일까지 온라인으로 열고, 같은 날 애플 파크에서 오프라인 특별 행사도 함께 진행해요.</li><li class="bullet-item">기조연설과 Platforms State of the Union, 100개가 넘는 세션과 랩을 통해 새 소프트웨어와 개발 도구 흐름을 한 번에 보여주는 구조예요.</li><li class="bullet-item">이 행사는 단순 발표를 넘어 애플 플랫폼의 다음 1년을 예고하는 자리라서, 개발자 생태계 전체가 다시 정렬되는 시점처럼 읽혀요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://www.apple.com/newsroom/2026/03/apples-worldwide-developers-conference-returns-the-week-of-june-8/" target="_blank" rel="noopener">https://www.apple.com/newsroom/2026/03/apples-worldwide-developers-conference-returns-the-week-of-june-8/</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 02</div>
+      <h2 class="article-title">네이버, 선거철 정치 기사 댓글 잠정 중단</h2>
+      <p class="article-summary">정치 댓글 운영의 재조정.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://designcompass.org/wp-content/uploads/2026/03/naver-reply-01.jpg" alt="네이버, 선거철 정치 기사 댓글 잠정 중단">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">네이버가 선거철을 맞아 정치 기사 댓글 기능을 잠정 중단하면서, 뉴스 서비스의 공론장 운영 기준을 다시 손보고 있어요.</li><li class="bullet-item">선거 국면에서는 참여를 열어두는 것만큼이나 어떤 상호작용을 어디까지 허용할지 결정하는 운영 정책의 무게가 더 커져요.</li><li class="bullet-item">플랫폼의 중립성 논의가 기능 제공 여부보다 댓글 구조와 노출 정책, 책임 범위 설계 쪽으로 더 이동하는 흐름이 보여요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://designcompass.org/2026/03/24/naver-suspends-comments-on-political-articles-during-election-season/" target="_blank" rel="noopener">https://designcompass.org/2026/03/24/naver-suspends-comments-on-political-articles-during-election-season/</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 03</div>
+      <h2 class="article-title">아마존에 25억 달러 손실을 안긴 다크 패턴</h2>
+      <p class="article-summary">단기 전환율의 비싼 대가.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://img1.daumcdn.net/thumb/R1280x0.fpng/?fname=http://t1.kakaocdn.net/brunch/service/user/hxsO/image/qajR3jBsfK-Ws6DwRJkRmTKs95w.png" alt="아마존에 25억 달러 손실을 안긴 다크 패턴">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">다크 패턴은 전환율을 잠깐 끌어올릴 수 있어도, 장기적으로는 브랜드 신뢰와 고객 생애 가치, 법적 리스크를 함께 훼손할 수 있어요.</li><li class="bullet-item">이 글은 아마존 사례를 통해 기만적인 설계가 윤리 문제를 넘어 실제 비용 구조와 소송 리스크로 이어질 수 있다는 점을 짚어요.</li><li class="bullet-item">결국 사용자를 설득하는 디자인보다 사용자를 몰아가는 디자인이 얼마나 비싼 대가를 남기는지 보여주는 사례예요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://brunch.co.kr/@0f2edcfe3d1d4c6/26" target="_blank" rel="noopener">https://brunch.co.kr/@0f2edcfe3d1d4c6/26</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 04</div>
+      <h2 class="article-title">신용카드를 맡길 수 없다면, 선불카드를 만들어주면 된다</h2>
+      <p class="article-summary">에이전트 결제 권한의 분리.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://cdn.maily.so/du/oz.talking/202603/1773380790845364.jpg" alt="신용카드를 맡길 수 없다면, 선불카드를 만들어주면 된다">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">AI 에이전트가 결제를 직접 수행하는 시대에는 기존 카드 정보를 그대로 넘기기보다, 한도와 권한이 제한된 선불 구조가 더 현실적인 해법으로 떠올라요.</li><li class="bullet-item">에이전트 커머스는 결제를 자동화하는 문제이면서 동시에, 어떤 권한을 누구에게 어떻게 위임할지 설계하는 신뢰 구조의 문제이기도 해요.</li><li class="bullet-item">결제 경험이 사람 중심 인터페이스에서 에이전트 중심 프로토콜로 이동하면서, 금융 UX도 권한 관리 관점으로 다시 설계되는 흐름이 보여요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://maily.so/oz.talking/posts/32z84jm1rn4" target="_blank" rel="noopener">https://maily.so/oz.talking/posts/32z84jm1rn4</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 05</div>
+      <h2 class="article-title">요즘 백화점 매장이 더 자주 바뀌는 이유</h2>
+      <p class="article-summary">오프라인 MD의 템포 변화.</p>
+      <div class="image-frame">
+        <img class="article-image" src="http://t1.kakaocdn.net/brunch/service/user/1J9E/image/fM24gAV3RHdK4njLssqPSfeajjU.png" alt="요즘 백화점 매장이 더 자주 바뀌는 이유">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">온라인 브랜드의 영향력이 상대적으로 약해지고 선택 가능한 브랜드 풀이 넓어지면서, 백화점의 협상력과 편집 주도권이 다시 커지고 있어요.</li><li class="bullet-item">그 결과 시즌 단위 대규모 개편보다, 온라인 트렌드 변화에 맞춰 브랜드를 수시로 교체하는 버티컬 MD 운영 방식이 더 빠르게 확산되고 있어요.</li><li class="bullet-item">매장 자체가 상시형 팝업처럼 계속 새로워지는 구조로 바뀌면서, 오프라인 리테일의 경쟁력도 고정된 테넌트보다 갱신 속도 쪽으로 옮겨가는 분위기예요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://brunch.co.kr/@trendlite/680" target="_blank" rel="noopener">https://brunch.co.kr/@trendlite/680</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 06</div>
+      <h2 class="article-title">유튜브, 브랜드와 크리에이터 협업의 새 시대 제시</h2>
+      <p class="article-summary">크리에이터 마케팅의 재정의.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://storage.googleapis.com/gweb-uniblog-publish-prod/images/1772101253320.max-700x3000.format-webp.webp" alt="유튜브, 브랜드와 크리에이터 협업의 새 시대 제시">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">유튜브는 NewFronts 2026에서 브랜드와 크리에이터 협업을 더 쉽게 연결하는 새 파트너십 흐름을 강조하며 광고 상품과 협업 구조를 다시 정비하고 있어요.</li><li class="bullet-item">핵심은 단순 광고 삽입보다, 크리에이터 커뮤니티와 브랜드 메시지를 더 자연스럽게 이어주는 협업 경험을 확장하는 데 있어 보여요.</li><li class="bullet-item">플랫폼 광고가 미디어 구매를 넘어 크리에이터 관계 설계로 이동하면서, 유튜브도 광고 상품보다 협업 시스템 자체를 파는 단계로 가고 있는 느낌이에요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://blog.youtube/news-and-events/youtube-creator-partnerships-newfronts-2026/" target="_blank" rel="noopener">https://blog.youtube/news-and-events/youtube-creator-partnerships-newfronts-2026/</a></div>
+    </article>
+    
+    <article class="article-item">
+      <div class="article-label">ARTICLE 07</div>
+      <h2 class="article-title">1984 매킨토시에서 영감 받은 맥세이프 카드 월렛</h2>
+      <p class="article-summary">과거 오브젝트의 휴대화.</p>
+      <div class="image-frame">
+        <img class="article-image" src="https://designcompass.org/wp-content/uploads/2026/03/1984-mac-01.jpg" alt="1984 매킨토시에서 영감 받은 맥세이프 카드 월렛">
+      </div>
+      <div class="summary-label">SUMMARY</div>
+      <ul class="bullet-list"><li class="bullet-item">1984년 매킨토시의 외형을 카드 지갑 크기로 축소한 이 맥세이프 월렛은, 기술 제품의 기억을 일상 액세서리로 다시 번역한 오브젝트예요.</li><li class="bullet-item">단순 레트로 굿즈를 넘어서, 전설적인 하드웨어의 조형 언어를 오늘의 스마트폰 주변기기에 이식했다는 점이 흥미로워요.</li><li class="bullet-item">기술 브랜드의 역사성을 제품 기능이 아니라 촉감과 소장성으로 이어붙이는 방식이 점점 더 강한 디자인 전략으로 보이기 시작해요.</li></ul>
+      <div class="link-label">LINK</div>
+      <div class="link-box"><a class="article-link" href="https://designcompass.org/2026/03/23/magsafe-card-wallet-inspired-by-the-1984-macintosh/" target="_blank" rel="noopener">https://designcompass.org/2026/03/23/magsafe-card-wallet-inspired-by-the-1984-macintosh/</a></div>
+    </article>
+    
+    </main>
+  </div>
+</div>
+</body>
+</html>
