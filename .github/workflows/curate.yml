@@ -1,10 +1,7 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 매일 한국시간 오전 8시 자동 실행 (UTC 23:00 전날)
-  schedule:
-    - cron: '0 23 * * 0-4'  # 일~목 UTC 23시 = 한국 월~금 오전 8시
-  # 수동 실행 (폰에서 트리거 가능)
+  # 수동 실행만 (폰에서 GitHub Actions → Run workflow)
   workflow_dispatch:
     inputs:
       article_count:
