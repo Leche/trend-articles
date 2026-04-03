@@ -111,7 +111,9 @@ def load_past_articles():
         try:
             with open(fp, "r", encoding="utf-8") as f:
                 content = f.read()
+            # 제목 추출
             titles = re.findall(r'class="article-title"[^>]*>([^<]+)', content)
+            # 링크 추출
             links = re.findall(r'class="article-link"[^>]*href="([^"]+)"', content)
             for t in titles:
                 past.append({"title": t.strip(), "file": fp})
@@ -130,6 +132,7 @@ print(f"🔍 과거 기사 {len(past_titles)}개 제목, {len(past_links)}개 �
 
 # ─── 웹 스크래핑 유틸 ─────────────────────────────────────────
 def fetch_page(url, timeout=15):
+    """URL에서 HTML 가져오기"""
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
         r.raise_for_status()
@@ -140,6 +143,7 @@ def fetch_page(url, timeout=15):
 
 
 def extract_og_image(html_text, base_url=""):
+    """og:image 메타태그에서 썸네일 URL 추출"""
     soup = BeautifulSoup(html_text, "lxml")
     og = soup.find("meta", property="og:image")
     if og and og.get("content"):
@@ -151,10 +155,13 @@ def extract_og_image(html_text, base_url=""):
 
 
 def download_image_as_base64(img_url, max_size_kb=500):
+    """이미지를 다운로드하여 base64로 인코딩"""
     try:
         r = requests.get(img_url, headers=HEADERS, timeout=15)
         r.raise_for_status()
         content_type = r.headers.get("Content-Type", "image/jpeg")
+
+        # 확장자 결정
         if "png" in content_type:
             ext = "png"
         elif "gif" in content_type:
@@ -165,11 +172,15 @@ def download_image_as_base64(img_url, max_size_kb=500):
             ext = "svg+xml"
         else:
             ext = "jpeg"
+
         img_data = r.content
+
+        # 너무 큰 이미지는 리사이즈
         if len(img_data) > max_size_kb * 1024 and ext in ("jpeg", "png", "webp"):
             try:
                 from PIL import Image
                 img = Image.open(BytesIO(img_data))
+                # 너비 1200px로 리사이즈
                 if img.width > 1200:
                     ratio = 1200 / img.width
                     new_size = (1200, int(img.height * ratio))
@@ -181,6 +192,7 @@ def download_image_as_base64(img_url, max_size_kb=500):
                 ext = save_fmt.lower()
             except Exception:
                 pass
+
         b64 = base64.b64encode(img_data).decode("utf-8")
         return f"data:image/{ext};base64,{b64}"
     except Exception as e:
@@ -190,21 +202,31 @@ def download_image_as_base64(img_url, max_size_kb=500):
 
 # ─── 우선 사이트 스캔 ─────────────────────────────────────────
 def scan_priority_sites():
+    """우선 사이트에서 최근 기사 목록 수집"""
     candidates = []
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
+
+    MAX_PER_SITE = 5  # 사이트당 최대 후보 수 (모든 사이트가 골고루 반영되도록)
+
     for site_url in PRIORITY_SITES:
         print(f"\n🌐 스캔 중: {site_url}")
         html = fetch_page(site_url)
         if not html:
+            print(f"  ❌ 접근 실패 — 건너뜀")
             continue
+
         soup = BeautifulSoup(html, "lxml")
+
+        # 링크 추출 (각 사이트 구조에 맞게)
         links_found = set()
+        site_candidates = []
         article_patterns = [
             "/202", "/post/", "/article/", "/magazine/",
             "/news/", "/newsroom/", "/blog/", "/press/",
             "/release-notes/", "/tech/", "/pr/", "/story/",
             "/archives/", "/entry/", "/contents/",
         ]
+        # 제외 패턴 (카테고리/태그 페이지 등)
         skip_patterns = [
             "/category/", "/tag/", "/page/", "/author/",
             "/search?", "/login", "/signup", "#comment",
@@ -215,6 +237,7 @@ def scan_priority_sites():
                 href = urljoin(site_url, href)
             parsed = urlparse(href)
             path = parsed.path + ("?" + parsed.query if parsed.query else "")
+            # 같은 도메인 또는 알려진 도메인의 기사만
             if not href.startswith("http"):
                 continue
             if any(skip in path.lower() for skip in skip_patterns):
@@ -223,21 +246,38 @@ def scan_priority_sites():
                 if href not in links_found and href != site_url:
                     links_found.add(href)
                     title_text = a_tag.get_text(strip=True)[:100] if a_tag.get_text(strip=True) else ""
-                    candidates.append({
+                    site_candidates.append({
                         "url": href,
                         "title_hint": title_text,
                         "source": site_url,
                     })
-        print(f"  → {len(links_found)}개 후보 발견")
+
+        # 사이트당 최대 MAX_PER_SITE개만 추가 (상위 링크 우선)
+        candidates.extend(site_candidates[:MAX_PER_SITE])
+        print(f"  → {len(links_found)}개 발견, {min(len(site_candidates), MAX_PER_SITE)}개 선택")
+
+    # 출처 분포 리포트
+    source_counts = {}
+    for c in candidates:
+        domain = urlparse(c["source"]).netloc
+        source_counts[domain] = source_counts.get(domain, 0) + 1
+    print(f"\n📊 출처 분포: {source_counts}")
+    print(f"📋 총 {len(candidates)}개 후보 (사이트 {len(source_counts)}곳)")
+
     return candidates
 
 
 # ─── Claude API로 기사 선정 및 요약 ──────────────────────────
 def curate_with_claude(candidates):
+    """Claude API를 사용하여 기사 선정, 제목 번역, 요약 생성"""
     client = anthropic.Anthropic()
+
+    # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
-    for i, c in enumerate(candidates[:50], 1):
+    for i, c in enumerate(candidates[:100], 1):
         candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
+
+    # 과거 기사 목록
     past_text = "과거 큐레이션된 기사 제목:\n"
     for t in past_titles:
         past_text += f"- {t}\n"
@@ -264,6 +304,7 @@ def curate_with_claude(candidates):
 위 후보 중에서, 그리고 필요하다면 후보에 없더라도 직접 떠올린 최근 빅테크/프로덕트 뉴스를 포함하여,
 정확히 {ARTICLE_COUNT}개의 기사를 선정해주세요.
 
+**출처 다양성 필수**: 같은 출처(사이트)에서 최대 2개까지만 선정하세요. 가능한 한 서로 다른 사이트에서 기사를 골라야 합니다.
 **중복 기사는 절대 선정하지 마세요.** 과거 기사 목록에 있는 제목이나 링크와 동일하거나 유사한 기사는 제외합니다.
 
 각 기사에 대해 아래 JSON 형식으로 답변하세요. JSON 배열만 출력하세요:
@@ -293,64 +334,85 @@ def curate_with_claude(candidates):
 - 현상 / 맥락 / 의미 중심"""
 
     print("\n🤖 Claude API로 기사 선정 및 요약 중...")
+
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
+
+    # JSON 추출
     text = response.content[0].text
     json_match = re.search(r'\[[\s\S]*\]', text)
     if not json_match:
         print("❌ Claude 응답에서 JSON을 찾을 수 없습니다.")
         print(text[:500])
         sys.exit(1)
+
     articles = json.loads(json_match.group())
     print(f"✅ {len(articles)}개 기사 선정 완료")
+
     return articles
 
 
 # ─── 각 기사 상세 읽기 + 썸네일 ───────────────────────────────
 def enrich_articles(articles):
+    """각 기사의 원문을 읽고 내용 보강 + 썸네일 다운로드"""
     enriched = []
     thumb_success = []
     thumb_fail = []
+
     for i, art in enumerate(articles, 1):
         url = art["url"]
         print(f"\n📖 기사 {i}: {art['title_ko']}")
         print(f"   URL: {url}")
+
+        # 페이지 접근 시도
         html = fetch_page(url)
         thumb_b64 = None
+
         if html:
+            # og:image로 썸네일 시도
             og_img = extract_og_image(html, url)
             if og_img:
                 print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
                 thumb_b64 = download_image_as_base64(og_img)
+
         if thumb_b64:
             thumb_success.append(i)
             print(f"   ✅ 썸네일 임베드 성공")
         else:
             thumb_fail.append(i)
             print(f"   ❌ 썸네일 다운로드 실패")
+
         enriched.append({
             **art,
             "thumbnail_b64": thumb_b64,
             "article_num": i,
         })
+
     print(f"\n📊 썸네일 결과:")
     print(f"   성공: {thumb_success}")
     print(f"   실패: {thumb_fail}")
+
     return enriched
 
 
 # ─── HTML 생성 ────────────────────────────────────────────────
 def generate_html(articles):
+    """확정된 템플릿으로 HTML 생성"""
+
+    # 기사 카드 HTML 생성
     cards_html = ""
     for art in articles:
         num = f"{art['article_num']:02d}"
+
+        # 썸네일 처리
         if art.get("thumbnail_b64"):
             img_html = f'<div class="image-frame"><img class="article-image" src="{art["thumbnail_b64"]}" alt="썸네일"></div>'
         else:
             img_html = '<div class="image-frame"><div style="width:100%;aspect-ratio:16/10;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">썸네일 없음</div></div>'
+
         card = f"""<article class="article-item">
 <div class="article-label">ARTICLE {num}</div>
 <h2 class="article-title">{art['title_ko']}</h2>
@@ -432,16 +494,20 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 </style></head><body><div class="page"><div class="card"><header class="header"><h1>{DATE_DISPLAY}</h1><div class="header-meta">Trend Article Digest</div></header><main class="article-wrap article-list">
 {cards_html}
 </main></div></div></body></html>"""
+
     return html
 
 
 # ─── 메인 실행 ────────────────────────────────────────────────
 def summarize_single_article(url):
+    """단일 기사를 Claude API로 요약"""
     client = anthropic.Anthropic()
+
     html = fetch_page(url)
     page_text = ""
     if html:
         soup = BeautifulSoup(html, "lxml")
+        # 본문 텍스트 추출 (최대 3000자)
         for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
             tag.decompose()
         page_text = soup.get_text(separator="\n", strip=True)[:3000]
@@ -486,13 +552,16 @@ def summarize_single_article(url):
 
 
 def load_existing_articles():
+    """오늘 날짜의 기존 HTML에서 기사 데이터를 추출"""
     archive_dir = TODAY.strftime("%Y-%m-%d")
     archive_path = f"{archive_dir}/index.html"
     if not os.path.exists(archive_path):
         print(f"❌ 기존 파일 없음: {archive_path} — 교체 모드는 기존 큐레이션이 필요합니다.")
         sys.exit(1)
+
     with open(archive_path, "r", encoding="utf-8") as f:
         content = f.read()
+
     soup = BeautifulSoup(content, "lxml")
     articles = []
     for item in soup.find_all("article", class_="article-item"):
@@ -501,6 +570,7 @@ def load_existing_articles():
         bullets = item.find_all(class_="bullet-item")
         link = item.find(class_="article-link")
         img = item.find(class_="article-image")
+
         art = {
             "title_ko": title.get_text(strip=True) if title else "",
             "one_line": summary.get_text(strip=True) if summary else "",
@@ -511,6 +581,7 @@ def load_existing_articles():
             "thumbnail_b64": img["src"] if img and img.get("src", "").startswith("data:") else None,
         }
         articles.append(art)
+
     print(f"📂 기존 기사 {len(articles)}개 로드 완료")
     return articles
 
@@ -520,48 +591,69 @@ def main():
     print("🚀 트렌드림 기사 큐레이션 자동화 시작")
     print("=" * 60)
 
+    # ── 교체 모드 ──
     if REPLACEMENTS:
         print("\n🔄 기사 교체 모드 실행")
         existing = load_existing_articles()
+
         for num, new_url in REPLACEMENTS.items():
-            idx = num - 1
+            idx = num - 1  # 0-based
             if idx < 0 or idx >= len(existing):
                 print(f"⚠️  기사 {num}번은 범위 밖 (총 {len(existing)}개)")
                 continue
+
             print(f"\n🔄 기사 {num}번 교체: {new_url}")
             new_art = summarize_single_article(new_url)
             if not new_art:
                 print(f"  ❌ 요약 실패, 기존 기사 유지")
                 continue
+
+            # 썸네일 다운로드
             html = fetch_page(new_url)
             thumb_b64 = None
             if html:
                 og_img = extract_og_image(html, new_url)
                 if og_img:
                     thumb_b64 = download_image_as_base64(og_img)
+
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
             existing[idx] = new_art
             print(f"  ✅ 교체 완료: {new_art['title_ko']}")
+
+        # 번호 재정렬
         for i, art in enumerate(existing, 1):
             art["article_num"] = i
+
         enriched = existing
     else:
+        # ── 일반 모드 ──
+        # 1. 우선 사이트 스캔
         candidates = scan_priority_sites()
         print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
+
+        # 2. Claude API로 기사 선정 + 요약
         articles = curate_with_claude(candidates)
+
+        # 기사 수 검증
         if len(articles) != ARTICLE_COUNT:
             print(f"⚠️  요청 {ARTICLE_COUNT}개 vs 선정 {len(articles)}개 — 조정 필요")
             articles = articles[:ARTICLE_COUNT]
+
+        # 3. 각 기사 상세 + 썸네일
         enriched = enrich_articles(articles)
 
+    # 4. HTML 생성
     html_content = generate_html(enriched)
 
+    # 5. 파일 저장
+    # index.html로 저장 (GitHub Pages 메인)
     output_path = "index.html"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"\n💾 저장 완료: {output_path}")
 
+    # 날짜별 아카이브 저장 (기존 레포 구조: YYYY-MM-DD/index.html)
     archive_dir = TODAY.strftime("%Y-%m-%d")
     os.makedirs(archive_dir, exist_ok=True)
     archive_path = f"{archive_dir}/index.html"
@@ -569,6 +661,7 @@ def main():
         f.write(html_content)
     print(f"💾 아카이브 저장: {archive_path}")
 
+    # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]
     if failed:
         print(f"\n⚠️  썸네일 미확보 기사: {failed}")
