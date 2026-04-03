@@ -1,1 +1,79 @@
-pbpaste > .github/workflows/curate.yml
+name: 트렌드림 기사 큐레이션
+
+on:
+  # 수동 실행만 (폰에서 GitHub Actions → Run workflow)
+  workflow_dispatch:
+    inputs:
+      article_count:
+        description: '기사 개수 (기본 6개)'
+        required: false
+        default: '6'
+      custom_date:
+        description: '날짜 지정 (YYYY-MM-DD, 비워두면 오늘)'
+        required: false
+        default: ''
+      replace_urls:
+        description: '교체할 기사 URL (쉼표로 구분, 예: 1=https://...,3=https://...)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  curate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 (과거 기사 크로스체크용)
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests beautifulsoup4 lxml Pillow
+
+      - name: Run curation script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ARTICLE_COUNT: ${{ github.event.inputs.article_count || '6' }}
+          CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
+          REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
+        run: python scripts/curate.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "trend-bot"
+          git config user.email "trend-bot@users.noreply.github.com"
+          DATE_LABEL=$(python -c "
+          import os, datetime
+          cd = os.environ.get('CUSTOM_DATE','')
+          d = datetime.datetime.strptime(cd,'%Y-%m-%d').date() if cd else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          print(d.strftime('%y%m%d'))
+          ")
+          DATE_FULL=$(python -c "
+          import os, datetime
+          cd = os.environ.get('CUSTOM_DATE','')
+          d = datetime.datetime.strptime(cd,'%Y-%m-%d').date() if cd else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          print(d.strftime('%Y-%m-%d'))
+          ")
+          echo "DATE_FULL=${DATE_FULL}" >> $GITHUB_ENV
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
+          git push
+
+      - name: Notify KakaoWork
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"✨ 트렌드림 기사 큐레이션 완료!\\n\\n📅 ${DATE_FULL}\\n🔗 https://leche.github.io/trend-articles/${DATE_FULL}/\"}"
