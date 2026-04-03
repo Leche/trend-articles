@@ -1,1 +1,246 @@
-pbpaste > trigger.html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>트렌드림 큐레이션 컨트롤</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:#f5f5f7;color:#191919;min-height:100vh;padding:20px;padding-top:env(safe-area-inset-top,20px);}
+.container{max-width:480px;margin:0 auto;}
+h1{font-size:22px;font-weight:700;margin-bottom:6px;}
+.subtitle{font-size:14px;color:#888;margin-bottom:24px;}
+
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.card-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+.btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-primary{background:#0A73DC;color:#fff;}
+.btn-primary:active{background:#0860b5;transform:scale(0.98);}
+.btn-secondary{background:#f0f0f0;color:#333;}
+.btn-secondary:active{background:#e0e0e0;transform:scale(0.98);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:6px;}
+input,textarea{width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:10px;font-family:inherit;font-size:15px;background:#fafafa;transition:border 0.15s;}
+input:focus,textarea:focus{outline:none;border-color:#0A73DC;background:#fff;}
+textarea{resize:vertical;min-height:80px;}
+
+.input-group{margin-bottom:14px;}
+.input-row{display:flex;gap:10px;}
+.input-row .input-group{flex:1;}
+
+.status{margin-top:12px;padding:14px;border-radius:10px;font-size:14px;line-height:1.5;display:none;}
+.status.success{display:block;background:#e8f5e9;color:#2e7d32;}
+.status.error{display:block;background:#ffeef0;color:#d32f2f;}
+.status.loading{display:block;background:#e3f2fd;color:#1565c0;}
+
+.replace-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.replace-item .num{width:50px;text-align:center;flex-shrink:0;}
+.replace-item .url-input{flex:1;}
+.add-btn{font-size:13px;color:#0A73DC;background:none;border:none;font-family:inherit;font-weight:600;cursor:pointer;padding:8px 0;}
+
+.setup-card{border:2px dashed #ddd;}
+.setup-card .card-title{color:#888;}
+.token-saved{color:#2e7d32;font-size:13px;margin-top:6px;}
+
+.divider{height:1px;background:#eee;margin:16px 0;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>트렌드림 큐레이션</h1>
+  <p class="subtitle">폰에서 간편하게 워크플로우를 실행하세요</p>
+
+  <div class="card setup-card" id="setupCard">
+    <div class="card-title">⚙️ 초기 설정</div>
+    <div class="input-group">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+    </div>
+    <div class="input-group">
+      <label>GitHub 사용자명 / 레포 이름</label>
+      <div class="input-row">
+        <div class="input-group"><input type="text" id="ownerInput" placeholder="leche"></div>
+        <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles"></div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="saveSettings()">설정 저장</button>
+    <div id="tokenStatus"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 새 큐레이션</div>
+    <div class="input-group">
+      <label>기사 개수</label>
+      <input type="number" id="articleCount" value="6" min="1" max="12">
+    </div>
+    <div class="input-group">
+      <label>날짜 (비워두면 오늘)</label>
+      <input type="date" id="customDate">
+    </div>
+    <button class="btn btn-primary" id="runBtn" onclick="runCuration()">큐레이션 시작</button>
+    <div class="status" id="runStatus"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 기사 교체</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;">교체할 기사 번호와 새 URL을 입력하세요</p>
+    <div id="replaceList">
+      <div class="replace-item">
+        <input class="num" type="number" placeholder="#" min="1" max="12">
+        <input class="url-input" type="url" placeholder="https://...">
+      </div>
+    </div>
+    <button class="add-btn" onclick="addReplaceRow()">+ 교체 항목 추가</button>
+    <div class="divider"></div>
+    <button class="btn btn-secondary" id="replaceBtn" onclick="runReplace()">교체 실행</button>
+    <div class="status" id="replaceStatus"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 바로가기</div>
+    <button class="btn btn-secondary" onclick="openLatest()" style="margin-bottom:8px;">최신 큐레이션 보기 ↗</button>
+    <button class="btn btn-secondary" onclick="openActions()">GitHub Actions 보기 ↗</button>
+  </div>
+</div>
+
+<script>
+let settings = { token: '', owner: '', repo: '' };
+
+function loadSettings() {
+  const card = document.getElementById('setupCard');
+  if (settings.token) {
+    card.style.border = '2px solid #e8f5e9';
+    document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 완료</div>';
+  }
+}
+
+function saveSettings() {
+  const token = document.getElementById('tokenInput').value.trim();
+  const owner = document.getElementById('ownerInput').value.trim();
+  const repo = document.getElementById('repoInput').value.trim();
+  if (!token || !owner || !repo) {
+    document.getElementById('tokenStatus').innerHTML = '<div style="color:#d32f2f;font-size:13px;margin-top:6px;">모든 필드를 입력해주세요</div>';
+    return;
+  }
+  settings = { token, owner, repo };
+  document.getElementById('setupCard').style.border = '2px solid #e8f5e9';
+  document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 저장 완료</div>';
+}
+
+function checkSettings() {
+  if (!settings.token || !settings.owner || !settings.repo) {
+    alert('먼저 초기 설정을 완료해주세요!');
+    return false;
+  }
+  return true;
+}
+
+async function triggerWorkflow(inputs) {
+  const url = `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/curate.yml/dispatches`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ref: 'main', inputs: inputs }),
+  });
+  return res;
+}
+
+async function runCuration() {
+  if (!checkSettings()) return;
+  const btn = document.getElementById('runBtn');
+  const status = document.getElementById('runStatus');
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = '⏳ 워크플로우 실행 요청 중...';
+  status.style.display = 'block';
+  try {
+    const inputs = {
+      article_count: document.getElementById('articleCount').value || '6',
+      custom_date: document.getElementById('customDate').value || '',
+      replace_urls: '',
+    };
+    const res = await triggerWorkflow(inputs);
+    if (res.status === 204) {
+      status.className = 'status success';
+      status.textContent = '✅ 워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.';
+    } else {
+      const data = await res.json();
+      status.className = 'status error';
+      status.textContent = `❌ 오류: ${data.message || res.statusText}`;
+    }
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = `❌ 네트워크 오류: ${e.message}`;
+  }
+  btn.disabled = false;
+}
+
+function addReplaceRow() {
+  const list = document.getElementById('replaceList');
+  const div = document.createElement('div');
+  div.className = 'replace-item';
+  div.innerHTML = '<input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="url" placeholder="https://...">';
+  list.appendChild(div);
+}
+
+async function runReplace() {
+  if (!checkSettings()) return;
+  const btn = document.getElementById('replaceBtn');
+  const status = document.getElementById('replaceStatus');
+  const items = document.querySelectorAll('.replace-item');
+  const parts = [];
+  items.forEach(item => {
+    const num = item.querySelector('.num').value.trim();
+    const url = item.querySelector('.url-input').value.trim();
+    if (num && url) parts.push(`${num}=${url}`);
+  });
+  if (parts.length === 0) {
+    status.className = 'status error';
+    status.textContent = '교체할 기사 번호와 URL을 입력해주세요.';
+    status.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = '⏳ 기사 교체 워크플로우 실행 중...';
+  status.style.display = 'block';
+  try {
+    const inputs = { article_count: '6', custom_date: '', replace_urls: parts.join(',') };
+    const res = await triggerWorkflow(inputs);
+    if (res.status === 204) {
+      status.className = 'status success';
+      status.textContent = `✅ 기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`;
+    } else {
+      const data = await res.json();
+      status.className = 'status error';
+      status.textContent = `❌ 오류: ${data.message || res.statusText}`;
+    }
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = `❌ 네트워크 오류: ${e.message}`;
+  }
+  btn.disabled = false;
+}
+
+function openLatest() {
+  const today = new Date();
+  const kst = new Date(today.getTime() + (9 * 60 * 60 * 1000));
+  const dateStr = kst.toISOString().split('T')[0];
+  window.open(`https://${settings.owner || 'leche'}.github.io/${settings.repo || 'trend-articles'}/${dateStr}/`, '_blank');
+}
+
+function openActions() {
+  window.open(`https://github.com/${settings.owner || 'leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');
+}
+
+loadSettings();
+</script>
+</body>
+</html>
