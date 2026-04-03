@@ -452,8 +452,10 @@ def main():
         f.write(html_content)
     print(f"\n💾 저장 완료: {output_path}")
 
-    # 날짜별 아카이브도 저장
-    archive_path = f"{DATE_PREFIX}_index.html"
+    # 날짜별 아카이브 저장 (기존 레포 구조: YYYY-MM-DD/index.html)
+    archive_dir = TODAY.strftime("%Y-%m-%d")
+    os.makedirs(archive_dir, exist_ok=True)
+    archive_path = f"{archive_dir}/index.html"
     with open(archive_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"💾 아카이브 저장: {archive_path}")
