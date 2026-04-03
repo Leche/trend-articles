@@ -1,0 +1,21 @@
+name: Deploy Notification
+
+on:
+  workflow_run:
+    workflows: ["pages-build-deployment"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Send Kakao Work Notification
+        run: |
+          DEPLOY_DATE=$(TZ=Asia/Seoul date +'%Y. %-m. %-d')
+          curl -s -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"✅ 트렌드림 배포 완료!\\n📅 ${DEPLOY_DATE}\\n🔗 https://leche.github.io/trend-articles\"
+            }"
