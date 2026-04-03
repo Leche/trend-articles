@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 전체 히스토리 (과거 기사 크로스체크용)
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -54,7 +54,21 @@ jobs:
           d = datetime.datetime.strptime(cd,'%Y-%m-%d').date() if cd else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
           print(d.strftime('%y%m%d'))
           ")
+          DATE_FULL=$(python -c "
+          import os, datetime
+          cd = os.environ.get('CUSTOM_DATE','')
+          d = datetime.datetime.strptime(cd,'%Y-%m-%d').date() if cd else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          print(d.strftime('%Y-%m-%d'))
+          ")
+          echo "DATE_FULL=${DATE_FULL}" >> $GITHUB_ENV
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
           git push
+
+      - name: Notify KakaoWork
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"✨ 트렌드림 기사 큐레이션 완료!\n\n📅 ${DATE_FULL}\n🔗 https://leche.github.io/trend-articles/${DATE_FULL}/\"}"
