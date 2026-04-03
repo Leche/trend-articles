@@ -11,41 +11,34 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:#f5f5f7;color:
 .container{max-width:480px;margin:0 auto;}
 h1{font-size:22px;font-weight:700;margin-bottom:6px;}
 .subtitle{font-size:14px;color:#888;margin-bottom:24px;}
-
 .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
 .card-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-
 .btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.15s;}
 .btn-primary{background:#0A73DC;color:#fff;}
 .btn-primary:active{background:#0860b5;transform:scale(0.98);}
 .btn-secondary{background:#f0f0f0;color:#333;}
 .btn-secondary:active{background:#e0e0e0;transform:scale(0.98);}
 .btn:disabled{opacity:0.5;cursor:not-allowed;}
-
 label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:6px;}
 input,textarea{width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:10px;font-family:inherit;font-size:15px;background:#fafafa;transition:border 0.15s;}
 input:focus,textarea:focus{outline:none;border-color:#0A73DC;background:#fff;}
-textarea{resize:vertical;min-height:80px;}
-
 .input-group{margin-bottom:14px;}
 .input-row{display:flex;gap:10px;}
 .input-row .input-group{flex:1;}
-
 .status{margin-top:12px;padding:14px;border-radius:10px;font-size:14px;line-height:1.5;display:none;}
 .status.success{display:block;background:#e8f5e9;color:#2e7d32;}
 .status.error{display:block;background:#ffeef0;color:#d32f2f;}
 .status.loading{display:block;background:#e3f2fd;color:#1565c0;}
-
 .replace-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
 .replace-item .num{width:50px;text-align:center;flex-shrink:0;}
 .replace-item .url-input{flex:1;}
 .add-btn{font-size:13px;color:#0A73DC;background:none;border:none;font-family:inherit;font-weight:600;cursor:pointer;padding:8px 0;}
-
 .setup-card{border:2px dashed #ddd;}
+.setup-card.saved{border:2px solid #e8f5e9;}
 .setup-card .card-title{color:#888;}
 .token-saved{color:#2e7d32;font-size:13px;margin-top:6px;}
-
 .divider{height:1px;background:#eee;margin:16px 0;}
+.connected{display:inline-block;background:#e8f5e9;color:#2e7d32;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:16px;}
 </style>
 </head>
 <body>
@@ -55,6 +48,7 @@ textarea{resize:vertical;min-height:80px;}
 
   <div class="card setup-card" id="setupCard">
     <div class="card-title">⚙️ 초기 설정</div>
+    <div id="connectedBadge" style="display:none;"><span class="connected">✅ 연결됨</span></div>
     <div class="input-group">
       <label>GitHub Personal Access Token</label>
       <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
@@ -62,11 +56,11 @@ textarea{resize:vertical;min-height:80px;}
     <div class="input-group">
       <label>GitHub 사용자명 / 레포 이름</label>
       <div class="input-row">
-        <div class="input-group"><input type="text" id="ownerInput" placeholder="leche"></div>
-        <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles"></div>
+        <div class="input-group"><input type="text" id="ownerInput" placeholder="Leche" value="Leche"></div>
+        <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles" value="trend-articles"></div>
       </div>
     </div>
-    <button class="btn btn-secondary" onclick="saveSettings()">설정 저장</button>
+    <button class="btn btn-secondary" onclick="saveSettings()">설정 저장 (URL에 저장)</button>
     <div id="tokenStatus"></div>
   </div>
 
@@ -107,13 +101,31 @@ textarea{resize:vertical;min-height:80px;}
 </div>
 
 <script>
-let settings = { token: '', owner: '', repo: '' };
+let settings = { token: '', owner: 'Leche', repo: 'trend-articles' };
+
+function parseHash() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return null;
+  const params = {};
+  hash.split('&').forEach(pair => {
+    const [k, v] = pair.split('=');
+    if (k && v) params[decodeURIComponent(k)] = decodeURIComponent(v);
+  });
+  return params;
+}
 
 function loadSettings() {
-  const card = document.getElementById('setupCard');
-  if (settings.token) {
-    card.style.border = '2px solid #e8f5e9';
-    document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 완료</div>';
+  const params = parseHash();
+  if (params && params.token) {
+    settings.token = params.token;
+    settings.owner = params.owner || 'Leche';
+    settings.repo = params.repo || 'trend-articles';
+    document.getElementById('tokenInput').value = settings.token;
+    document.getElementById('ownerInput').value = settings.owner;
+    document.getElementById('repoInput').value = settings.repo;
+    document.getElementById('setupCard').classList.add('saved');
+    document.getElementById('connectedBadge').style.display = 'block';
+    document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ URL에서 설정 자동 로드됨</div>';
   }
 }
 
@@ -126,8 +138,11 @@ function saveSettings() {
     return;
   }
   settings = { token, owner, repo };
-  document.getElementById('setupCard').style.border = '2px solid #e8f5e9';
-  document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 저장 완료</div>';
+  const hash = `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
+  window.location.hash = hash;
+  document.getElementById('setupCard').classList.add('saved');
+  document.getElementById('connectedBadge').style.display = 'block';
+  document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 저장 완료 — 이 페이지를 북마크하면 다음에도 자동 로드돼요!</div>';
 }
 
 function checkSettings() {
@@ -173,11 +188,11 @@ async function runCuration() {
     } else {
       const data = await res.json();
       status.className = 'status error';
-      status.textContent = `❌ 오류: ${data.message || res.statusText}`;
+      status.textContent = '❌ 오류: ' + (data.message || res.statusText);
     }
   } catch (e) {
     status.className = 'status error';
-    status.textContent = `❌ 네트워크 오류: ${e.message}`;
+    status.textContent = '❌ 네트워크 오류: ' + e.message;
   }
   btn.disabled = false;
 }
@@ -199,7 +214,7 @@ async function runReplace() {
   items.forEach(item => {
     const num = item.querySelector('.num').value.trim();
     const url = item.querySelector('.url-input').value.trim();
-    if (num && url) parts.push(`${num}=${url}`);
+    if (num && url) parts.push(num + '=' + url);
   });
   if (parts.length === 0) {
     status.className = 'status error';
@@ -216,15 +231,15 @@ async function runReplace() {
     const res = await triggerWorkflow(inputs);
     if (res.status === 204) {
       status.className = 'status success';
-      status.textContent = `✅ 기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`;
+      status.textContent = '✅ 기사 교체 시작! (' + parts.length + '개 교체) 카카오워크로 완료 알림이 올 거예요.';
     } else {
       const data = await res.json();
       status.className = 'status error';
-      status.textContent = `❌ 오류: ${data.message || res.statusText}`;
+      status.textContent = '❌ 오류: ' + (data.message || res.statusText);
     }
   } catch (e) {
     status.className = 'status error';
-    status.textContent = `❌ 네트워크 오류: ${e.message}`;
+    status.textContent = '❌ 네트워크 오류: ' + e.message;
   }
   btn.disabled = false;
 }
@@ -233,11 +248,11 @@ function openLatest() {
   const today = new Date();
   const kst = new Date(today.getTime() + (9 * 60 * 60 * 1000));
   const dateStr = kst.toISOString().split('T')[0];
-  window.open(`https://${settings.owner || 'leche'}.github.io/${settings.repo || 'trend-articles'}/${dateStr}/`, '_blank');
+  window.open('https://' + (settings.owner || 'Leche') + '.github.io/' + (settings.repo || 'trend-articles') + '/' + dateStr + '/', '_blank');
 }
 
 function openActions() {
-  window.open(`https://github.com/${settings.owner || 'leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');
+  window.open('https://github.com/' + (settings.owner || 'Leche') + '/' + (settings.repo || 'trend-articles') + '/actions', '_blank');
 }
 
 loadSettings();
