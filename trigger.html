@@ -159,6 +159,19 @@ input, textarea {
 input[type="date"] {
   min-height: 46px;
 }
+.date-wrapper {
+  position: relative;
+}
+.date-placeholder {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+}
 
 input::placeholder {
   color: #767676;
@@ -322,7 +335,10 @@ input:focus, textarea:focus {
     </div>
     <div class="input-group">
       <label>날짜 (비워두면 오늘)</label>
-      <input type="date" id="customDate">
+      <div class="date-wrapper">
+            <input type="date" id="customDate" onchange="toggleDatePlaceholder(this)">
+            <span class="date-placeholder" id="datePlaceholder">날짜 선택 (비워두면 오늘)</span>
+          </div>
     </div>
     <button class="btn btn-primary" id="runBtn" onclick="runCuration()">큐레이션 시작</button>
     <div class="status" id="runStatus"></div>
@@ -392,6 +408,10 @@ function showConnected() {
   document.getElementById('tokenStatus').innerHTML = '';
 }
 
+function toggleDatePlaceholder(input) {
+  const ph = document.getElementById('datePlaceholder');
+  if (ph) ph.style.display = input.value ? 'none' : '';
+}
 function loadSettings() {
   const params = parseHash();
   if (params && params.token) {
