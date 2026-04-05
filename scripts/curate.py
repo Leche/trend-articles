@@ -200,6 +200,26 @@ def download_image_as_base64(img_url, max_size_kb=500):
         return None
 
 
+# ─── URL 날짜 추출 ───────────────────────────────────────────────
+def extract_date_from_url(url):
+    """URL 경로에서 날짜 패턴 추출 → datetime.date 또는 None"""
+    patterns = [
+        r'/(\d{4})[/-](\d{2})[/-](\d{2})',   # /2026/03/25 또는 /2026-03-25
+        r'/(\d{4})(\d{2})(\d{2})[/-]',        # /20260325/
+        r'/(\d{4})(\d{2})(\d{2})',          # URL 끝 또는 구분자 앞
+    ]
+    for pat in patterns:
+        m = re.search(pat, url)
+        if m:
+            try:
+                y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+                if 2020 <= y <= TODAY.year + 1 and 1 <= mo <= 12 and 1 <= d <= 31:
+                    return datetime.date(y, mo, d)
+            except Exception:
+                continue
+    return None
+
+
 # ─── 우선 사이트 스캔 ─────────────────────────────────────────
 def scan_priority_sites():
     """우선 사이트에서 최근 기사 목록 수집"""
@@ -252,9 +272,22 @@ def scan_priority_sites():
                         "source": site_url,
                     })
 
-        # 사이트당 최대 MAX_PER_SITE개만 추가 (상위 링크 우선)
-        candidates.extend(site_candidates[:MAX_PER_SITE])
-        print(f"  → {len(links_found)}개 발견, {min(len(site_candidates), MAX_PER_SITE)}개 선택")
+        # 날짜 필터: URL에서 날짜 추출 가능하면 2주 이내만 통과
+        dated = []
+        undated = []
+        for cand in site_candidates:
+            art_date = extract_date_from_url(cand["url"])
+            if art_date is not None:
+                if art_date >= two_weeks_ago:
+                    cand["pub_date"] = art_date.isoformat()
+                    dated.append(cand)
+                # 날짜 확인됐는데 2주 초과 → 제외
+            else:
+                undated.append(cand)  # 날짜 불명 → 일단 포함, Claude가 재필터
+
+        filtered = (dated + undated)[:MAX_PER_SITE]
+        candidates.extend(filtered)
+        print(f"  → {len(links_found)}개 발견, 날짜확인 {len(dated)}개 + 미확인 {len(undated)}개 → {len(filtered)}개 선택")
 
     # 출처 분포 리포트
     source_counts = {}
@@ -275,7 +308,8 @@ def curate_with_claude(candidates):
     # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
     for i, c in enumerate(candidates[:100], 1):
-        candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
+        pub = c.get("pub_date", "날짜미확인")
+        candidate_text += f"{i}. URL: {c['url']}\n   발행일: {pub}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
 
     # 과거 기사 목록
     past_text = "과거 큐레이션된 기사 제목:\n"
@@ -288,7 +322,7 @@ def curate_with_claude(candidates):
     prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
 
 ## 기사 선정 기준
-1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내 기사만
+1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내({two_weeks_ago}) 기사만. 후보 목록에 발행일이 표시된 경우 반드시 확인하고, 2주 이전이면 절대 선정하지 마세요. 발행일 미확인 기사는 URL·제목으로 최대한 판단하세요.
 2. 방향성: 빅테크(구글, 애플, 메타, OpenAI 등) 신제품 출시나 새로운 소식 우선
 3. 없으면 프로덕트 디자인/UX/그로스 관련 기사
 4. 마케팅 기사는 프로덕트 디자인을 통한 그로스 관점만
