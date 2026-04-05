@@ -226,7 +226,7 @@ def scan_priority_sites():
     candidates = []
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
 
-    MAX_PER_SITE = 5  # 사이트당 최대 후보 수 (모든 사이트가 골고루 반영되도록)
+    MAX_PER_SITE = 1  # 사이트당 1개만 수집 (22개 사이트 동일 가중치)
 
     for site_url in PRIORITY_SITES:
         print(f"\n🌐 스캔 중: {site_url}")
