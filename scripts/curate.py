@@ -143,14 +143,111 @@ def fetch_page(url, timeout=15):
 
 
 def extract_og_image(html_text, base_url=""):
-    """og:image 메타태그에서 썸네일 URL 추출"""
+    """메타태그에서 썸네일 URL 추출 (다중 fallback)"""
     soup = BeautifulSoup(html_text, "lxml")
+
+    def resolve(url):
+        if url and url.startswith("/"):
+            return urljoin(base_url, url)
+        return url
+
+    # 1) og:image
     og = soup.find("meta", property="og:image")
     if og and og.get("content"):
-        img_url = og["content"]
-        if img_url.startswith("/"):
-            img_url = urljoin(base_url, img_url)
-        return img_url
+        return resolve(og["content"])
+
+    # 2) twitter:image
+    tw = soup.find("meta", attrs={"name": "twitter:image"}) or soup.find("meta", property="twitter:image")
+    if tw and tw.get("content"):
+        return resolve(tw["content"])
+
+    # 3) JSON-LD image
+    for script in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json.loads(script.string or "")
+            if isinstance(data, list):
+                data = data[0] if data else {}
+            img = data.get("image")
+            if isinstance(img, str) and img.startswith("http"):
+                return img
+            if isinstance(img, dict) and img.get("url"):
+                return img["url"]
+            if isinstance(img, list) and img:
+                return img[0] if isinstance(img[0], str) else img[0].get("url", "")
+        except Exception:
+            continue
+
+    # 4) 본문 큰 이미지
+    for img_tag in soup.find_all("img", src=True):
+        src = img_tag["src"]
+        cls = " ".join(img_tag.get("class", []))
+        w = img_tag.get("width", "")
+        if any(k in cls for k in ("hero", "thumbnail", "featured", "post-image", "article")):
+            return resolve(src)
+        try:
+            if w and int(w) >= 300:
+                return resolve(src)
+        except ValueError:
+            pass
+
+    return None
+
+
+
+def extract_pub_date(html_text):
+    """기사 HTML에서 발행일 추출 → datetime.date 또는 None"""
+    soup = BeautifulSoup(html_text, "lxml")
+
+    def parse_date(s):
+        s = s.strip().replace("Z", "+00:00")
+        for fmt in ["%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z",
+                     "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%B %d, %Y", "%b %d, %Y"]:
+            try:
+                return datetime.datetime.strptime(s[:26], fmt).date()
+            except Exception:
+                continue
+        # ISO 기본 파싱
+        try:
+            return datetime.datetime.fromisoformat(s[:19]).date()
+        except Exception:
+            return None
+
+    # 1) article:published_time
+    for prop in ["article:published_time", "og:article:published_time"]:
+        meta = soup.find("meta", property=prop)
+        if meta and meta.get("content"):
+            d = parse_date(meta["content"])
+            if d:
+                return d
+
+    # 2) JSON-LD datePublished
+    for script in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json.loads(script.string or "")
+            if isinstance(data, list):
+                data = data[0] if data else {}
+            dp = data.get("datePublished", "")
+            if dp:
+                d = parse_date(dp)
+                if d:
+                    return d
+        except Exception:
+            continue
+
+    # 3) <time datetime="...">
+    time_tag = soup.find("time", datetime=True)
+    if time_tag:
+        d = parse_date(time_tag["datetime"])
+        if d:
+            return d
+
+    # 4) meta name="date"
+    meta_date = soup.find("meta", attrs={"name": "date"})
+    if meta_date and meta_date.get("content"):
+        d = parse_date(meta_date["content"])
+        if d:
+            return d
+
     return None
 
 
@@ -395,6 +492,7 @@ def enrich_articles(articles):
     enriched = []
     thumb_success = []
     thumb_fail = []
+    skipped_old = []
 
     for i, art in enumerate(articles, 1):
         url = art["url"]
@@ -406,7 +504,17 @@ def enrich_articles(articles):
         thumb_b64 = None
 
         if html:
-            # og:image로 썸네일 시도
+            # 발행일 검증
+            pub_date = extract_pub_date(html)
+            two_weeks_ago = TODAY - datetime.timedelta(days=14)
+            if pub_date:
+                print(f"   📅 발행일: {pub_date}")
+                if pub_date < two_weeks_ago:
+                    print(f"   ⛔ 2주 초과 기사 — 스킵 (발행일: {pub_date}, 기준: {two_weeks_ago})")
+                    skipped_old.append(i)
+                    continue
+
+            # 썸네일 시도 (다중 fallback)
             og_img = extract_og_image(html, url)
             if og_img:
                 print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
@@ -425,9 +533,18 @@ def enrich_articles(articles):
             "article_num": i,
         })
 
+    if skipped_old:
+        print(f"\n⛔ 2주 초과로 제외된 기사: {skipped_old}")
+
     print(f"\n📊 썸네일 결과:")
     print(f"   성공: {thumb_success}")
     print(f"   실패: {thumb_fail}")
+
+    # 제외된 기사가 있으면 번호 재정렬
+    if skipped_old:
+        for idx, art in enumerate(enriched, 1):
+            art["article_num"] = idx
+        print(f"   📌 최종 기사 수: {len(enriched)}개 (원래 {len(articles)}개 중 {len(skipped_old)}개 제외)")
 
     return enriched
 
