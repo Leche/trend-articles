@@ -491,9 +491,14 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
   display: block !important; width: 100% !important; min-width: 0 !important;
   overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
 }}
+.agit-cta {{ padding: 20px 20px 32px; text-align: center; border-top: 1px solid var(--line); }}
+.agit-cta-btn {{ display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; background: #191919; color: #fff !important; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }}
+.agit-cta-btn:hover {{ opacity: 0.8; }}
+@media (min-width: 768px) {{ .agit-cta {{ padding: 24px 32px 36px; }} }}
+@media (min-width: 1200px) {{ .agit-cta {{ padding: 24px 40px 40px; }} }}
 </style></head><body><div class="page"><div class="card"><header class="header"><h1>{DATE_DISPLAY}</h1><div class="header-meta">Trend Article Digest</div></header><main class="article-wrap article-list">
 {cards_html}
-</main></div></div></body></html>"""
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">아지트 트렌드림으로 돌아가기</a></div></div></div></body></html>"""
 
     return html
 
@@ -647,13 +652,11 @@ def main():
     html_content = generate_html(enriched)
 
     # 5. 파일 저장
-    # index.html로 저장 (GitHub Pages 메인)
     output_path = "index.html"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"\n💾 저장 완료: {output_path}")
 
-    # 날짜별 아카이브 저장 (기존 레포 구조: YYYY-MM-DD/index.html)
     archive_dir = TODAY.strftime("%Y-%m-%d")
     os.makedirs(archive_dir, exist_ok=True)
     archive_path = f"{archive_dir}/index.html"
@@ -661,7 +664,6 @@ def main():
         f.write(html_content)
     print(f"💾 아카이브 저장: {archive_path}")
 
-    # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]
     if failed:
         print(f"\n⚠️  썸네일 미확보 기사: {failed}")
