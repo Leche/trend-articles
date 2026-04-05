@@ -6,66 +6,316 @@
 <title>트렌드림 큐레이션 컨트롤</title>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Pretendard',-apple-system,sans-serif;background:#f5f5f7;color:#191919;min-height:100vh;padding:20px;padding-top:env(safe-area-inset-top,20px);}
-.container{max-width:480px;margin:0 auto;}
-h1{font-size:22px;font-weight:700;margin-bottom:6px;}
-.subtitle{font-size:14px;color:#888;margin-bottom:24px;}
-.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
-.card-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.15s;}
-.btn-primary{background:#0A73DC;color:#fff;}
-.btn-primary:active{background:#0860b5;transform:scale(0.98);}
-.btn-secondary{background:#f0f0f0;color:#333;}
-.btn-secondary:active{background:#e0e0e0;transform:scale(0.98);}
-.btn:disabled{opacity:0.5;cursor:not-allowed;}
-label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:6px;}
-input,textarea{width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:10px;font-family:inherit;font-size:15px;background:#fafafa;transition:border 0.15s;}
-input:focus,textarea:focus{outline:none;border-color:#0A73DC;background:#fff;}
-.input-group{margin-bottom:14px;}
-.input-row{display:flex;gap:10px;}
-.input-row .input-group{flex:1;}
-.status{margin-top:12px;padding:14px;border-radius:10px;font-size:14px;line-height:1.5;display:none;}
-.status.success{display:block;background:#e8f5e9;color:#2e7d32;}
-.status.error{display:block;background:#ffeef0;color:#d32f2f;}
-.status.loading{display:block;background:#e3f2fd;color:#1565c0;}
-.replace-item{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-.replace-item .num{width:50px;text-align:center;flex-shrink:0;}
-.replace-item .url-input{flex:1;}
-.add-btn{font-size:13px;color:#0A73DC;background:none;border:none;font-family:inherit;font-weight:600;cursor:pointer;padding:8px 0;}
-.setup-card{border:2px dashed #ddd;}
-.setup-card.saved{border:2px solid #e8f5e9;}
-.setup-card .card-title{color:#888;}
-.token-saved{color:#2e7d32;font-size:13px;margin-top:6px;}
-.divider{height:1px;background:#eee;margin:16px 0;}
-.connected{display:inline-block;background:#e8f5e9;color:#2e7d32;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:16px;}
+
+:root {
+  --bg: #F5F5F5;
+  --card: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #8C8C8C;
+  --text-tertiary: #B0B0B0;
+  --accent: #191919;
+  --accent-hover: #000000;
+  --accent-light: rgba(25, 25, 25, 0.04);
+  --success: #1B873F;
+  --success-bg: #EDFAF1;
+  --error: #CF3030;
+  --error-bg: #FFF0F0;
+  --loading-bg: #F0F0F0;
+  --loading-text: #191919;
+  --border: #E5E5E5;
+  --input-bg: #FAFAFA;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  padding: 20px 4px 24px;
+}
+
+.header h1 {
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.header .subtitle {
+  font-size: 14px;
+  font-weight: 420;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  letter-spacing: -0.1px;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 12px;
+  box-shadow: 0px 0.5px 4px rgba(0, 0, 0, 0.02);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+  color: #191919;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:active {
+  background: var(--accent-hover);
+  transform: scale(0.985);
+}
+
+.btn-secondary {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:active {
+  background: #F0EFEC;
+  transform: scale(0.985);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Inputs */
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  letter-spacing: 0.1px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-xs);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 450;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+  -webkit-appearance: none;
+  height: 46px;
+}
+
+input[type="date"] {
+  min-height: 46px;
+}
+
+input::placeholder {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.06);
+}
+
+.input-group { margin-bottom: 14px; }
+.input-row { display: flex; gap: 10px; }
+.input-row .input-group { flex: 1; margin-bottom: 0; }
+
+/* Status */
+.status {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  display: none;
+  letter-spacing: -0.1px;
+}
+
+.status.success {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(27, 135, 63, 0.1);
+}
+
+.status.error {
+  display: block;
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid rgba(207, 48, 48, 0.08);
+}
+
+.status.loading {
+  display: block;
+  background: var(--loading-bg);
+  color: var(--loading-text);
+  border: 1px solid rgba(44, 92, 255, 0.08);
+}
+
+/* Replace items */
+.replace-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.replace-item .num {
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 12px 8px;
+}
+
+.replace-item .url-input { flex: 1; }
+
+.add-btn {
+  font-size: 15px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin: 16px 0;
+  transition: opacity 0.15s;
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.add-btn:active { opacity: 0.6; }
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+
+/* Setup card */
+.setup-card {
+  border: none;
+  box-shadow: none;
+}
+
+.setup-card.saved {
+  border: none;
+}
+
+/* Connected button */
+.btn-connected {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--success-bg);
+  color: var(--success);
+  cursor: default;
+  letter-spacing: -0.1px;
+}
+
+/* Shortcut buttons */
+.shortcut-stack { display: flex; flex-direction: column; gap: 8px; }
+
+.shortcut-stack .btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.shortcut-stack .btn-secondary .arrow {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  transition: transform 0.15s;
+}
+
+.shortcut-stack .btn-secondary:active .arrow {
+  transform: translateX(2px);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px 0 8px;
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-tertiary);
+  letter-spacing: 0.2px;
+}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>트렌드림 큐레이션</h1>
-  <p class="subtitle">폰에서 간편하게 워크플로우를 실행하세요</p>
-
-  <div class="card setup-card" id="setupCard">
-    <div class="card-title">⚙️ 초기 설정</div>
-    <div id="connectedBadge" style="display:none;"><span class="connected">✅ 연결됨</span></div>
-    <div class="input-group">
-      <label>GitHub Personal Access Token</label>
-      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
-    </div>
-    <div class="input-group">
-      <label>GitHub 사용자명 / 레포 이름</label>
-      <div class="input-row">
-        <div class="input-group"><input type="text" id="ownerInput" placeholder="Leche" value="Leche"></div>
-        <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles" value="trend-articles"></div>
-      </div>
-    </div>
-    <button class="btn btn-secondary" onclick="saveSettings()">설정 저장 (URL에 저장)</button>
-    <div id="tokenStatus"></div>
+  <div class="header">
+    <h1>트렌드림 큐레이션</h1>
+    <p class="subtitle">폰에서 간편하게 워크플로우를 실행하세요</p>
   </div>
 
   <div class="card">
-    <div class="card-title">🚀 새 큐레이션</div>
+    <div class="card-title">새 큐레이션</div>
     <div class="input-group">
       <label>기사 개수</label>
       <input type="number" id="articleCount" value="6" min="1" max="12">
@@ -79,8 +329,8 @@ input:focus,textarea:focus{outline:none;border-color:#0A73DC;background:#fff;}
   </div>
 
   <div class="card">
-    <div class="card-title">🔄 기사 교체</div>
-    <p style="font-size:13px;color:#888;margin-bottom:12px;">교체할 기사 번호와 새 URL을 입력하세요</p>
+    <div class="card-title">기사 교체</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">교체할 기사 번호와 새 URL을 입력하세요</p>
     <div id="replaceList">
       <div class="replace-item">
         <input class="num" type="number" placeholder="#" min="1" max="12">
@@ -88,16 +338,37 @@ input:focus,textarea:focus{outline:none;border-color:#0A73DC;background:#fff;}
       </div>
     </div>
     <button class="add-btn" onclick="addReplaceRow()">+ 교체 항목 추가</button>
-    <div class="divider"></div>
     <button class="btn btn-secondary" id="replaceBtn" onclick="runReplace()">교체 실행</button>
     <div class="status" id="replaceStatus"></div>
   </div>
 
   <div class="card">
-    <div class="card-title">📋 바로가기</div>
-    <button class="btn btn-secondary" onclick="openLatest()" style="margin-bottom:8px;">최신 큐레이션 보기 ↗</button>
-    <button class="btn btn-secondary" onclick="openActions()">GitHub Actions 보기 ↗</button>
+    <div class="card-title">바로가기</div>
+    <div class="shortcut-stack">
+      <button class="btn btn-secondary" onclick="openLatest()">최신 큐레이션 보기<span class="arrow">→</span></button>
+      <button class="btn btn-secondary" onclick="openActions()">GitHub Actions<span class="arrow">→</span></button>
+    </div>
   </div>
+
+  <div class="card setup-card" id="setupCard">
+    <div class="card-title">초기 설정</div>
+    <div class="input-group">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+    </div>
+    <div class="input-group">
+      <label>GitHub 사용자명 / 레포 이름</label>
+      <div class="input-row">
+        <div class="input-group"><input type="text" id="ownerInput" placeholder="Leche" value="Leche"></div>
+        <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles" value="trend-articles"></div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" id="saveBtn" onclick="saveSettings()">설정 저장</button>
+    <button class="btn-connected" id="connectedBtn" style="display:none;">연결됨</button>
+    <div id="tokenStatus"></div>
+  </div>
+
+  <div class="footer">TRENDREAM CURATION</div>
 </div>
 
 <script>
@@ -114,6 +385,13 @@ function parseHash() {
   return params;
 }
 
+function showConnected() {
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('connectedBtn').style.display = 'block';
+  document.getElementById('setupCard').classList.add('saved');
+  document.getElementById('tokenStatus').innerHTML = '';
+}
+
 function loadSettings() {
   const params = parseHash();
   if (params && params.token) {
@@ -123,9 +401,7 @@ function loadSettings() {
     document.getElementById('tokenInput').value = settings.token;
     document.getElementById('ownerInput').value = settings.owner;
     document.getElementById('repoInput').value = settings.repo;
-    document.getElementById('setupCard').classList.add('saved');
-    document.getElementById('connectedBadge').style.display = 'block';
-    document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ URL에서 설정 자동 로드됨</div>';
+    showConnected();
   }
 }
 
@@ -140,9 +416,7 @@ function saveSettings() {
   settings = { token, owner, repo };
   const hash = `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
   window.location.hash = hash;
-  document.getElementById('setupCard').classList.add('saved');
-  document.getElementById('connectedBadge').style.display = 'block';
-  document.getElementById('tokenStatus').innerHTML = '<div class="token-saved">✅ 설정 저장 완료 — 이 페이지를 북마크하면 다음에도 자동 로드돼요!</div>';
+  showConnected();
 }
 
 function checkSettings() {
@@ -173,7 +447,7 @@ async function runCuration() {
   const status = document.getElementById('runStatus');
   btn.disabled = true;
   status.className = 'status loading';
-  status.textContent = '⏳ 워크플로우 실행 요청 중...';
+  status.textContent = '워크플로우 실행 요청 중...';
   status.style.display = 'block';
   try {
     const inputs = {
@@ -184,15 +458,15 @@ async function runCuration() {
     const res = await triggerWorkflow(inputs);
     if (res.status === 204) {
       status.className = 'status success';
-      status.textContent = '✅ 워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.';
+      status.textContent = '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.';
     } else {
       const data = await res.json();
       status.className = 'status error';
-      status.textContent = '❌ 오류: ' + (data.message || res.statusText);
+      status.textContent = '오류: ' + (data.message || res.statusText);
     }
   } catch (e) {
     status.className = 'status error';
-    status.textContent = '❌ 네트워크 오류: ' + e.message;
+    status.textContent = '네트워크 오류: ' + e.message;
   }
   btn.disabled = false;
 }
@@ -224,22 +498,22 @@ async function runReplace() {
   }
   btn.disabled = true;
   status.className = 'status loading';
-  status.textContent = '⏳ 기사 교체 워크플로우 실행 중...';
+  status.textContent = '기사 교체 워크플로우 실행 중...';
   status.style.display = 'block';
   try {
     const inputs = { article_count: '6', custom_date: '', replace_urls: parts.join(',') };
     const res = await triggerWorkflow(inputs);
     if (res.status === 204) {
       status.className = 'status success';
-      status.textContent = '✅ 기사 교체 시작! (' + parts.length + '개 교체) 카카오워크로 완료 알림이 올 거예요.';
+      status.textContent = '기사 교체 시작! (' + parts.length + '개 교체) 카카오워크로 완료 알림이 올 거예요.';
     } else {
       const data = await res.json();
       status.className = 'status error';
-      status.textContent = '❌ 오류: ' + (data.message || res.statusText);
+      status.textContent = '오류: ' + (data.message || res.statusText);
     }
   } catch (e) {
     status.className = 'status error';
-    status.textContent = '❌ 네트워크 오류: ' + e.message;
+    status.textContent = '네트워크 오류: ' + e.message;
   }
   btn.disabled = false;
 }
