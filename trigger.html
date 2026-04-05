@@ -172,6 +172,12 @@ input[type="date"] {
   font-size: 14px;
   line-height: 1;
 }
+input[type="date"]:not(.has-value)::-webkit-datetime-edit-text,
+input[type="date"]:not(.has-value)::-webkit-datetime-edit-month-field,
+input[type="date"]:not(.has-value)::-webkit-datetime-edit-day-field,
+input[type="date"]:not(.has-value)::-webkit-datetime-edit-year-field {
+  color: transparent;
+}
 
 input::placeholder {
   color: #767676;
@@ -337,7 +343,7 @@ input:focus, textarea:focus {
       <label>날짜 (비워두면 오늘)</label>
       <div class="date-wrapper">
             <input type="date" id="customDate" onchange="toggleDatePlaceholder(this)">
-            <span class="date-placeholder" id="datePlaceholder">날짜 선택 (비워두면 오늘)</span>
+            <span class="date-placeholder" id="datePlaceholder">연도. 월. 일.</span>
           </div>
     </div>
     <button class="btn btn-primary" id="runBtn" onclick="runCuration()">큐레이션 시작</button>
@@ -410,7 +416,13 @@ function showConnected() {
 
 function toggleDatePlaceholder(input) {
   const ph = document.getElementById('datePlaceholder');
-  if (ph) ph.style.display = input.value ? 'none' : '';
+  if (input.value) {
+    input.classList.add('has-value');
+    if (ph) ph.style.display = 'none';
+  } else {
+    input.classList.remove('has-value');
+    if (ph) ph.style.display = '';
+  }
 }
 function loadSettings() {
   const params = parseHash();
