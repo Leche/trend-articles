@@ -429,6 +429,10 @@ def generate_html(articles):
 </article>"""
         cards_html += card + "\n"
 
+    total = len(articles)
+    last_2col = total % 2 or 2
+    last_3col = total % 3 or 3
+
     html = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{DATE_DISPLAY} Trend Article Digest</title><style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -441,11 +445,11 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 .page {{ width:100%; background:#fff; }}
 .card {{ width:100%; max-width:100%; background:var(--surface); border-radius:8px; }}
 .header {{ padding:28px 20px 24px; border-bottom:1px solid var(--line); }}
-.header h1 {{ font-size:clamp(24px,3vw,30px); font-weight:700; line-height:1.2; letter-spacing:-0.02em; }}
-.header-meta {{ margin-top:14px; font-size:17px; color:var(--text4); font-weight:600; line-height:1.6; }}
-.article-wrap {{ padding:0 20px 24px; }}
+.header h1 {{ font-size:clamp(24px,3vw,30px); font-weight:600; line-height:1.2; letter-spacing:-0.02em; }}
+.header-meta {{ margin-top:14px; font-size:16px; color:var(--text4); font-weight:500; line-height:1.6; }}
+.article-wrap {{ padding:0 20px 0; }}
 .article-item {{ padding:24px 0 28px; border-bottom:1px solid var(--line); }}
-.article-item:last-of-type {{ border-bottom:0; }}
+.article-item:last-of-type {{ border-bottom:0; padding-bottom:20px; }}
 .article-label {{ display:inline-block; margin-bottom:14px; padding:7px 10px; background:#fbfbfb; border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }}
 .article-title {{ font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }}
 .article-summary {{ font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }}
@@ -462,7 +466,8 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 @media (min-width:768px) {{
   html,body{{background:var(--page);}} .page{{background:var(--page);padding:28px;}}
   .card{{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}}
-  .header{{padding:40px 32px 32px;}} .article-wrap{{padding:0 32px 32px;}} .article-item{{padding:28px 0 32px;}}
+  .header{{padding:40px 32px 32px;}} .article-wrap{{padding:0 32px 0;}} .article-item{{padding:28px 0 32px;}}
+  .article-item:last-of-type{{padding-bottom:40px;}}
 }}
 @media (min-width:1200px) {{
   .page{{padding:36px;}}
@@ -485,20 +490,26 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
   .image-frame .article-image {{ width: 100%; height: auto; display: block; object-fit: contain; object-position: center center; }}
 }}
 @media (min-width: 1200px) {{
-  .article-item:nth-last-child(-n+2) {{ border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }}
+  .article-item:nth-last-child(-n+{last_2col}) {{ border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }}
+}}
+@media (min-width: 1600px) {{
+  .card {{ max-width: 1800px; }}
+  .article-wrap {{ grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }}
+  .article-item:nth-last-child(-n+{last_2col}) {{ border-bottom: 1px solid var(--line) !important; padding-bottom: 32px !important; margin-bottom: 0 !important; }}
+  .article-item:nth-last-child(-n+{last_3col}) {{ border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }}
 }}
 .link-box a, .link-url, .article-link, .url-text {{
   display: block !important; width: 100% !important; min-width: 0 !important;
   overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
 }}
-.agit-cta {{ padding: 20px 20px 32px; text-align: center; border-top: 1px solid var(--line); }}
-.agit-cta-btn {{ display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; background: #191919; color: #fff !important; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }}
+.agit-cta {{ margin: 0 20px; border-top: 1px solid var(--line); padding: 20px 0 28px; text-align: center; }}
+.agit-cta-btn {{ display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: #191919; color: #fff !important; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }}
 .agit-cta-btn:hover {{ opacity: 0.8; }}
-@media (min-width: 768px) {{ .agit-cta {{ padding: 24px 32px 36px; }} }}
-@media (min-width: 1200px) {{ .agit-cta {{ padding: 24px 40px 40px; }} }}
+@media (min-width: 768px) {{ .agit-cta {{ margin: 0 40px; padding: 40px 0 32px; }} .agit-cta-btn {{ display: inline-flex; width: auto; padding: 0 24px; }} }}
+@media (min-width: 1200px) {{ .agit-cta {{ padding: 40px 0 36px; }} }}
 </style></head><body><div class="page"><div class="card"><header class="header"><h1>{DATE_DISPLAY}</h1><div class="header-meta">Trend Article Digest</div></header><main class="article-wrap article-list">
 {cards_html}
-</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">아지트 트렌드림으로 돌아가기</a></div></div></div></body></html>"""
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트로 돌아가기</a></div></div></div></body></html>"""
 
     return html
 
@@ -652,11 +663,13 @@ def main():
     html_content = generate_html(enriched)
 
     # 5. 파일 저장
+    # index.html로 저장 (GitHub Pages 메인)
     output_path = "index.html"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     print(f"\n💾 저장 완료: {output_path}")
 
+    # 날짜별 아카이브 저장 (기존 레포 구조: YYYY-MM-DD/index.html)
     archive_dir = TODAY.strftime("%Y-%m-%d")
     os.makedirs(archive_dir, exist_ok=True)
     archive_path = f"{archive_dir}/index.html"
@@ -664,6 +677,7 @@ def main():
         f.write(html_content)
     print(f"💾 아카이브 저장: {archive_path}")
 
+    # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]
     if failed:
         print(f"\n⚠️  썸네일 미확보 기사: {failed}")
