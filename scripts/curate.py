@@ -54,6 +54,8 @@ PRIORITY_SITES = [
     "https://oliveyoung.tech",
     # 디자인 툴
     "https://www.figma.com/ko-kr/release-notes/",
+    # 테크/미디어
+    "https://byline.network",
 ]
 
 HEADERS = {
