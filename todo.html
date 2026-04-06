@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>트렌드림 To-Do</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  --bg: #F5F5F5;
+  --card: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #8C8C8C;
+  --text-tertiary: #B0B0B0;
+  --accent: #191919;
+  --accent-hover: #000000;
+  --success: #1B873F;
+  --success-bg: #EDFAF1;
+  --error: #CF3030;
+  --error-bg: #FFF0F0;
+  --border: #E5E5E5;
+  --input-bg: #FAFAFA;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.header {
+  padding: 20px 4px 24px;
+}
+
+.header h1 {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.header .subtitle {
+  font-size: 14px;
+  font-weight: 420;
+  color: #767676;
+  margin-top: 6px;
+  letter-spacing: -0.1px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 12px;
+  box-shadow: 0px 0.5px 4px rgba(0, 0, 0, 0.02);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+  color: #191919;
+  margin-bottom: 16px;
+}
+
+/* Input area */
+.todo-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-input-wrap input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-xs);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 450;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+  -webkit-appearance: none;
+  height: 46px;
+}
+
+.todo-input-wrap input::placeholder {
+  color: #767676;
+  font-weight: 400;
+}
+
+.todo-input-wrap input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.06);
+}
+
+.btn-add {
+  height: 46px;
+  width: 46px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-add:active {
+  background: var(--accent-hover);
+  transform: scale(0.94);
+}
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: var(--input-bg);
+  border-radius: var(--radius-xs);
+  padding: 3px;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.1px;
+}
+
+.filter-tab.active {
+  background: var(--card);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.filter-tab:active {
+  transform: scale(0.97);
+}
+
+/* Todo list */
+.todo-list {
+  list-style: none;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  animation: fadeIn 0.2s ease;
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom checkbox */
+.todo-checkbox {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1.5px solid #C8C8C8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.todo-checkbox:hover {
+  border-color: var(--accent);
+}
+
+.todo-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.todo-checkbox.checked::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+/* Todo text */
+.todo-text {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 450;
+  letter-spacing: -0.1px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.todo-item.done .todo-text {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+/* Delete button */
+.todo-delete {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.todo-item:hover .todo-delete,
+.todo-item:active .todo-delete {
+  opacity: 1;
+}
+
+/* Always show on touch devices */
+@media (hover: none) {
+  .todo-delete { opacity: 0.5; }
+}
+
+.todo-delete:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.todo-delete:active {
+  transform: scale(0.9);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 32px 0 24px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  font-weight: 450;
+  letter-spacing: -0.1px;
+}
+
+/* Counter */
+.counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.1px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-header .card-title {
+  margin-bottom: 0;
+}
+
+/* Clear completed */
+.btn-clear {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--error);
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.15s;
+  letter-spacing: -0.1px;
+}
+
+.btn-clear:active {
+  opacity: 0.5;
+}
+
+.btn-clear:disabled {
+  opacity: 0;
+  cursor: default;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px 0 8px;
+  font-size: 11px;
+  font-weight: 450;
+  color: #767676;
+  letter-spacing: 0.2px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>To-Do</h1>
+    <p class="subtitle">할 일을 기록하고 관리하세요</p>
+  </div>
+
+  <div class="card">
+    <div class="todo-input-wrap">
+      <input type="text" id="todoInput" placeholder="새로운 할 일 입력" autocomplete="off" enterkeyhint="done">
+      <button class="btn-add" id="addBtn" onclick="addTodo()">+</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">전체</button>
+      <button class="filter-tab" data-filter="active" onclick="setFilter('active', this)">진행 중</button>
+      <button class="filter-tab" data-filter="done" onclick="setFilter('done', this)">완료</button>
+    </div>
+
+    <div class="card-header">
+      <span class="counter" id="counter"></span>
+      <button class="btn-clear" id="clearBtn" onclick="clearCompleted()">완료 항목 삭제</button>
+    </div>
+
+    <ul class="todo-list" id="todoList"></ul>
+    <div class="empty-state" id="emptyState" style="display:none;">할 일이 없어요</div>
+  </div>
+
+  <div class="footer">TRENDREAM TO-DO</div>
+</div>
+
+<script>
+const STORAGE_KEY = 'trendream-todos';
+let todos = [];
+let currentFilter = 'all';
+
+function loadTodos() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) todos = JSON.parse(saved);
+  } catch (e) {
+    todos = [];
+  }
+}
+
+function saveTodos() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+}
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  todos.unshift({ id: generateId(), text, done: false, createdAt: Date.now() });
+  saveTodos();
+  input.value = '';
+  render();
+  input.focus();
+}
+
+function toggleTodo(id) {
+  const todo = todos.find(t => t.id === id);
+  if (todo) {
+    todo.done = !todo.done;
+    saveTodos();
+    render();
+  }
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id);
+  saveTodos();
+  render();
+}
+
+function clearCompleted() {
+  todos = todos.filter(t => !t.done);
+  saveTodos();
+  render();
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function getFiltered() {
+  if (currentFilter === 'active') return todos.filter(t => !t.done);
+  if (currentFilter === 'done') return todos.filter(t => t.done);
+  return todos;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function render() {
+  const list = document.getElementById('todoList');
+  const empty = document.getElementById('emptyState');
+  const counter = document.getElementById('counter');
+  const clearBtn = document.getElementById('clearBtn');
+
+  const filtered = getFiltered();
+  const activeCount = todos.filter(t => !t.done).length;
+  const doneCount = todos.filter(t => t.done).length;
+
+  counter.textContent = `${activeCount}개 남음`;
+  clearBtn.disabled = doneCount === 0;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    if (currentFilter === 'active') empty.textContent = '모든 할 일을 완료했어요';
+    else if (currentFilter === 'done') empty.textContent = '완료된 항목이 없어요';
+    else empty.textContent = '할 일이 없어요';
+    return;
+  }
+
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(todo => `
+    <li class="todo-item${todo.done ? ' done' : ''}">
+      <div class="todo-checkbox${todo.done ? ' checked' : ''}" onclick="toggleTodo('${todo.id}')"></div>
+      <span class="todo-text">${escapeHtml(todo.text)}</span>
+      <button class="todo-delete" onclick="deleteTodo('${todo.id}')" aria-label="삭제">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </li>
+  `).join('');
+}
+
+// Enter key support
+document.getElementById('todoInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTodo();
+  }
+});
+
+loadTodos();
+render();
+</script>
+</body>
+</html>
