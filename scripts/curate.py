@@ -24,6 +24,7 @@ from bs4 import BeautifulSoup
 ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "6"))
 CUSTOM_DATE = os.environ.get("CUSTOM_DATE", "").strip()
 REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
+TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
 PRIORITY_SITES = [
@@ -54,8 +55,6 @@ PRIORITY_SITES = [
     "https://oliveyoung.tech",
     # 디자인 툴
     "https://www.figma.com/ko-kr/release-notes/",
-    # 테크/미디어
-    "https://byline.network",
 ]
 
 HEADERS = {
@@ -145,111 +144,14 @@ def fetch_page(url, timeout=15):
 
 
 def extract_og_image(html_text, base_url=""):
-    """메타태그에서 썸네일 URL 추출 (다중 fallback)"""
+    """og:image 메타태그에서 썸네일 URL 추출"""
     soup = BeautifulSoup(html_text, "lxml")
-
-    def resolve(url):
-        if url and url.startswith("/"):
-            return urljoin(base_url, url)
-        return url
-
-    # 1) og:image
     og = soup.find("meta", property="og:image")
     if og and og.get("content"):
-        return resolve(og["content"])
-
-    # 2) twitter:image
-    tw = soup.find("meta", attrs={"name": "twitter:image"}) or soup.find("meta", property="twitter:image")
-    if tw and tw.get("content"):
-        return resolve(tw["content"])
-
-    # 3) JSON-LD image
-    for script in soup.find_all("script", type="application/ld+json"):
-        try:
-            data = json.loads(script.string or "")
-            if isinstance(data, list):
-                data = data[0] if data else {}
-            img = data.get("image")
-            if isinstance(img, str) and img.startswith("http"):
-                return img
-            if isinstance(img, dict) and img.get("url"):
-                return img["url"]
-            if isinstance(img, list) and img:
-                return img[0] if isinstance(img[0], str) else img[0].get("url", "")
-        except Exception:
-            continue
-
-    # 4) 본문 큰 이미지
-    for img_tag in soup.find_all("img", src=True):
-        src = img_tag["src"]
-        cls = " ".join(img_tag.get("class", []))
-        w = img_tag.get("width", "")
-        if any(k in cls for k in ("hero", "thumbnail", "featured", "post-image", "article")):
-            return resolve(src)
-        try:
-            if w and int(w) >= 300:
-                return resolve(src)
-        except ValueError:
-            pass
-
-    return None
-
-
-
-def extract_pub_date(html_text):
-    """기사 HTML에서 발행일 추출 → datetime.date 또는 None"""
-    soup = BeautifulSoup(html_text, "lxml")
-
-    def parse_date(s):
-        s = s.strip().replace("Z", "+00:00")
-        for fmt in ["%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z",
-                     "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%B %d, %Y", "%b %d, %Y"]:
-            try:
-                return datetime.datetime.strptime(s[:26], fmt).date()
-            except Exception:
-                continue
-        # ISO 기본 파싱
-        try:
-            return datetime.datetime.fromisoformat(s[:19]).date()
-        except Exception:
-            return None
-
-    # 1) article:published_time
-    for prop in ["article:published_time", "og:article:published_time"]:
-        meta = soup.find("meta", property=prop)
-        if meta and meta.get("content"):
-            d = parse_date(meta["content"])
-            if d:
-                return d
-
-    # 2) JSON-LD datePublished
-    for script in soup.find_all("script", type="application/ld+json"):
-        try:
-            data = json.loads(script.string or "")
-            if isinstance(data, list):
-                data = data[0] if data else {}
-            dp = data.get("datePublished", "")
-            if dp:
-                d = parse_date(dp)
-                if d:
-                    return d
-        except Exception:
-            continue
-
-    # 3) <time datetime="...">
-    time_tag = soup.find("time", datetime=True)
-    if time_tag:
-        d = parse_date(time_tag["datetime"])
-        if d:
-            return d
-
-    # 4) meta name="date"
-    meta_date = soup.find("meta", attrs={"name": "date"})
-    if meta_date and meta_date.get("content"):
-        d = parse_date(meta_date["content"])
-        if d:
-            return d
-
+        img_url = og["content"]
+        if img_url.startswith("/"):
+            img_url = urljoin(base_url, img_url)
+        return img_url
     return None
 
 
@@ -299,33 +201,13 @@ def download_image_as_base64(img_url, max_size_kb=500):
         return None
 
 
-# ─── URL 날짜 추출 ───────────────────────────────────────────────
-def extract_date_from_url(url):
-    """URL 경로에서 날짜 패턴 추출 → datetime.date 또는 None"""
-    patterns = [
-        r'/(\d{4})[/-](\d{2})[/-](\d{2})',   # /2026/03/25 또는 /2026-03-25
-        r'/(\d{4})(\d{2})(\d{2})[/-]',        # /20260325/
-        r'/(\d{4})(\d{2})(\d{2})',          # URL 끝 또는 구분자 앞
-    ]
-    for pat in patterns:
-        m = re.search(pat, url)
-        if m:
-            try:
-                y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
-                if 2020 <= y <= TODAY.year + 1 and 1 <= mo <= 12 and 1 <= d <= 31:
-                    return datetime.date(y, mo, d)
-            except Exception:
-                continue
-    return None
-
-
 # ─── 우선 사이트 스캔 ─────────────────────────────────────────
 def scan_priority_sites():
     """우선 사이트에서 최근 기사 목록 수집"""
     candidates = []
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
 
-    MAX_PER_SITE = 1  # 사이트당 1개만 수집 (22개 사이트 동일 가중치)
+    MAX_PER_SITE = 5  # 사이트당 최대 후보 수 (모든 사이트가 골고루 반영되도록)
 
     for site_url in PRIORITY_SITES:
         print(f"\n🌐 스캔 중: {site_url}")
@@ -371,22 +253,9 @@ def scan_priority_sites():
                         "source": site_url,
                     })
 
-        # 날짜 필터: URL에서 날짜 추출 가능하면 2주 이내만 통과
-        dated = []
-        undated = []
-        for cand in site_candidates:
-            art_date = extract_date_from_url(cand["url"])
-            if art_date is not None:
-                if art_date >= two_weeks_ago:
-                    cand["pub_date"] = art_date.isoformat()
-                    dated.append(cand)
-                # 날짜 확인됐는데 2주 초과 → 제외
-            else:
-                undated.append(cand)  # 날짜 불명 → 일단 포함, Claude가 재필터
-
-        filtered = (dated + undated)[:MAX_PER_SITE]
-        candidates.extend(filtered)
-        print(f"  → {len(links_found)}개 발견, 날짜확인 {len(dated)}개 + 미확인 {len(undated)}개 → {len(filtered)}개 선택")
+        # 사이트당 최대 MAX_PER_SITE개만 추가 (상위 링크 우선)
+        candidates.extend(site_candidates[:MAX_PER_SITE])
+        print(f"  → {len(links_found)}개 발견, {min(len(site_candidates), MAX_PER_SITE)}개 선택")
 
     # 출처 분포 리포트
     source_counts = {}
@@ -407,8 +276,7 @@ def curate_with_claude(candidates):
     # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
     for i, c in enumerate(candidates[:100], 1):
-        pub = c.get("pub_date", "날짜미확인")
-        candidate_text += f"{i}. URL: {c['url']}\n   발행일: {pub}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
+        candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
 
     # 과거 기사 목록
     past_text = "과거 큐레이션된 기사 제목:\n"
@@ -421,7 +289,7 @@ def curate_with_claude(candidates):
     prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
 
 ## 기사 선정 기준
-1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내({(TODAY - datetime.timedelta(days=14)).isoformat()}) 기사만. 후보 목록에 발행일이 표시된 경우 반드시 확인하고, 2주 이전이면 절대 선정하지 마세요. 발행일 미확인 기사는 URL·제목으로 최대한 판단하세요.
+1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내 기사만
 2. 방향성: 빅테크(구글, 애플, 메타, OpenAI 등) 신제품 출시나 새로운 소식 우선
 3. 없으면 프로덕트 디자인/UX/그로스 관련 기사
 4. 마케팅 기사는 프로덕트 디자인을 통한 그로스 관점만
@@ -494,7 +362,6 @@ def enrich_articles(articles):
     enriched = []
     thumb_success = []
     thumb_fail = []
-    skipped_old = []
 
     for i, art in enumerate(articles, 1):
         url = art["url"]
@@ -506,17 +373,7 @@ def enrich_articles(articles):
         thumb_b64 = None
 
         if html:
-            # 발행일 검증
-            pub_date = extract_pub_date(html)
-            two_weeks_ago = TODAY - datetime.timedelta(days=14)
-            if pub_date:
-                print(f"   📅 발행일: {pub_date}")
-                if pub_date < two_weeks_ago:
-                    print(f"   ⛔ 2주 초과 기사 — 스킵 (발행일: {pub_date}, 기준: {two_weeks_ago})")
-                    skipped_old.append(i)
-                    continue
-
-            # 썸네일 시도 (다중 fallback)
+            # og:image로 썸네일 시도
             og_img = extract_og_image(html, url)
             if og_img:
                 print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
@@ -535,18 +392,9 @@ def enrich_articles(articles):
             "article_num": i,
         })
 
-    if skipped_old:
-        print(f"\n⛔ 2주 초과로 제외된 기사: {skipped_old}")
-
     print(f"\n📊 썸네일 결과:")
     print(f"   성공: {thumb_success}")
     print(f"   실패: {thumb_fail}")
-
-    # 제외된 기사가 있으면 번호 재정렬
-    if skipped_old:
-        for idx, art in enumerate(enriched, 1):
-            art["article_num"] = idx
-        print(f"   📌 최종 기사 수: {len(enriched)}개 (원래 {len(articles)}개 중 {len(skipped_old)}개 제외)")
 
     return enriched
 
@@ -722,7 +570,7 @@ def summarize_single_article(url):
 
 def load_existing_articles():
     """오늘 날짜의 기존 HTML에서 기사 데이터를 추출"""
-    archive_dir = TODAY.strftime("%Y-%m-%d")
+    archive_dir = "test" if TEST_MODE else TODAY.strftime("%Y-%m-%d")
     archive_path = f"{archive_dir}/index.html"
     if not os.path.exists(archive_path):
         print(f"❌ 기존 파일 없음: {archive_path} — 교체 모드는 기존 큐레이션이 필요합니다.")
@@ -816,19 +664,31 @@ def main():
     html_content = generate_html(enriched)
 
     # 5. 파일 저장
-    # index.html로 저장 (GitHub Pages 메인)
-    output_path = "index.html"
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print(f"\n💾 저장 완료: {output_path}")
+    if not TEST_MODE:
+        # index.html로 저장 (GitHub Pages 메인) — 테스트 모드에서는 건드리지 않음
+        output_path = "index.html"
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print(f"\n💾 저장 완료: {output_path}")
+    else:
+        print(f"\n🧪 [TEST MODE] root index.html 변경 없음")
 
     # 날짜별 아카이브 저장 (기존 레포 구조: YYYY-MM-DD/index.html)
-    archive_dir = TODAY.strftime("%Y-%m-%d")
-    os.makedirs(archive_dir, exist_ok=True)
-    archive_path = f"{archive_dir}/index.html"
-    with open(archive_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print(f"💾 아카이브 저장: {archive_path}")
+    # TEST_MODE일 경우 test/ 폴더에만 저장하고 root index.html은 덮어쓰지 않음
+    if TEST_MODE:
+        archive_dir = "test"
+        os.makedirs(archive_dir, exist_ok=True)
+        archive_path = f"{archive_dir}/index.html"
+        with open(archive_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print(f"🧪 [TEST MODE] 저장 완료: {archive_path} (root index.html 변경 없음)")
+    else:
+        archive_dir = TODAY.strftime("%Y-%m-%d")
+        os.makedirs(archive_dir, exist_ok=True)
+        archive_path = f"{archive_dir}/index.html"
+        with open(archive_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print(f"💾 아카이브 저장: {archive_path}")
 
     # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]

@@ -16,6 +16,10 @@ on:
         description: '교체할 기사 URL (쉼표로 구분, 예: 1=https://...,3=https://...)'
         required: false
         default: ''
+      test_mode:
+        description: '테스트 모드 (true이면 test/ 폴더에만 저장, 실 데이터 보호)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -47,6 +51,7 @@ jobs:
           ARTICLE_COUNT: ${{ github.event.inputs.article_count || '6' }}
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
+          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
         run: python scripts/curate.py
 
       - name: Commit and push

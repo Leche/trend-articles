@@ -845,9 +845,9 @@ async function runReplace() {
   btn.disabled = true;
   showStatus('replaceStatus', 'loading', '기사 교체 워크플로우 실행 중...');
   try {
-    const res = await triggerWorkflow({ article_count: '6', custom_date: '', replace_urls: parts.join(',') });
+    const res = await triggerWorkflow({ article_count: '6', custom_date: '', replace_urls: parts.join(','), test_mode: 'true' });
     if (res.status === 204) {
-      showStatus('replaceStatus', 'success', `기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`);
+      showStatus('replaceStatus', 'success', `🧪 [TEST] 기사 교체 시작! (${parts.length}개) test/index.html에 반영돼요.`);
     } else {
       const data = await res.json();
       showStatus('replaceStatus', 'error', '오류: ' + (data.message || res.statusText));
