@@ -27,9 +27,15 @@ REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
 TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
+SURFIT_CATEGORIES = [
+    "https://www.surfit.io/explore/startup/new-product",
+    "https://www.surfit.io/explore/startup/ai",
+    "https://www.surfit.io/explore/design/ui-ux",
+    "https://www.surfit.io/explore/startup/business-trend",
+]
+
 PRIORITY_SITES = [
-    # 기존 사이트
-    "https://www.surfit.io",
+    # 기존 사이트 (surfit.io는 Playwright로 별도 스캔)
     "https://techcrunch.com/category/apps/",
     "https://designcompass.org/magazine/",
     # 디바이스 / 모바일
@@ -201,10 +207,89 @@ def download_image_as_base64(img_url, max_size_kb=500):
         return None
 
 
+# ─── 서핏 Playwright 스캔 ────────────────────────────────────
+def scan_surfit_categories():
+    """Playwright로 서핏 카테고리 페이지에서 기사 수집 (JS 렌더링 필요)"""
+    import re as _re
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  ⚠️  playwright 미설치 — 서핏 스킵")
+        return []
+
+    MAX_PER_CAT = 5
+    candidates = []
+    print("\n🎭 Playwright로 서핏 스캔 시작...")
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            context = browser.new_context(user_agent=HEADERS["User-Agent"])
+            page = context.new_page()
+
+            for cat_url in SURFIT_CATEGORIES:
+                print(f"\n🌐 서핏 스캔 중: {cat_url}")
+                try:
+                    page.goto(cat_url, wait_until="networkidle", timeout=30000)
+                    html = page.content()
+                    soup = BeautifulSoup(html, "lxml")
+
+                    site_candidates = []
+                    seen_urls = set()
+
+                    for article in soup.find_all("article"):
+                        # surfit.io/link/XXXXX 형태 링크 추출
+                        link_tag = article.find(
+                            "a", href=lambda h: h and "surfit.io/link/" in h
+                        )
+                        if not link_tag:
+                            continue
+                        url = link_tag["href"]
+                        if not url.startswith("http"):
+                            url = "https://surfit.io" + url
+                        if url in seen_urls:
+                            continue
+                        seen_urls.add(url)
+
+                        # 제목 추출
+                        heading = article.find(["h1", "h2", "h3", "h4"])
+                        title_hint = heading.get_text(strip=True)[:100] if heading else ""
+
+                        # 날짜 추출 (YYYY.MM.DD 패턴)
+                        date_hint = ""
+                        for text_node in article.find_all(string=_re.compile(r"\d{4}\.\d{2}\.\d{2}")):
+                            m = _re.search(r"(\d{4})\.(\d{2})\.(\d{2})", text_node)
+                            if m:
+                                date_hint = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+                                break
+
+                        site_candidates.append({
+                            "url": url,
+                            "title_hint": title_hint,
+                            "source": "https://www.surfit.io",
+                            "date_hint": date_hint,
+                        })
+
+                    candidates.extend(site_candidates[:MAX_PER_CAT])
+                    print(f"  → {len(site_candidates)}개 발견, {min(len(site_candidates), MAX_PER_CAT)}개 선택")
+
+                except Exception as e:
+                    print(f"  ❌ {cat_url} 스캔 실패: {e}")
+
+            browser.close()
+
+    except Exception as e:
+        print(f"  ❌ Playwright 실행 실패: {e}")
+
+    return candidates
+
+
 # ─── 우선 사이트 스캔 ─────────────────────────────────────────
 def scan_priority_sites():
     """우선 사이트에서 최근 기사 목록 수집"""
-    candidates = []
+    # ── 서핏은 Playwright로 별도 스캔 ──
+    candidates = scan_surfit_categories()
+
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
 
     MAX_PER_SITE = 5  # 사이트당 최대 후보 수 (모든 사이트가 골고루 반영되도록)
@@ -276,7 +361,10 @@ def curate_with_claude(candidates):
     # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
     for i, c in enumerate(candidates[:100], 1):
-        candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n\n"
+        candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n"
+        if c.get("date_hint"):
+            candidate_text += f"   날짜: {c['date_hint']}\n"
+        candidate_text += "\n"
 
     # 과거 기사 목록
     past_text = "과거 큐레이션된 기사 제목:\n"
