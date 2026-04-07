@@ -384,6 +384,48 @@ input:focus, textarea:focus {
   </div>
 
   <div class="card">
+    <div class="card-title">썸네일 교체</div>
+    <div class="card-subtitle" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">기존 썸네일이 있어도 새 이미지로 교체할 수 있어요</div>
+    <div class="input-group">
+      <label>날짜</label>
+      <div class="date-wrapper">
+        <input type="date" id="replaceThumbDate" onchange="toggleDPH(this,'replaceThumbDatePH')">
+        <span class="date-placeholder" id="replaceThumbDatePH">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>기사 번호</label>
+      <input type="number" id="replaceThumbNum" min="1" max="12" placeholder="예: 3">
+    </div>
+    <div class="input-group">
+      <label>새 이미지 파일</label>
+      <input type="file" id="replaceThumbFile" accept="image/*" style="padding:10px 12px;font-size:14px;">
+    </div>
+    <button class="btn btn-primary" id="replaceThumbBtn" onclick="replaceThumbnail()">썸네일 교체</button>
+    <div class="status" id="replaceThumbStatus"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">기사 순서 조정</div>
+    <div class="card-subtitle" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">번호를 쉼표로 구분해 새 순서를 입력하세요 (예: 3,1,4,2,5,6)</div>
+    <div class="input-group">
+      <label>날짜</label>
+      <div class="date-wrapper">
+        <input type="date" id="reorderDate" onchange="toggleDPH(this,'reorderDatePH')">
+        <span class="date-placeholder" id="reorderDatePH">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>새 순서</label>
+      <input type="text" id="reorderInput" placeholder="예: 3,1,4,2,5,6">
+    </div>
+    <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()">순서 적용</button>
+    <div class="status" id="reorderStatus"></div>
+  </div>
+
+  <div class="card">
     <div class="card-title">바로가기</div>
     <div class="shortcut-stack">
       <button class="btn btn-secondary" onclick="openLatest()">최신 큐레이션 보기<span class="arrow">→</span></button>
@@ -443,6 +485,190 @@ function toggleDatePlaceholder(input) {
     if (ph) ph.style.display = '';
   }
 }
+// ── 공통: date placeholder 토글
+function toggleDPH(input, phId) {
+  const ph = document.getElementById(phId);
+  if (input.value) { input.classList.add('has-value'); if (ph) ph.style.display = 'none'; }
+  else { input.classList.remove('has-value'); if (ph) ph.style.display = ''; }
+}
+
+// ── GitHub 파일 읽기/쓰기 유틸
+async function ghGet(path) {
+  const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
+    headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) throw new Error(`파일 읽기 실패 (${res.status}): ${path}`);
+  return res.json();
+}
+
+async function ghPut(path, newContent, sha, message) {
+  const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(newContent))), sha })
+  });
+  if (!res.ok) { const d = await res.json(); throw new Error(d.message || res.statusText); }
+  return res.json();
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+// image-frame 전체를 새 이미지로 교체 (기존 이미지 유무 관계없이)
+function replaceImageFrame(content, articleNum, dataUrl) {
+  const numStr = String(articleNum).padStart(2, '0');
+  const labelIdx = content.indexOf(`ARTICLE ${numStr}`);
+  if (labelIdx === -1) throw new Error(`기사 ${articleNum}번을 찾을 수 없어요.`);
+
+  const marker = '<div class="image-frame">';
+  const frameStart = content.indexOf(marker, labelIdx);
+  if (frameStart === -1) throw new Error('이미지 영역을 찾을 수 없어요.');
+
+  // 중첩 div 카운팅으로 닫는 태그 위치 찾기
+  let depth = 1, pos = frameStart + marker.length;
+  while (depth > 0 && pos < content.length) {
+    const nextOpen = content.indexOf('<div', pos);
+    const nextClose = content.indexOf('</div>', pos);
+    if (nextClose === -1) break;
+    if (nextOpen !== -1 && nextOpen < nextClose) { depth++; pos = nextOpen + 4; }
+    else { depth--; pos = nextClose + 6; }
+  }
+
+  const newFrame = `<div class="image-frame"><img class="article-image" src="${dataUrl}" alt="썸네일"></div>`;
+  return content.substring(0, frameStart) + newFrame + content.substring(pos);
+}
+
+// ── 썸네일 교체
+async function replaceThumbnail() {
+  if (!checkSettings()) return;
+  const btn = document.getElementById('replaceThumbBtn');
+  const status = document.getElementById('replaceThumbStatus');
+  const dateVal = document.getElementById('replaceThumbDate').value;
+  const num = parseInt(document.getElementById('replaceThumbNum').value);
+  const file = document.getElementById('replaceThumbFile').files[0];
+
+  if (!dateVal || !num || !file) {
+    status.className = 'status error'; status.textContent = '날짜, 기사 번호, 이미지를 모두 입력해주세요.'; status.style.display = 'block'; return;
+  }
+  btn.disabled = true;
+  status.className = 'status loading'; status.textContent = '이미지 변환 중...'; status.style.display = 'block';
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    const msg = `🖼️ 기사 ${num}번 썸네일 교체 (${dateVal})`;
+
+    // 날짜 폴더 파일
+    status.textContent = '날짜 폴더 파일 업데이트 중...';
+    let fd = await ghGet(`${dateVal}/index.html`);
+    let html = decodeURIComponent(escape(atob(fd.content.replace(/
+/g, ''))));
+    html = replaceImageFrame(html, num, dataUrl);
+    await ghPut(`${dateVal}/index.html`, html, fd.sha, msg);
+
+    // root index.html도 시도
+    try {
+      status.textContent = 'index.html 업데이트 중...';
+      let rf = await ghGet('index.html');
+      let rhtml = decodeURIComponent(escape(atob(rf.content.replace(/
+/g, ''))));
+      rhtml = replaceImageFrame(rhtml, num, dataUrl);
+      await ghPut('index.html', rhtml, rf.sha, msg);
+    } catch(_) {}
+
+    status.className = 'status success';
+    status.textContent = `기사 ${num}번 썸네일 교체 완료! 1~2분 후 반영돼요.`;
+    document.getElementById('replaceThumbFile').value = '';
+  } catch(e) {
+    status.className = 'status error'; status.textContent = '오류: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+// ── 기사 순서 조정
+async function reorderArticles() {
+  if (!checkSettings()) return;
+  const btn = document.getElementById('reorderBtn');
+  const status = document.getElementById('reorderStatus');
+  const dateVal = document.getElementById('reorderDate').value;
+  const orderStr = document.getElementById('reorderInput').value.trim();
+
+  if (!dateVal || !orderStr) {
+    status.className = 'status error'; status.textContent = '날짜와 새 순서를 입력해주세요.'; status.style.display = 'block'; return;
+  }
+  const order = orderStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  if (order.length === 0) {
+    status.className = 'status error'; status.textContent = '올바른 순서를 입력해주세요. (예: 3,1,4,2,5,6)'; status.style.display = 'block'; return;
+  }
+
+  btn.disabled = true;
+  status.className = 'status loading'; status.textContent = '파일 읽는 중...'; status.style.display = 'block';
+
+  try {
+    const msg = `🔀 기사 순서 조정 (${dateVal}): ${orderStr}`;
+
+    async function reorderHtml(path) {
+      const fd = await ghGet(path);
+      let html = decodeURIComponent(escape(atob(fd.content.replace(/
+/g, ''))));
+
+      // article 블록 추출
+      const startTag = '<article class="article-item">';
+      const endTag = '</article>';
+      const blocks = [];
+      let searchFrom = 0;
+      while (true) {
+        const s = html.indexOf(startTag, searchFrom);
+        if (s === -1) break;
+        const e = html.indexOf(endTag, s) + endTag.length;
+        blocks.push(html.substring(s, e));
+        searchFrom = e;
+      }
+      if (blocks.length === 0) throw new Error('기사 블록을 찾을 수 없어요.');
+
+      // 순서 재배열 + 번호 재부여
+      const reordered = order.map(n => {
+        if (n < 1 || n > blocks.length) throw new Error(`기사 ${n}번이 범위를 벗어났어요. (총 ${blocks.length}개)`);
+        return blocks[n - 1];
+      });
+      const renumbered = reordered.map((b, i) =>
+        b.replace(/ARTICLE \d{2}/, `ARTICLE ${String(i+1).padStart(2,'0')}`)
+      );
+
+      // article-wrap 안쪽 교체
+      const wrapStart = html.indexOf('<main class="article-wrap article-list">');
+      const wrapEnd = html.indexOf('</main>', wrapStart) + 7;
+      const newHtml = html.substring(0, wrapStart) +
+        '<main class="article-wrap article-list">
+' + renumbered.join('
+') + '
+</main>' +
+        html.substring(wrapEnd);
+
+      await ghPut(path, newHtml, fd.sha, msg);
+    }
+
+    status.textContent = '날짜 폴더 파일 업데이트 중...';
+    await reorderHtml(`${dateVal}/index.html`);
+
+    try {
+      status.textContent = 'index.html 업데이트 중...';
+      await reorderHtml('index.html');
+    } catch(_) {}
+
+    status.className = 'status success';
+    status.textContent = `기사 순서 조정 완료! (${orderStr}) 1~2분 후 반영돼요.`;
+    document.getElementById('reorderInput').value = '';
+  } catch(e) {
+    status.className = 'status error'; status.textContent = '오류: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
 function loadSettings() {
   const params = parseHash();
   if (params && params.token) {
