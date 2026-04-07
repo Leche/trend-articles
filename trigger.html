@@ -203,8 +203,12 @@ input:focus, textarea:focus {
 .reorder-item .reorder-from,
 .reorder-item .reorder-to {
   flex: 1;
+  text-align: left;
+  padding: 12px 12px;
+}
+.reorder-item .reorder-from.has-value,
+.reorder-item .reorder-to.has-value {
   text-align: center;
-  padding: 12px 8px;
 }
 .reorder-arrow {
   flex-shrink: 0;
@@ -394,9 +398,9 @@ input:focus, textarea:focus {
     </div>
     <div id="reorderList">
       <div class="reorder-item">
-        <input class="reorder-from" type="number" placeholder="#" min="1" max="12">
+        <input class="reorder-from" type="number" placeholder="#" min="1" max="12" oninput="toggleReorderAlign(this)">
         <span class="reorder-arrow">→</span>
-        <input class="reorder-to" type="number" placeholder="#" min="1" max="12">
+        <input class="reorder-to" type="number" placeholder="#" min="1" max="12" oninput="toggleReorderAlign(this)">
       </div>
     </div>
     <button class="add-btn" onclick="addReorderRow()">+ 순서 조정 항목 추가</button>
@@ -631,12 +635,17 @@ async function replaceThumbnails() {
   btn.disabled = false;
 }
 
+// ── 순서 조정 인풋 정렬 토글 ──
+function toggleReorderAlign(input) {
+  input.value ? input.classList.add('has-value') : input.classList.remove('has-value');
+}
+
 // ── 순서 조정 항목 추가 ──
 function addReorderRow() {
   const list = document.getElementById('reorderList');
   const div  = document.createElement('div');
   div.className = 'reorder-item';
-  div.innerHTML = '<input class="reorder-from" type="number" placeholder="#" min="1" max="12"><span class="reorder-arrow">→</span><input class="reorder-to" type="number" placeholder="#" min="1" max="12">';
+  div.innerHTML = '<input class="reorder-from" type="number" placeholder="#" min="1" max="12" oninput="toggleReorderAlign(this)"><span class="reorder-arrow">→</span><input class="reorder-to" type="number" placeholder="#" min="1" max="12" oninput="toggleReorderAlign(this)">';
   list.appendChild(div);
 }
 
