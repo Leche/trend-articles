@@ -6,7 +6,6 @@
 <title>트렌드림 큐레이션 컨트롤</title>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
 :root {
   --bg: #F5F5F5;
   --card: #FFFFFF;
@@ -15,7 +14,6 @@
   --text-tertiary: #B0B0B0;
   --accent: #191919;
   --accent-hover: #000000;
-  --accent-light: rgba(25, 25, 25, 0.04);
   --success: #1B873F;
   --success-bg: #EDFAF1;
   --error: #CF3030;
@@ -24,15 +22,11 @@
   --loading-text: #191919;
   --border: #E5E5E5;
   --input-bg: #FAFAFA;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
   --radius: 14px;
   --radius-sm: 10px;
   --radius-xs: 8px;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
@@ -44,17 +38,10 @@ body {
   padding-bottom: max(32px, env(safe-area-inset-bottom));
   -webkit-font-smoothing: antialiased;
 }
-
-.container {
-  max-width: 440px;
-  margin: 0 auto;
-}
+.container { max-width: 440px; margin: 0 auto; }
 
 /* Header */
-.header {
-  padding: 20px 4px 24px;
-}
-
+.header { padding: 20px 4px 24px; }
 .header h1 {
   font-size: 26px;
   font-weight: 650;
@@ -62,7 +49,6 @@ body {
   color: var(--text-primary);
   line-height: 1.2;
 }
-
 .header .subtitle {
   font-size: 14px;
   font-weight: 420;
@@ -77,9 +63,8 @@ body {
   border-radius: var(--radius);
   padding: 22px;
   margin-bottom: 12px;
-  box-shadow: 0px 0.5px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0px 0.5px 4px rgba(0,0,0,0.02);
 }
-
 .card-title {
   font-size: 15px;
   font-weight: 650;
@@ -100,36 +85,16 @@ body {
   cursor: pointer;
   transition: all 0.15s ease;
   letter-spacing: -0.1px;
-  position: relative;
-  overflow: hidden;
 }
-
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn-primary:active {
-  background: var(--accent-hover);
-  transform: scale(0.985);
-}
-
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:active { background: var(--accent-hover); transform: scale(0.985); }
 .btn-secondary {
   background: var(--input-bg);
   color: var(--text-primary);
   border: 1px solid var(--border);
 }
-
-.btn-secondary:active {
-  background: #F0EFEC;
-  transform: scale(0.985);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none !important;
-}
+.btn-secondary:active { background: #F0EFEC; transform: scale(0.985); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
 
 /* Inputs */
 label {
@@ -140,11 +105,10 @@ label {
   margin-bottom: 6px;
   letter-spacing: 0.1px;
 }
-
 input, textarea {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-xs);
   font-family: inherit;
   font-size: 15px;
@@ -155,13 +119,8 @@ input, textarea {
   -webkit-appearance: none;
   height: 46px;
 }
-
-input[type="date"] {
-  min-height: 46px;
-}
-.date-wrapper {
-  position: relative;
-}
+input[type="date"] { min-height: 46px; }
+.date-wrapper { position: relative; }
 .date-placeholder {
   position: absolute;
   left: 12px;
@@ -175,10 +134,8 @@ input[type="date"] {
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0;
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   cursor: pointer;
 }
 .date-icon {
@@ -193,22 +150,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]:not(.has-value)::-webkit-datetime-edit-text,
 input[type="date"]:not(.has-value)::-webkit-datetime-edit-month-field,
 input[type="date"]:not(.has-value)::-webkit-datetime-edit-day-field,
-input[type="date"]:not(.has-value)::-webkit-datetime-edit-year-field {
-  color: transparent;
-}
-
-input::placeholder {
-  color: #767676;
-  font-weight: 400;
-}
-
+input[type="date"]:not(.has-value)::-webkit-datetime-edit-year-field { color: transparent; }
+input::placeholder { color: #767676; font-weight: 400; }
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.06);
+  box-shadow: 0 0 0 3px rgba(25,25,25,0.06);
 }
-
 .input-group { margin-bottom: 14px; }
 .input-row { display: flex; gap: 10px; }
 .input-row .input-group { flex: 1; margin-bottom: 0; }
@@ -224,43 +173,25 @@ input:focus, textarea:focus {
   display: none;
   letter-spacing: -0.1px;
 }
+.status.success { display: block; background: var(--success-bg); color: var(--success); border: 1px solid rgba(27,135,63,0.1); }
+.status.error   { display: block; background: var(--error-bg);   color: var(--error);   border: 1px solid rgba(207,48,48,0.08); }
+.status.loading { display: block; background: var(--loading-bg); color: var(--loading-text); border: 1px solid rgba(44,92,255,0.08); }
 
-.status.success {
-  display: block;
-  background: var(--success-bg);
-  color: var(--success);
-  border: 1px solid rgba(27, 135, 63, 0.1);
-}
-
-.status.error {
-  display: block;
-  background: var(--error-bg);
-  color: var(--error);
-  border: 1px solid rgba(207, 48, 48, 0.08);
-}
-
-.status.loading {
-  display: block;
-  background: var(--loading-bg);
-  color: var(--loading-text);
-  border: 1px solid rgba(44, 92, 255, 0.08);
-}
-
-/* Replace items */
-.replace-item {
+/* List rows (기사 교체 / 썸네일 교체 공통) */
+.replace-item,
+.thumb-item {
   display: flex;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
 }
-
-.replace-item .num {
+.replace-item .num,
+.thumb-item .num {
   width: 52px;
   text-align: center;
   flex-shrink: 0;
   padding: 12px 8px;
 }
-
 .replace-item .url-input { flex: 1; }
 
 .add-btn {
@@ -278,25 +209,13 @@ input:focus, textarea:focus {
   width: 100%;
   text-align: center;
 }
-
 .add-btn:active { opacity: 0.6; }
 
 /* Divider */
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 14px 0;
-}
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
 
 /* Setup card */
-.setup-card {
-  border: none;
-  box-shadow: none;
-}
-
-.setup-card.saved {
-  border: none;
-}
+.setup-card { border: none; box-shadow: none; }
 
 /* Connected button */
 .btn-connected {
@@ -315,23 +234,62 @@ input:focus, textarea:focus {
 
 /* Shortcut buttons */
 .shortcut-stack { display: flex; flex-direction: column; gap: 8px; }
-
 .shortcut-stack .btn-secondary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   text-align: left;
 }
-
 .shortcut-stack .btn-secondary .arrow {
   font-size: 14px;
   color: #767676;
   transition: transform 0.15s;
 }
+.shortcut-stack .btn-secondary:active .arrow { transform: translateX(2px); }
 
-.shortcut-stack .btn-secondary:active .arrow {
-  transform: translateX(2px);
+/* ── Figma 파일 인풋 (node 6387:3634 기준) ── */
+.file-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafa;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 10px 10px 10px 12px;
+  overflow: hidden;
+  cursor: pointer;
 }
+.file-name-text {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #b0b0b0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  line-height: 1;
+}
+.file-name-text.has-file { color: #191919; }
+.file-select-btn {
+  background: rgba(0,0,0,0.08);
+  border: none;
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #191919;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.file-select-btn:active { background: rgba(0,0,0,0.14); }
 
 /* Footer */
 .footer {
@@ -351,6 +309,7 @@ input:focus, textarea:focus {
     <p class="subtitle">모바일에서 간편하게 워크플로우를 실행하세요</p>
   </div>
 
+  <!-- 새 큐레이션 -->
   <div class="card">
     <div class="card-title">새 큐레이션</div>
     <div class="input-group">
@@ -360,15 +319,16 @@ input:focus, textarea:focus {
     <div class="input-group">
       <label>날짜 (비워두면 오늘)</label>
       <div class="date-wrapper">
-            <input type="date" id="customDate" onchange="toggleDatePlaceholder(this)">
-            <span class="date-placeholder" id="datePlaceholder">연도. 월. 일.</span>
-            <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-          </div>
+        <input type="date" id="customDate" onchange="toggleDatePlaceholder(this)">
+        <span class="date-placeholder" id="datePlaceholder">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      </div>
     </div>
     <button class="btn btn-primary" id="runBtn" onclick="runCuration()">큐레이션 시작</button>
     <div class="status" id="runStatus"></div>
   </div>
 
+  <!-- 기사 교체 -->
   <div class="card">
     <div class="card-title">기사 교체</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">교체할 기사 번호와 새 URL을 입력하세요</p>
@@ -383,48 +343,44 @@ input:focus, textarea:focus {
     <div class="status" id="replaceStatus"></div>
   </div>
 
+  <!-- 썸네일 교체 -->
   <div class="card">
     <div class="card-title">썸네일 교체</div>
-    <div class="card-subtitle" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">기존 썸네일이 있어도 새 이미지로 교체할 수 있어요</div>
-    <div class="input-group">
-      <label>날짜</label>
-      <div class="date-wrapper">
-        <input type="date" id="replaceThumbDate" onchange="toggleDPH(this,'replaceThumbDatePH')">
-        <span class="date-placeholder" id="replaceThumbDatePH">연도. 월. 일.</span>
-        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">교체할 기사 번호와 새 이미지를 선택하세요</p>
+    <div id="thumbList">
+      <div class="thumb-item">
+        <input class="num" type="number" placeholder="#" min="1" max="12">
+        <div class="file-input-wrapper" onclick="triggerFileInput(this)">
+          <span class="file-name-text">선택된 파일 없음</span>
+          <button type="button" class="file-select-btn" onclick="event.stopPropagation();triggerFileInput(this.closest('.file-input-wrapper'))">파일 선택</button>
+          <input type="file" accept="image/*,video/mp4" style="display:none" onchange="onThumbFileChange(this)">
+        </div>
       </div>
     </div>
-    <div class="input-group">
-      <label>기사 번호</label>
-      <input type="number" id="replaceThumbNum" min="1" max="12" placeholder="예: 3">
-    </div>
-    <div class="input-group">
-      <label>새 이미지 파일</label>
-      <input type="file" id="replaceThumbFile" accept="image/*" style="padding:10px 12px;font-size:14px;">
-    </div>
-    <button class="btn btn-primary" id="replaceThumbBtn" onclick="replaceThumbnail()">썸네일 교체</button>
+    <button class="add-btn" onclick="addThumbRow()">+ 썸네일 교체 항목 추가</button>
+    <button class="btn btn-secondary" id="replaceThumbBtn" onclick="replaceThumbnails()">썸네일 교체 실행</button>
     <div class="status" id="replaceThumbStatus"></div>
   </div>
 
+  <!-- 기사 순서 조정 -->
   <div class="card">
     <div class="card-title">기사 순서 조정</div>
-    <div class="card-subtitle" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">번호를 쉼표로 구분해 새 순서를 입력하세요 (예: 3,1,4,2,5,6)</div>
-    <div class="input-group">
-      <label>날짜</label>
-      <div class="date-wrapper">
-        <input type="date" id="reorderDate" onchange="toggleDPH(this,'reorderDatePH')">
-        <span class="date-placeholder" id="reorderDatePH">연도. 월. 일.</span>
-        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="#191919" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="#191919" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="#191919" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;font-weight:450;">이동할 기사와 목표 위치를 입력하면 번호가 자동 재부여돼요</div>
+    <div class="input-row" style="margin-bottom:14px;">
+      <div class="input-group">
+        <label>이동할 기사 번호</label>
+        <input type="number" id="reorderFrom" placeholder="예: 3" min="1" max="12">
+      </div>
+      <div class="input-group">
+        <label>이동할 위치</label>
+        <input type="number" id="reorderTo" placeholder="예: 1" min="1" max="12">
       </div>
     </div>
-    <div class="input-group">
-      <label>새 순서</label>
-      <input type="text" id="reorderInput" placeholder="예: 3,1,4,2,5,6">
-    </div>
-    <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()">순서 적용</button>
+    <button class="btn btn-secondary" id="reorderBtn" onclick="reorderArticles()">순서 적용</button>
     <div class="status" id="reorderStatus"></div>
   </div>
 
+  <!-- 바로가기 -->
   <div class="card">
     <div class="card-title">바로가기</div>
     <div class="shortcut-stack">
@@ -433,6 +389,7 @@ input:focus, textarea:focus {
     </div>
   </div>
 
+  <!-- 초기 설정 -->
   <div class="card setup-card" id="setupCard">
     <div class="card-title">초기 설정</div>
     <div class="input-group">
@@ -457,6 +414,7 @@ input:focus, textarea:focus {
 <script>
 let settings = { token: '', owner: 'Leche', repo: 'trend-articles' };
 
+// ── URL 해시로 설정 파싱 ──
 function parseHash() {
   const hash = window.location.hash.substring(1);
   if (!hash) return null;
@@ -475,6 +433,7 @@ function showConnected() {
   document.getElementById('tokenStatus').innerHTML = '';
 }
 
+// ── 날짜 placeholder 토글 ──
 function toggleDatePlaceholder(input) {
   const ph = document.getElementById('datePlaceholder');
   if (input.value) {
@@ -485,17 +444,54 @@ function toggleDatePlaceholder(input) {
     if (ph) ph.style.display = '';
   }
 }
-// ── 공통: date placeholder 토글
-function toggleDPH(input, phId) {
-  const ph = document.getElementById(phId);
-  if (input.value) { input.classList.add('has-value'); if (ph) ph.style.display = 'none'; }
-  else { input.classList.remove('has-value'); if (ph) ph.style.display = ''; }
+
+// ── 오늘 KST 날짜 ──
+function getTodayKST() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().split('T')[0];
 }
 
-// ── GitHub 파일 읽기/쓰기 유틸
+// ── 파일 인풋 트리거 ──
+function triggerFileInput(wrapper) {
+  wrapper.querySelector('input[type="file"]').click();
+}
+
+// ── 썸네일 파일 선택 시 파일명 업데이트 ──
+function onThumbFileChange(input) {
+  const wrapper  = input.closest('.file-input-wrapper');
+  const nameSpan = wrapper.querySelector('.file-name-text');
+  if (input.files && input.files[0]) {
+    nameSpan.textContent = input.files[0].name;
+    nameSpan.classList.add('has-file');
+  } else {
+    nameSpan.textContent = '선택된 파일 없음';
+    nameSpan.classList.remove('has-file');
+  }
+}
+
+// ── 썸네일 항목 추가 ──
+function addThumbRow() {
+  const list = document.getElementById('thumbList');
+  const div  = document.createElement('div');
+  div.className = 'thumb-item';
+  div.innerHTML = `
+    <input class="num" type="number" placeholder="#" min="1" max="12">
+    <div class="file-input-wrapper" onclick="triggerFileInput(this)">
+      <span class="file-name-text">선택된 파일 없음</span>
+      <button type="button" class="file-select-btn" onclick="event.stopPropagation();triggerFileInput(this.closest('.file-input-wrapper'))">파일 선택</button>
+      <input type="file" accept="image/*,video/mp4" style="display:none" onchange="onThumbFileChange(this)">
+    </div>`;
+  list.appendChild(div);
+}
+
+// ── GitHub 파일 읽기/쓰기 유틸 ──
 async function ghGet(path) {
   const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
-    headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' }
+    headers: {
+      'Authorization': `Bearer ${settings.token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    }
   });
   if (!res.ok) throw new Error(`파일 읽기 실패 (${res.status}): ${path}`);
   return res.json();
@@ -504,180 +500,215 @@ async function ghGet(path) {
 async function ghPut(path, newContent, sha, message) {
   const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
     method: 'PUT',
-    headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${settings.token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(newContent))), sha })
   });
-  if (!res.ok) { const d = await res.json(); throw new Error(d.message || res.statusText); }
+  if (!res.ok) {
+    const d = await res.json();
+    throw new Error(d.message || res.statusText);
+  }
   return res.json();
 }
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve(r.result);
+    r.onload  = () => resolve(r.result);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
 }
 
-// image-frame 전체를 새 이미지로 교체 (기존 이미지 유무 관계없이)
+// ── image-frame 교체 (div depth 방식) ──
 function replaceImageFrame(content, articleNum, dataUrl) {
-  const numStr = String(articleNum).padStart(2, '0');
+  const numStr   = String(articleNum).padStart(2, '0');
   const labelIdx = content.indexOf(`ARTICLE ${numStr}`);
   if (labelIdx === -1) throw new Error(`기사 ${articleNum}번을 찾을 수 없어요.`);
-
-  const marker = '<div class="image-frame">';
+  const marker     = '<div class="image-frame">';
   const frameStart = content.indexOf(marker, labelIdx);
   if (frameStart === -1) throw new Error('이미지 영역을 찾을 수 없어요.');
-
-  // 중첩 div 카운팅으로 닫는 태그 위치 찾기
   let depth = 1, pos = frameStart + marker.length;
   while (depth > 0 && pos < content.length) {
-    const nextOpen = content.indexOf('<div', pos);
+    const nextOpen  = content.indexOf('<div', pos);
     const nextClose = content.indexOf('</div>', pos);
     if (nextClose === -1) break;
     if (nextOpen !== -1 && nextOpen < nextClose) { depth++; pos = nextOpen + 4; }
     else { depth--; pos = nextClose + 6; }
   }
-
   const newFrame = `<div class="image-frame"><img class="article-image" src="${dataUrl}" alt="썸네일"></div>`;
   return content.substring(0, frameStart) + newFrame + content.substring(pos);
 }
 
-// ── 썸네일 교체
-async function replaceThumbnail() {
+// ── 썸네일 교체 (다수 기사 대응) ──
+async function replaceThumbnails() {
   if (!checkSettings()) return;
-  const btn = document.getElementById('replaceThumbBtn');
-  const status = document.getElementById('replaceThumbStatus');
-  const dateVal = document.getElementById('replaceThumbDate').value;
-  const num = parseInt(document.getElementById('replaceThumbNum').value);
-  const file = document.getElementById('replaceThumbFile').files[0];
 
-  if (!dateVal || !num || !file) {
-    status.className = 'status error'; status.textContent = '날짜, 기사 번호, 이미지를 모두 입력해주세요.'; status.style.display = 'block'; return;
+  // 항목 수집
+  const items = document.querySelectorAll('.thumb-item');
+  const tasks = [];
+  items.forEach(item => {
+    const num  = parseInt(item.querySelector('.num').value);
+    const file = item.querySelector('input[type="file"]').files[0];
+    if (num && file) tasks.push({ num, file });
+  });
+
+  if (tasks.length === 0) {
+    showStatus('replaceThumbStatus', 'error', '기사 번호와 이미지 파일을 입력해주세요.');
+    return;
   }
+
+  const btn = document.getElementById('replaceThumbBtn');
   btn.disabled = true;
-  status.className = 'status loading'; status.textContent = '이미지 변환 중...'; status.style.display = 'block';
+  showStatus('replaceThumbStatus', 'loading', '이미지 변환 중...');
+
   try {
-    const dataUrl = await fileToDataUrl(file);
-    const msg = `🖼️ 기사 ${num}번 썸네일 교체 (${dateVal})`;
+    // 모든 파일 먼저 dataUrl 변환
+    const converted = await Promise.all(tasks.map(async t => ({
+      num:    t.num,
+      dataUrl: await fileToDataUrl(t.file)
+    })));
 
-    // 날짜 폴더 파일
-    status.textContent = '날짜 폴더 파일 업데이트 중...';
-    let fd = await ghGet(`${dateVal}/index.html`);
-    let html = decodeURIComponent(escape(atob(fd.content.replace(/
-/g, ''))));
-    html = replaceImageFrame(html, num, dataUrl);
-    await ghPut(`${dateVal}/index.html`, html, fd.sha, msg);
+    const dateVal = getTodayKST();
+    const nums    = converted.map(t => t.num).join(', ');
+    const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
-    // root index.html도 시도
+    async function applyToPath(path) {
+      const fd   = await ghGet(path);
+      let html   = decodeURIComponent(escape(atob(fd.content.replace(/ /g, ''))));
+      for (const { num, dataUrl } of converted) {
+        html = replaceImageFrame(html, num, dataUrl);
+      }
+      await ghPut(path, html, fd.sha, msg);
+    }
+
+    showStatus('replaceThumbStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
+    await applyToPath(`${dateVal}/index.html`);
+
     try {
-      status.textContent = 'index.html 업데이트 중...';
-      let rf = await ghGet('index.html');
-      let rhtml = decodeURIComponent(escape(atob(rf.content.replace(/
-/g, ''))));
-      rhtml = replaceImageFrame(rhtml, num, dataUrl);
-      await ghPut('index.html', rhtml, rf.sha, msg);
+      showStatus('replaceThumbStatus', 'loading', 'index.html 업데이트 중...');
+      await applyToPath('index.html');
     } catch(_) {}
 
-    status.className = 'status success';
-    status.textContent = `기사 ${num}번 썸네일 교체 완료! 1~2분 후 반영돼요.`;
-    document.getElementById('replaceThumbFile').value = '';
+    showStatus('replaceThumbStatus', 'success', `${nums}번 기사 썸네일 교체 완료! 1~2분 후 반영돼요.`);
+
+    // 파일 인풋 초기화
+    document.querySelectorAll('.thumb-item input[type="file"]').forEach(f => { f.value = ''; });
+    document.querySelectorAll('.thumb-item .file-name-text').forEach(s => {
+      s.textContent = '선택된 파일 없음';
+      s.classList.remove('has-file');
+    });
   } catch(e) {
-    status.className = 'status error'; status.textContent = '오류: ' + e.message;
+    showStatus('replaceThumbStatus', 'error', '오류: ' + e.message);
   }
   btn.disabled = false;
 }
 
-// ── 기사 순서 조정
+// ── 기사 순서 조정 (from → to, 오늘 날짜 자동, 번호 재부여) ──
 async function reorderArticles() {
   if (!checkSettings()) return;
+
+  const fromNum = parseInt(document.getElementById('reorderFrom').value);
+  const toNum   = parseInt(document.getElementById('reorderTo').value);
+
+  if (!fromNum || !toNum) {
+    showStatus('reorderStatus', 'error', '이동할 기사 번호와 위치를 모두 입력해주세요.');
+    return;
+  }
+  if (fromNum === toNum) {
+    showStatus('reorderStatus', 'error', '이동할 번호와 목표 위치가 같아요.');
+    return;
+  }
+
   const btn = document.getElementById('reorderBtn');
-  const status = document.getElementById('reorderStatus');
-  const dateVal = document.getElementById('reorderDate').value;
-  const orderStr = document.getElementById('reorderInput').value.trim();
-
-  if (!dateVal || !orderStr) {
-    status.className = 'status error'; status.textContent = '날짜와 새 순서를 입력해주세요.'; status.style.display = 'block'; return;
-  }
-  const order = orderStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-  if (order.length === 0) {
-    status.className = 'status error'; status.textContent = '올바른 순서를 입력해주세요. (예: 3,1,4,2,5,6)'; status.style.display = 'block'; return;
-  }
-
   btn.disabled = true;
-  status.className = 'status loading'; status.textContent = '파일 읽는 중...'; status.style.display = 'block';
+  showStatus('reorderStatus', 'loading', '파일 읽는 중...');
 
   try {
-    const msg = `🔀 기사 순서 조정 (${dateVal}): ${orderStr}`;
+    const dateVal = getTodayKST();
+    const msg     = `🔀 기사 순서 조정 (${dateVal}): ${fromNum}번 → ${toNum}번 위치`;
 
     async function reorderHtml(path) {
-      const fd = await ghGet(path);
-      let html = decodeURIComponent(escape(atob(fd.content.replace(/
-/g, ''))));
+      const fd   = await ghGet(path);
+      let html   = decodeURIComponent(escape(atob(fd.content.replace(/ /g, ''))));
 
       // article 블록 추출
       const startTag = '<article class="article-item">';
-      const endTag = '</article>';
-      const blocks = [];
-      let searchFrom = 0;
+      const endTag   = '</article>';
+      const blocks   = [];
+      let cursor     = 0;
       while (true) {
-        const s = html.indexOf(startTag, searchFrom);
+        const s = html.indexOf(startTag, cursor);
         if (s === -1) break;
         const e = html.indexOf(endTag, s) + endTag.length;
         blocks.push(html.substring(s, e));
-        searchFrom = e;
+        cursor = e;
       }
       if (blocks.length === 0) throw new Error('기사 블록을 찾을 수 없어요.');
+      if (fromNum < 1 || fromNum > blocks.length || toNum < 1 || toNum > blocks.length) {
+        throw new Error(`기사 번호 범위 초과 (총 ${blocks.length}개 기사)`);
+      }
 
-      // 순서 재배열 + 번호 재부여
-      const reordered = order.map(n => {
-        if (n < 1 || n > blocks.length) throw new Error(`기사 ${n}번이 범위를 벗어났어요. (총 ${blocks.length}개)`);
-        return blocks[n - 1];
-      });
-      const renumbered = reordered.map((b, i) =>
-        b.replace(/ARTICLE \d{2}/, `ARTICLE ${String(i+1).padStart(2,'0')}`)
+      // from 위치에서 꺼내 to 위치에 삽입
+      const moved = blocks.splice(fromNum - 1, 1)[0];
+      blocks.splice(toNum - 1, 0, moved);
+
+      // ARTICLE 번호 재부여 (새 위치 기준 01, 02, 03...)
+      const renumbered = blocks.map((b, i) =>
+        b.replace(/ARTICLE \d{2}/, `ARTICLE ${String(i + 1).padStart(2, '0')}`)
       );
 
-      // article-wrap 안쪽 교체
+      // article-wrap 교체
       const wrapStart = html.indexOf('<main class="article-wrap article-list">');
-      const wrapEnd = html.indexOf('</main>', wrapStart) + 7;
-      const newHtml = html.substring(0, wrapStart) +
-        '<main class="article-wrap article-list">
-' + renumbered.join('
-') + '
-</main>' +
+      const wrapEnd   = html.indexOf('</main>', wrapStart) + 7;
+      const newHtml   =
+        html.substring(0, wrapStart) +
+        '<main class="article-wrap article-list"> ' +
+        renumbered.join(' ') +
+        ' </main>' +
         html.substring(wrapEnd);
 
       await ghPut(path, newHtml, fd.sha, msg);
     }
 
-    status.textContent = '날짜 폴더 파일 업데이트 중...';
+    showStatus('reorderStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
     await reorderHtml(`${dateVal}/index.html`);
 
     try {
-      status.textContent = 'index.html 업데이트 중...';
+      showStatus('reorderStatus', 'loading', 'index.html 업데이트 중...');
       await reorderHtml('index.html');
     } catch(_) {}
 
-    status.className = 'status success';
-    status.textContent = `기사 순서 조정 완료! (${orderStr}) 1~2분 후 반영돼요.`;
-    document.getElementById('reorderInput').value = '';
+    showStatus('reorderStatus', 'success', `${fromNum}번 기사를 ${toNum}번 위치로 이동 완료! 번호 자동 재부여됐어요. 1~2분 후 반영돼요.`);
+    document.getElementById('reorderFrom').value = '';
+    document.getElementById('reorderTo').value   = '';
   } catch(e) {
-    status.className = 'status error'; status.textContent = '오류: ' + e.message;
+    showStatus('reorderStatus', 'error', '오류: ' + e.message);
   }
   btn.disabled = false;
 }
 
+// ── 유틸 ──
+function showStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `status ${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── 설정 ──
 function loadSettings() {
   const params = parseHash();
   if (params && params.token) {
     settings.token = params.token;
     settings.owner = params.owner || 'Leche';
-    settings.repo = params.repo || 'trend-articles';
+    settings.repo  = params.repo  || 'trend-articles';
     document.getElementById('tokenInput').value = settings.token;
     document.getElementById('ownerInput').value = settings.owner;
-    document.getElementById('repoInput').value = settings.repo;
+    document.getElementById('repoInput').value  = settings.repo;
     showConnected();
   }
 }
@@ -685,14 +716,15 @@ function loadSettings() {
 function saveSettings() {
   const token = document.getElementById('tokenInput').value.trim();
   const owner = document.getElementById('ownerInput').value.trim();
-  const repo = document.getElementById('repoInput').value.trim();
+  const repo  = document.getElementById('repoInput').value.trim();
   if (!token || !owner || !repo) {
-    document.getElementById('tokenStatus').innerHTML = '<div style="color:#d32f2f;font-size:13px;margin-top:6px;">모든 필드를 입력해주세요</div>';
+    document.getElementById('tokenStatus').innerHTML =
+      '<div style="color:#d32f2f;font-size:13px;margin-top:6px;">모든 필드를 입력해주세요</div>';
     return;
   }
   settings = { token, owner, repo };
-  const hash = `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
-  window.location.hash = hash;
+  window.location.hash =
+    `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
   showConnected();
 }
 
@@ -704,106 +736,90 @@ function checkSettings() {
   return true;
 }
 
+// ── 새 큐레이션 ──
 async function triggerWorkflow(inputs) {
   const url = `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/curate.yml/dispatches`;
-  const res = await fetch(url, {
+  return fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${settings.token}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ref: 'main', inputs: inputs }),
+    body: JSON.stringify({ ref: 'main', inputs }),
   });
-  return res;
 }
 
 async function runCuration() {
   if (!checkSettings()) return;
   const btn = document.getElementById('runBtn');
-  const status = document.getElementById('runStatus');
   btn.disabled = true;
-  status.className = 'status loading';
-  status.textContent = '워크플로우 실행 요청 중...';
-  status.style.display = 'block';
+  showStatus('runStatus', 'loading', '워크플로우 실행 요청 중...');
   try {
-    const inputs = {
+    const res = await triggerWorkflow({
       article_count: document.getElementById('articleCount').value || '6',
-      custom_date: document.getElementById('customDate').value || '',
-      replace_urls: '',
-    };
-    const res = await triggerWorkflow(inputs);
+      custom_date:   document.getElementById('customDate').value || '',
+      replace_urls:  '',
+    });
     if (res.status === 204) {
-      status.className = 'status success';
-      status.textContent = '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.';
+      showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
     } else {
       const data = await res.json();
-      status.className = 'status error';
-      status.textContent = '오류: ' + (data.message || res.statusText);
+      showStatus('runStatus', 'error', '오류: ' + (data.message || res.statusText));
     }
-  } catch (e) {
-    status.className = 'status error';
-    status.textContent = '네트워크 오류: ' + e.message;
+  } catch(e) {
+    showStatus('runStatus', 'error', '네트워크 오류: ' + e.message);
   }
   btn.disabled = false;
 }
 
+// ── 기사 교체 ──
 function addReplaceRow() {
   const list = document.getElementById('replaceList');
-  const div = document.createElement('div');
+  const div  = document.createElement('div');
   div.className = 'replace-item';
-  div.innerHTML = '<input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="url" placeholder="https://...">';
+  div.innerHTML = '<input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="url" placeholder="https://..." value="">';
   list.appendChild(div);
+  // 새로 추가된 인풋으로 포커스
+  div.querySelector('.num').value = '';
+  div.querySelector('.url-input').value = '';
 }
 
 async function runReplace() {
   if (!checkSettings()) return;
-  const btn = document.getElementById('replaceBtn');
-  const status = document.getElementById('replaceStatus');
-  const items = document.querySelectorAll('.replace-item');
   const parts = [];
-  items.forEach(item => {
+  document.querySelectorAll('.replace-item').forEach(item => {
     const num = item.querySelector('.num').value.trim();
     const url = item.querySelector('.url-input').value.trim();
     if (num && url) parts.push(num + '=' + url);
   });
   if (parts.length === 0) {
-    status.className = 'status error';
-    status.textContent = '교체할 기사 번호와 URL을 입력해주세요.';
-    status.style.display = 'block';
+    showStatus('replaceStatus', 'error', '교체할 기사 번호와 URL을 입력해주세요.');
     return;
   }
+  const btn = document.getElementById('replaceBtn');
   btn.disabled = true;
-  status.className = 'status loading';
-  status.textContent = '기사 교체 워크플로우 실행 중...';
-  status.style.display = 'block';
+  showStatus('replaceStatus', 'loading', '기사 교체 워크플로우 실행 중...');
   try {
-    const inputs = { article_count: '6', custom_date: '', replace_urls: parts.join(',') };
-    const res = await triggerWorkflow(inputs);
+    const res = await triggerWorkflow({ article_count: '6', custom_date: '', replace_urls: parts.join(',') });
     if (res.status === 204) {
-      status.className = 'status success';
-      status.textContent = '기사 교체 시작! (' + parts.length + '개 교체) 카카오워크로 완료 알림이 올 거예요.';
+      showStatus('replaceStatus', 'success', `기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`);
     } else {
       const data = await res.json();
-      status.className = 'status error';
-      status.textContent = '오류: ' + (data.message || res.statusText);
+      showStatus('replaceStatus', 'error', '오류: ' + (data.message || res.statusText));
     }
-  } catch (e) {
-    status.className = 'status error';
-    status.textContent = '네트워크 오류: ' + e.message;
+  } catch(e) {
+    showStatus('replaceStatus', 'error', '네트워크 오류: ' + e.message);
   }
   btn.disabled = false;
 }
 
+// ── 바로가기 ──
 function openLatest() {
-  const today = new Date();
-  const kst = new Date(today.getTime() + (9 * 60 * 60 * 1000));
-  const dateStr = kst.toISOString().split('T')[0];
-  window.open('https://' + (settings.owner || 'Leche') + '.github.io/' + (settings.repo || 'trend-articles') + '/' + dateStr + '/', '_blank');
+  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getTodayKST()}/`, '_blank');
 }
-
 function openActions() {
-  window.open('https://github.com/' + (settings.owner || 'Leche') + '/' + (settings.repo || 'trend-articles') + '/actions', '_blank');
+  window.open(`https://github.com/${settings.owner || 'Leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');
 }
 
 loadSettings();
