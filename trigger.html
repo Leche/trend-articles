@@ -522,7 +522,21 @@ async function ghGet(path) {
     }
   });
   if (!res.ok) throw new Error(`파일 읽기 실패 (${res.status}): ${path}`);
-  return res.json();
+  const fd = await res.json();
+  // 1 MB 초과 파일은 content가 빈 문자열 → Git Blob API로 재시도
+  if (!fd.content || fd.encoding === 'none') {
+    const blobRes = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/git/blobs/${fd.sha}`, {
+      headers: {
+        'Authorization': `Bearer ${settings.token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if (!blobRes.ok) throw new Error(`블롭 읽기 실패 (${blobRes.status}): ${path}`);
+    const blob = await blobRes.json();
+    fd.content = blob.content;
+    fd.encoding = blob.encoding;
+  }
+  return fd;
 }
 
 async function ghPut(path, newContent, sha, message) {
