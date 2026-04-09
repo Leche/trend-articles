@@ -95,7 +95,7 @@ body {
 }
 .btn-secondary:active { background: #F0EFEC; transform: scale(0.985); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
-  .btn-loading  { background: rgba(10,115,220,0.1) !important; color: #0a73dc !important; border: 1px solid #0a73dc !important; opacity: 1 !important; }
+.btn-loading  { background: rgba(10,115,220,0.1) !important; color: #0a73dc !important; border: 1px solid #0a73dc !important; opacity: 1 !important; }
 .btn-complete { background: rgba(5,172,54,0.1) !important; color: #05ac36 !important; border: 1px solid #05ac36 !important; opacity: 1 !important; }
 
 /* Inputs */
@@ -121,6 +121,7 @@ input, textarea {
   -webkit-appearance: none;
   height: 46px;
 }
+input:focus, textarea:focus { outline: none; border-color: rgba(0,0,0,0.08); box-shadow: none; }
 input[type="date"] { min-height: 46px; }
 .date-wrapper { position: relative; }
 .date-placeholder {
@@ -860,7 +861,7 @@ async function runCuration() {
     });
     if (res.status === 204) {
       showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
-    setBtnComplete(btn);
+      setBtnComplete(btn);
     } else {
       const data = await res.json();
       showStatus('runStatus', 'error', '오류: ' + (data.message || res.statusText));
@@ -902,7 +903,7 @@ async function runReplace() {
     const res = await triggerWorkflow({ article_count: '6', custom_date: '', replace_urls: parts.join(','), test_mode: 'true' });
     if (res.status === 204) {
       showStatus('replaceStatus', 'success', `🧪 [TEST] 기사 교체 시작! (${parts.length}개) test/index.html에 반영돼요.`);
-    setBtnComplete(btn);
+      setBtnComplete(btn);
     } else {
       const data = await res.json();
       showStatus('replaceStatus', 'error', '오류: ' + (data.message || res.statusText));
@@ -986,19 +987,44 @@ async function fixLinks() {
 // ── AI 명령 ──
 async function runCommand() {
   const prompt = document.getElementById('commandPrompt').value.trim();
+  if (!prompt) {
+    showStatus('commandStatus', 'error', '명령을 입력해주세요.');
+    return;
+  }
+  if (!checkSettings()) return;
   const btn = document.getElementById('commandBtn');
   setBtnLoading(btn, true);
   showStatus('commandStatus', 'loading', '명령 전달 중...');
   try {
     const res = await fetch(
       `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/command.yml/dispatches`,
-      { method: 'POST', headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main', inputs: { prompt, target_date: getTodayKST() } }) }
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: {
+            prompt,
+            target_date: getTodayKST(),
+          },
+        }),
+      }
     );
-    if (res.status === 204) { showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.'); document.getElementById('commandPrompt').value = ''; }
-    setBtnComplete(btn);
-    else { const data = await res.json().catch(()=>({})); showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText)); }
-  } catch(e) { showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message); }
+    if (res.status === 204) {
+      showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
+      setBtnComplete(btn);
+      document.getElementById('commandPrompt').value = '';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
+    }
+  } catch(e) {
+    showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message);
+  }
   setBtnLoading(btn, false);
 }
 
