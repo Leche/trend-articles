@@ -49,8 +49,12 @@ def interpret_command(prompt: str) -> dict:
 2. 기사 순서 변경 (기사 위치 이동 + ARTICLE 번호 재부여):
    {"action": "reorder", "items": [{"from": 3, "to": 1}]}
 
+3. 트리거 페이지 텍스트 수정 (trigger.html의 제목/서브타이틀 등):
+   {"action": "edit_text", "file": "trigger.html", "items": [{"selector": "p.subtitle", "new": "새 텍스트"}]}
+   지원 셀렉터: "h1" (메인 타이틀), "p.subtitle" (서브타이틀)
+
 지원하지 않는 액션 (기사 내용 교체 등 복잡한 작업):
-   {"action": "unsupported", "message": "트리거 페이지에서 직접 진행해주세요."}
+   {"action": "unsupported", "message": "간단한 이유"}
 
 이해할 수 없는 요청:
    {"action": "unknown", "message": "이해할 수 없는 이유 간단히"}
@@ -144,6 +148,19 @@ def reorder_in_html(html: str, from_num: int, to_num: int) -> str:
     return prefix + "".join(renumbered) + suffix
 
 
+def edit_text_in_html(html: str, selector: str, new_text: str) -> str:
+    """CSS selector 기반 텍스트 교체 (예: 'p.subtitle', 'h1')"""
+    if '.' in selector:
+        tag, cls = selector.split('.', 1)
+        pattern = rf'(<{re.escape(tag)}[^>]*class="[^"]*{re.escape(cls)}[^"]*"[^>]*>)(.*?)(</{re.escape(tag)}>)'
+    else:
+        pattern = rf'(<{re.escape(selector)}(?:\s[^>]*)?>)(.*?)(</{re.escape(selector)}>)'
+    replaced = re.sub(pattern, lambda m: m.group(1) + new_text + m.group(3), html, flags=re.DOTALL)
+    if replaced == html:
+        raise ValueError(f"'{selector}' 요소를 찾을 수 없어요.")
+    return replaced
+
+
 # ─── 파일 읽기/쓰기 ───────────────────────────────────────────
 def read_html(path: str) -> str:
     if not os.path.exists(path):
@@ -214,10 +231,27 @@ def main():
                     print(f"  ❌ {path} 수정 실패: {e}")
                     sys.exit(1)
 
+    elif action == "edit_text":
+        file_target = result.get("file", "trigger.html")
+        items = result.get("items", [])
+        for item in items:
+            selector = item.get("selector", "")
+            new_text = item.get("new", "")
+            print(f"\n✏️  텍스트 수정: [{file_target}] '{selector}' → '{new_text}'")
+            try:
+                html = read_html(file_target)
+                html = edit_text_in_html(html, selector, new_text)
+                write_html(file_target, html)
+            except FileNotFoundError:
+                print(f"  ⚠️  {file_target} 없음 — 건너뜀")
+            except Exception as e:
+                print(f"  ❌ {file_target} 수정 실패: {e}")
+                sys.exit(1)
+
     elif action == "unsupported":
         msg = result.get("message", "지원하지 않는 액션이에요.")
         print(f"⚠️  {msg}")
-        sys.exit(1)
+        sys.exit(0)  # 워크플로우 실패 아님, 경고로만 처리
 
     else:
         msg = result.get("message", "이해할 수 없는 명령이에요.")
