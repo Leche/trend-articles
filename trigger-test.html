@@ -898,6 +898,48 @@ async function runReplace() {
   }
 }
 
+// ── AI 명령 ──
+async function runCommand() {
+  const prompt = document.getElementById('commandPrompt').value.trim();
+  if (!prompt) {
+    showStatus('commandStatus', 'error', '명령을 입력해주세요.');
+    return;
+  }
+  if (!checkSettings()) return;
+  showStatus('commandStatus', 'loading', '명령 전달 중...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/command.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: {
+            prompt,
+            target_date: getTodayKST(),
+          },
+        }),
+      }
+    );
+    if (res.status === 204) {
+      showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
+      const ta = document.getElementById('commandPrompt');
+      ta.value = '';
+      ta.style.height = '';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
+    }
+  } catch(e) {
+    showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message);
+  }
+}
+
 // ── 링크 수정 ──
 function addLinkFixRow() {
   const list = document.getElementById('linkFixList');
@@ -960,48 +1002,6 @@ async function fixLinks() {
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
-  }
-}
-
-// ── AI 명령 ──
-async function runCommand() {
-  const prompt = document.getElementById('commandPrompt').value.trim();
-  if (!prompt) {
-    showStatus('commandStatus', 'error', '명령을 입력해주세요.');
-    return;
-  }
-  if (!checkSettings()) return;
-  showStatus('commandStatus', 'loading', '명령 전달 중...');
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/command.yml/dispatches`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${settings.token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ref: 'main',
-          inputs: {
-            prompt,
-            target_date: getTodayKST(),
-          },
-        }),
-      }
-    );
-    if (res.status === 204) {
-      showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
-      const ta = document.getElementById('commandPrompt');
-      ta.value = '';
-      ta.style.height = '';
-    } else {
-      const data = await res.json().catch(() => ({}));
-      showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
-    }
-  } catch(e) {
-    showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message);
   }
 }
 
