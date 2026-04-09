@@ -58,6 +58,7 @@ def interpret_command(prompt: str) -> dict:
 4. trigger.html 자유 수정 (카드 제목, 설명, 버튼, 라벨, h1, subtitle 등 모든 요소):
    {"action": "free_edit", "file": "trigger.html", "instruction": "원본 지시 그대로"}
    - trigger.html 관련 요청은 항상 이 액션 사용
+   - trigger-test.html은 자동 동기화되므로 별도 처리 불필요. trigger-test.html 언급이 있어도 trigger.html만 대상으로 JSON 1개만 출력
 
 이해할 수 없는 요청:
    {"action": "unknown", "message": "이해할 수 없는 이유 간단히"}
@@ -66,10 +67,16 @@ JSON만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.""",
         messages=[{"role": "user", "content": prompt}],
     )
     raw = response.content[0].text.strip()
-    m = re.search(r'\{[\s\S]*\}', raw)
+    m = re.search(r'\{[\s\S]*?\}', raw)
     if not m:
         raise ValueError(f"Claude 응답 파싱 실패: {raw}")
-    return json.loads(m.group())
+    try:
+        return json.loads(m.group())
+    except json.JSONDecodeError:
+        # 중첩 객체가 있을 수 있으므로 raw_decode 사용
+        decoder = json.JSONDecoder()
+        obj, _ = decoder.raw_decode(raw[raw.index('{'):])
+        return obj
 
 
 # ─── AI 변경 식별 ─────────────────────────────────────────────
@@ -213,6 +220,36 @@ def get_article_section(html: str, num: int) -> tuple:
     return stripped, article_start, article_end
 
 
+# ─── trigger-test.html 자동 동기화 ─────────────────────────────
+# trigger.html 수정 시 trigger-test.html에도 동일하게 반영
+# 단, TEST 전용 패치 6개는 유지
+TEST_PATCHES = [
+    # (trigger.html 원본 텍스트, trigger-test.html 텍스트)
+    ("<title>트렌드림 컨트롤러 컨트롤</title>",
+     "<title>트렌드림 컨트롤러 컨트롤 [TEST]</title>"),
+    ('<p class="subtitle">모바일에서 간편하게 아티클 다이제스트를 컨트롤 하세요</p>',
+     '<p class="subtitle" style="color:#CF3030;">🧪 테스트 모드 — test/ 폴더에서 동작합니다</p>'),
+    ("// ── 오늘 KST 날짜 ──\nfunction getTodayKST() {\n  const now = new Date();\n  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);\n  return kst.toISOString().split('T')[0];",
+     "// ── 테스트 모드: 날짜 대신 \"test\" 고정 경로 사용 ──\nfunction getTodayKST() {\n  return 'test';"),
+    ("replace_urls: parts.join(',') })",
+     "replace_urls: parts.join(','), test_mode: 'true' })"),
+    ("showStatus('replaceStatus', 'success', `기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`)",
+     "showStatus('replaceStatus', 'success', `🧪 [TEST] 기사 교체 시작! (${parts.length}개) test/index.html에 반영돼요.`)"),
+]
+
+
+def sync_trigger_test():
+    """trigger.html → trigger-test.html 동기화 (TEST 패치 유지)"""
+    if not os.path.exists("trigger.html"):
+        print("  ⚠️  trigger.html 없음 — 동기화 건너뜀")
+        return
+    html = read_html("trigger.html")
+    for original, test_ver in TEST_PATCHES:
+        html = html.replace(original, test_ver)
+    write_html("trigger-test.html", html)
+    print("  🔄 trigger-test.html 자동 동기화 완료")
+
+
 # ─── 파일 읽기/쓰기 ───────────────────────────────────────────
 def read_html(path: str) -> str:
     if not os.path.exists(path):
@@ -299,6 +336,7 @@ def main():
                 print(f"  📋 변경 항목 {len(changes)}개")
                 html = apply_changes(html, changes)
                 write_html("trigger.html", html)
+                sync_trigger_test()
             except FileNotFoundError:
                 print("  ⚠️  trigger.html 없음 — 건너뜀")
             except Exception as e:
