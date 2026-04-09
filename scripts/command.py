@@ -3,6 +3,7 @@
 자연어 명령을 Claude API로 해석하고 트렌드림 HTML을 직접 수정하는 스크립트
 - 링크 수정: "5번 기사 링크를 https://... 로 바꿔줘"
 - 순서 조정: "3번 기사를 1번으로 이동해줘"
+- 자유 편집: "1번 기사 제목을 '새 제목'으로 바꿔줘" / "trigger.html 카드 설명 수정"
 """
 
 import os
@@ -49,12 +50,14 @@ def interpret_command(prompt: str) -> dict:
 2. 기사 순서 변경 (기사 위치 이동 + ARTICLE 번호 재부여):
    {"action": "reorder", "items": [{"from": 3, "to": 1}]}
 
-3. 트리거 페이지 텍스트 수정 (trigger.html의 제목/서브타이틀 등):
-   {"action": "edit_text", "file": "trigger.html", "items": [{"selector": "p.subtitle", "new": "새 텍스트"}]}
-   지원 셀렉터: "h1" (메인 타이틀), "p.subtitle" (서브타이틀)
+3. index.html 기사 내용 자유 수정 (제목, 한 줄 요약, 3줄 요약 등):
+   {"action": "free_edit", "file": "index.html", "article_num": 3, "instruction": "원본 지시 그대로"}
+   - article_num: 수정할 기사 번호 (모든 기사면 0)
+   - 예: "1번 기사 제목을 '새 제목'으로 바꿔줘" → article_num: 1
 
-지원하지 않는 액션 (기사 내용 교체 등 복잡한 작업):
-   {"action": "unsupported", "message": "간단한 이유"}
+4. trigger.html 자유 수정 (카드 제목, 설명, 버튼, 라벨, h1, subtitle 등 모든 요소):
+   {"action": "free_edit", "file": "trigger.html", "instruction": "원본 지시 그대로"}
+   - trigger.html 관련 요청은 항상 이 액션 사용
 
 이해할 수 없는 요청:
    {"action": "unknown", "message": "이해할 수 없는 이유 간단히"}
@@ -67,6 +70,46 @@ JSON만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.""",
     if not m:
         raise ValueError(f"Claude 응답 파싱 실패: {raw}")
     return json.loads(m.group())
+
+
+# ─── AI 변경 식별 ─────────────────────────────────────────────
+def ai_identify_changes(context_html: str, instruction: str) -> list:
+    """HTML 섹션과 지시를 받아 [{old, new}] 변경 쌍 반환"""
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        system="""당신은 HTML 텍스트 편집 도우미입니다.
+주어진 HTML에서 지시에 따라 변경할 텍스트를 찾아 JSON 배열로만 응답하세요.
+
+응답 형식: [{"old": "정확한 기존 텍스트", "new": "새 텍스트"}]
+
+규칙:
+- "old"는 HTML 내에서 찾을 수 있는 정확한 텍스트 (태그 내부 텍스트 그대로)
+- HTML 구조(태그, 속성, 클래스)는 절대 변경하지 마세요
+- src="[IMAGE]" 플레이스홀더는 무시하세요
+- JSON 배열만 출력, 다른 설명 없이""",
+        messages=[{"role": "user", "content": f"지시: {instruction}\n\nHTML:\n{context_html}"}],
+    )
+    raw = response.content[0].text.strip()
+    m = re.search(r'\[[\s\S]*\]', raw)
+    if not m:
+        raise ValueError(f"변경 사항 파싱 실패: {raw}")
+    return json.loads(m.group())
+
+
+def apply_changes(html: str, changes: list) -> str:
+    """[{old, new}] 변경 사항을 HTML에 적용"""
+    for change in changes:
+        old_text = change.get("old", "").strip()
+        new_text = change.get("new", "").strip()
+        if not old_text:
+            continue
+        if old_text not in html:
+            raise ValueError(f"텍스트를 찾을 수 없어요: '{old_text[:80]}'")
+        html = html.replace(old_text, new_text, 1)
+        print(f"  ✅ '{old_text[:50]}' → '{new_text[:50]}'")
+    return html
 
 
 # ─── HTML 수정 유틸 ───────────────────────────────────────────
@@ -148,17 +191,26 @@ def reorder_in_html(html: str, from_num: int, to_num: int) -> str:
     return prefix + "".join(renumbered) + suffix
 
 
-def edit_text_in_html(html: str, selector: str, new_text: str) -> str:
-    """CSS selector 기반 텍스트 교체 (예: 'p.subtitle', 'h1')"""
-    if '.' in selector:
-        tag, cls = selector.split('.', 1)
-        pattern = rf'(<{re.escape(tag)}[^>]*class="[^"]*{re.escape(cls)}[^"]*"[^>]*>)(.*?)(</{re.escape(tag)}>)'
-    else:
-        pattern = rf'(<{re.escape(selector)}(?:\s[^>]*)?>)(.*?)(</{re.escape(selector)}>)'
-    replaced = re.sub(pattern, lambda m: m.group(1) + new_text + m.group(3), html, flags=re.DOTALL)
-    if replaced == html:
-        raise ValueError(f"'{selector}' 요소를 찾을 수 없어요.")
-    return replaced
+def get_article_section(html: str, num: int) -> tuple:
+    """특정 기사 article 블록 추출 (base64 이미지 제거) → (stripped_section, start, end)"""
+    num_str = str(num).zfill(2)
+    label_pos = html.find(f"ARTICLE {num_str}")
+    if label_pos == -1:
+        raise ValueError(f"기사 {num}번을 찾을 수 없어요.")
+
+    # <article 태그 시작점 (label 이전)
+    article_start = html.rfind("<article", 0, label_pos)
+    if article_start == -1:
+        raise ValueError(f"기사 {num}번 article 태그를 찾을 수 없어요.")
+
+    # </article> 끝점
+    article_end = html.find("</article>", article_start) + len("</article>")
+
+    section = html[article_start:article_end]
+    # base64 이미지 제거 (플레이스홀더로 교체)
+    stripped = re.sub(r'src="data:[^"]*"', 'src="[IMAGE]"', section)
+
+    return stripped, article_start, article_end
 
 
 # ─── 파일 읽기/쓰기 ───────────────────────────────────────────
@@ -231,32 +283,61 @@ def main():
                     print(f"  ❌ {path} 수정 실패: {e}")
                     sys.exit(1)
 
-    elif action == "edit_text":
-        file_target = result.get("file", "trigger.html")
-        items = result.get("items", [])
-        for item in items:
-            selector = item.get("selector", "")
-            new_text = item.get("new", "")
-            print(f"\n✏️  텍스트 수정: [{file_target}] '{selector}' → '{new_text}'")
+    elif action == "free_edit":
+        file_target = result.get("file", "index.html")
+        instruction = result.get("instruction", COMMAND_PROMPT)
+        article_num = result.get("article_num", 0)
+
+        print(f"\n✏️  자유 편집: [{file_target}] '{instruction}'")
+
+        if file_target == "trigger.html":
+            # trigger.html 전체 전송 (37KB, 관리 가능)
             try:
-                html = read_html(file_target)
-                html = edit_text_in_html(html, selector, new_text)
-                write_html(file_target, html)
+                html = read_html("trigger.html")
+                print("  🤖 변경 사항 식별 중...")
+                changes = ai_identify_changes(html, instruction)
+                print(f"  📋 변경 항목 {len(changes)}개")
+                html = apply_changes(html, changes)
+                write_html("trigger.html", html)
             except FileNotFoundError:
-                print(f"  ⚠️  {file_target} 없음 — 건너뜀")
+                print("  ⚠️  trigger.html 없음 — 건너뜀")
             except Exception as e:
-                print(f"  ❌ {file_target} 수정 실패: {e}")
+                print(f"  ❌ trigger.html 수정 실패: {e}")
                 sys.exit(1)
 
-    elif action == "unsupported":
-        msg = result.get("message", "지원하지 않는 액션이에요.")
-        print(f"⚠️  {msg}")
-        sys.exit(0)  # 워크플로우 실패 아님, 경고로만 처리
+        else:
+            # index.html: 특정 기사 블록만 추출해서 전송
+            for path in [date_path, root_path]:
+                try:
+                    html = read_html(path)
+
+                    if article_num and article_num > 0:
+                        # 특정 기사 섹션만 추출
+                        stripped_section, art_start, art_end = get_article_section(html, article_num)
+                        print(f"  🤖 {article_num}번 기사 섹션 변경 사항 식별 중...")
+                        changes = ai_identify_changes(stripped_section, instruction)
+                        print(f"  📋 변경 항목 {len(changes)}개")
+                        # 전체 HTML에 적용 (base64 이미지가 있는 원본에 적용)
+                        html = apply_changes(html, changes)
+                    else:
+                        # 전체 기사 대상 (base64 제거 후 전체 전송)
+                        stripped = re.sub(r'src="data:[^"]*"', 'src="[IMAGE]"', html)
+                        print("  🤖 전체 기사 변경 사항 식별 중...")
+                        changes = ai_identify_changes(stripped, instruction)
+                        print(f"  📋 변경 항목 {len(changes)}개")
+                        html = apply_changes(html, changes)
+
+                    write_html(path, html)
+                except FileNotFoundError:
+                    print(f"  ⚠️  {path} 없음 — 건너뜀")
+                except Exception as e:
+                    print(f"  ❌ {path} 수정 실패: {e}")
+                    sys.exit(1)
 
     else:
         msg = result.get("message", "이해할 수 없는 명령이에요.")
-        print(f"❌ {msg}")
-        sys.exit(1)
+        print(f"⚠️  {msg}")
+        sys.exit(0)
 
     print("\n✅ 명령 실행 완료!")
 
