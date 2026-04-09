@@ -156,9 +156,9 @@ input[type="date"]:not(.has-value)::-webkit-datetime-edit-year-field { color: tr
 input::placeholder { color: #767676; font-weight: 400; }
 input:focus, textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(25,25,25,0.06);
+  border-color: rgba(0,0,0,0.08);
+  background: var(--input-bg);
+  box-shadow: none;
 }
 .input-group { margin-bottom: 14px; }
 .input-row { display: flex; gap: 10px; }
@@ -251,7 +251,7 @@ input:focus, textarea:focus {
   border: none;
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   background: var(--success-bg);
   color: var(--success);
@@ -357,9 +357,9 @@ input:focus, textarea:focus {
 
   <!-- AI 명령 -->
   <div class="card">
-    <div class="card-title">AI 명령</div>
+    <div class="card-title">AI 프롬프트 수정</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정 내용을 자연어로 입력하세요. 완료되면 카카오워크로 알림이 와요.</p>
-    <textarea id="commandPrompt" rows="3" placeholder="예) 5번 기사 링크를 https://brunch.co.kr/@xxx/81 로 바꿔줘&#10;예) 3번 기사를 1번으로 이동해줘" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-xs);font-size:14px;font-family:inherit;resize:none;overflow:hidden;background:var(--input-bg);color:var(--text-primary);outline:none;"></textarea>
+    <textarea id="commandPrompt" rows="3" placeholder="프롬프트를 입력하여 수정하세요." autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-xs);font-size:14px;font-family:inherit;resize:none;overflow:hidden;background:var(--input-bg);color:var(--text-primary);outline:none;"></textarea>
     <button class="btn btn-primary" id="commandBtn" onclick="runCommand()" style="margin-top:10px;">실행</button>
     <div class="status" id="commandStatus"></div>
   </div>
