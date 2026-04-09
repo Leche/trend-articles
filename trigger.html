@@ -357,7 +357,7 @@ input:focus, textarea:focus {
   <div class="card">
     <div class="card-title">AI 명령</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정 내용을 자연어로 입력하세요. 완료되면 카카오워크로 알림이 와요.</p>
-    <textarea id="commandPrompt" rows="3" placeholder="예) 5번 기사 링크를 https://brunch.co.kr/@xxx/81 로 바꿔줘&#10;예) 3번 기사를 1번으로 이동해줘" autocorrect="off" autocapitalize="off" spellcheck="false" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:10px;font-size:14px;font-family:inherit;resize:none;background:#fafafa;color:var(--text-primary);outline:none;"></textarea>
+    <textarea id="commandPrompt" rows="3" placeholder="예) 5번 기사 링크를 https://brunch.co.kr/@xxx/81 로 바꿔줘&#10;예) 3번 기사를 1번으로 이동해줘" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:10px;font-size:14px;font-family:inherit;resize:none;overflow:hidden;background:#fafafa;color:var(--text-primary);outline:none;"></textarea>
     <button class="btn btn-secondary" id="commandBtn" onclick="runCommand()" style="margin-top:10px;">실행</button>
     <div class="status" id="commandStatus"></div>
   </div>
