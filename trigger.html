@@ -368,21 +368,6 @@ input:focus, textarea:focus {
     <div class="status" id="replaceStatus"></div>
   </div>
 
-  <!-- 링크 수정 -->
-  <div class="card">
-    <div class="card-title">링크 수정</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정할 기사 번호와 새 URL을 입력하세요</p>
-    <div id="linkFixList">
-      <div class="replace-item">
-        <input class="num" type="number" placeholder="#" min="1" max="12">
-        <input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false">
-      </div>
-    </div>
-    <button class="add-btn" onclick="addLinkFixRow()">+ 링크 수정 항목 추가</button>
-    <button class="btn btn-secondary" id="linkFixBtn" onclick="fixLinks()">링크 수정 실행</button>
-    <div class="status" id="linkFixStatus"></div>
-  </div>
-
   <!-- 썸네일 교체 -->
   <div class="card">
     <div class="card-title">썸네일 교체</div>
@@ -421,6 +406,21 @@ input:focus, textarea:focus {
     <button class="add-btn" onclick="addReorderRow()">+ 순서 조정 항목 추가</button>
     <button class="btn btn-secondary" id="reorderBtn" onclick="reorderArticles()">순서 적용</button>
     <div class="status" id="reorderStatus"></div>
+  </div>
+
+  <!-- 링크 수정 -->
+  <div class="card">
+    <div class="card-title">링크 수정</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정할 기사 번호와 새 URL을 입력하세요</p>
+    <div id="linkFixList">
+      <div class="replace-item">
+        <input class="num" type="number" placeholder="#" min="1" max="12">
+        <input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+    </div>
+    <button class="add-btn" onclick="addLinkFixRow()">+ 링크 수정 항목 추가</button>
+    <button class="btn btn-secondary" id="linkFixBtn" onclick="fixLinks()">링크 수정 실행</button>
+    <div class="status" id="linkFixStatus"></div>
   </div>
 
   <!-- 바로가기 -->
