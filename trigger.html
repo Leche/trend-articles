@@ -368,6 +368,21 @@ input:focus, textarea:focus {
     <div class="status" id="replaceStatus"></div>
   </div>
 
+  <!-- 링크 수정 -->
+  <div class="card">
+    <div class="card-title">링크 수정</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정할 기사 번호와 새 URL을 입력하세요</p>
+    <div id="linkFixList">
+      <div class="replace-item">
+        <input class="num" type="number" placeholder="#" min="1" max="12">
+        <input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+    </div>
+    <button class="add-btn" onclick="addLinkFixRow()">+ 링크 수정 항목 추가</button>
+    <button class="btn btn-secondary" id="linkFixBtn" onclick="fixLinks()">링크 수정 실행</button>
+    <div class="status" id="linkFixStatus"></div>
+  </div>
+
   <!-- 썸네일 교체 -->
   <div class="card">
     <div class="card-title">썸네일 교체</div>
@@ -872,6 +887,75 @@ async function runReplace() {
     showStatus('replaceStatus', 'error', '네트워크 오류: ' + e.message);
   }
   btn.disabled = false;
+}
+
+// ── 링크 수정 ──
+function addLinkFixRow() {
+  const list = document.getElementById('linkFixList');
+  const div = document.createElement('div');
+  div.className = 'replace-item';
+  div.innerHTML = '<input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." value="" autocorrect="off" autocapitalize="off" spellcheck="false">';
+  list.appendChild(div);
+}
+
+function fixLinkInHtml(content, articleNum, newUrl) {
+  const numStr = String(articleNum).padStart(2, '0');
+  const labelIdx = content.indexOf(`ARTICLE ${numStr}`);
+  if (labelIdx === -1) throw new Error(`기사 ${articleNum}번을 찾을 수 없어요.`);
+  const linkClassIdx = content.indexOf('class="article-link"', labelIdx);
+  if (linkClassIdx === -1) throw new Error('링크 영역을 찾을 수 없어요.');
+  const aTagStart = content.lastIndexOf('<a', linkClassIdx);
+  const aTagEnd = content.indexOf('</a>', linkClassIdx) + 4;
+  const oldATag = content.substring(aTagStart, aTagEnd);
+  const hrefMatch = oldATag.match(/href="([^"]+)"/);
+  if (!hrefMatch) throw new Error('URL을 찾을 수 없어요.');
+  const oldUrl = hrefMatch[1];
+  const newATag = oldATag
+    .replace(`href="${oldUrl}"`, `href="${newUrl}"`)
+    .replace(`>${oldUrl}<`, `>${newUrl}<`);
+  return content.substring(0, aTagStart) + newATag + content.substring(aTagEnd);
+}
+
+async function fixLinks() {
+  if (!checkSettings()) return;
+  const items = document.querySelectorAll('#linkFixList .replace-item');
+  const tasks = [];
+  items.forEach(item => {
+    const num = parseInt(item.querySelector('.num').value);
+    const url = item.querySelector('.url-input').value.trim();
+    if (num && url) tasks.push({ num, url });
+  });
+  if (tasks.length === 0) {
+    showStatus('linkFixStatus', 'error', '기사 번호와 새 URL을 입력해주세요.');
+    return;
+  }
+  const btn = document.getElementById('linkFixBtn');
+  btn.disabled = true;
+  const nums = tasks.map(t => t.num).join(', ');
+  showStatus('linkFixStatus', 'loading', 'HTML 파일 불러오는 중...');
+  try {
+    const dateVal = getTodayKST();
+    const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
+    async function applyToPath(path) {
+      const fd = await ghGet(path);
+      let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+      for (const { num, url } of tasks) {
+        html = fixLinkInHtml(html, num, url);
+      }
+      await ghPut(path, html, fd.sha, msg);
+    }
+    showStatus('linkFixStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
+    await applyToPath(`${dateVal}/index.html`);
+    try {
+      showStatus('linkFixStatus', 'loading', 'index.html 업데이트 중...');
+      await applyToPath('index.html');
+    } catch(_) {}
+    showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
+  } catch(e) {
+    showStatus('linkFixStatus', 'error', '오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── 바로가기 ──
