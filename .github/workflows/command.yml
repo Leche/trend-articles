@@ -1,0 +1,62 @@
+name: 트렌드림 AI 명령 실행
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: '실행할 명령 (자연어)'
+        required: true
+      target_date:
+        description: '대상 날짜 (YYYY-MM-DD, 비워두면 오늘 KST)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Run command script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          COMMAND_PROMPT: ${{ github.event.inputs.prompt }}
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: python scripts/command.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "trend-bot"
+          git config user.email "trend-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && echo "변경 없음" && exit 0
+          git commit -m "🤖 ${{ github.event.inputs.prompt }}"
+          git push
+
+      - name: Notify KakaoWork
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"🤖 명령 실행 완료!\n\n📝 ${{ github.event.inputs.prompt }}\n📅 ${{ github.event.inputs.target_date || 'today' }}\"}"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"❌ 명령 실행 실패\n\n📝 ${{ github.event.inputs.prompt }}\n로그를 확인해주세요.\"}"

@@ -353,6 +353,15 @@ input:focus, textarea:focus {
     <div class="status" id="runStatus"></div>
   </div>
 
+  <!-- AI 명령 -->
+  <div class="card">
+    <div class="card-title">AI 명령</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정 내용을 자연어로 입력하세요. 완료되면 카카오워크로 알림이 와요.</p>
+    <textarea id="commandPrompt" rows="3" placeholder="예) 5번 기사 링크를 https://brunch.co.kr/@xxx/81 로 바꿔줘&#10;예) 3번 기사를 1번으로 이동해줘" autocorrect="off" autocapitalize="off" spellcheck="false" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:10px;font-size:14px;font-family:inherit;resize:none;background:#fafafa;color:var(--text-primary);outline:none;"></textarea>
+    <button class="btn btn-secondary" id="commandBtn" onclick="runCommand()" style="margin-top:10px;">실행</button>
+    <div class="status" id="commandStatus"></div>
+  </div>
+
   <!-- 기사 교체 -->
   <div class="card">
     <div class="card-title">기사 교체</div>
@@ -885,6 +894,49 @@ async function runReplace() {
     }
   } catch(e) {
     showStatus('replaceStatus', 'error', '네트워크 오류: ' + e.message);
+  }
+  btn.disabled = false;
+}
+
+// ── AI 명령 ──
+async function runCommand() {
+  const prompt = document.getElementById('commandPrompt').value.trim();
+  if (!prompt) {
+    showStatus('commandStatus', 'error', '명령을 입력해주세요.');
+    return;
+  }
+  if (!checkSettings()) return;
+  const btn = document.getElementById('commandBtn');
+  btn.disabled = true;
+  showStatus('commandStatus', 'loading', '명령 전달 중...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/command.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: {
+            prompt,
+            target_date: getTodayKST(),
+          },
+        }),
+      }
+    );
+    if (res.status === 204) {
+      showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
+      document.getElementById('commandPrompt').value = '';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
+    }
+  } catch(e) {
+    showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message);
   }
   btn.disabled = false;
 }
