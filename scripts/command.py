@@ -227,7 +227,7 @@ TEST_PATCHES = [
     # (trigger.html 원본 텍스트, trigger-test.html 텍스트)
     ("<title>트렌드림 컨트롤러 컨트롤</title>",
      "<title>트렌드림 컨트롤러 컨트롤 [TEST]</title>"),
-    ('<p class="subtitle">모바일에서 간편하게 아티클 다이제스트를 컨트롤 하세요</p>',
+    ('<p class="subtitle">모바일에서 간편하게 아티클들을 컨트롤 하세요</p>',
      '<p class="subtitle" style="color:#CF3030;">🧪 테스트 모드 — test/ 폴더에서 동작합니다</p>'),
     ("// ── 오늘 KST 날짜 ──\nfunction getTodayKST() {\n  const now = new Date();\n  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);\n  return kst.toISOString().split('T')[0];",
      "// ── 테스트 모드: 날짜 대신 \"test\" 고정 경로 사용 ──\nfunction getTodayKST() {\n  return 'test';"),
