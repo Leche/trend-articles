@@ -95,6 +95,7 @@ body {
 }
 .btn-secondary:active { background: #F0EFEC; transform: scale(0.985); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.btn-loading { background: rgba(10,115,220,0.1) !important; color: #0a73dc !important; border: 1px solid #0a73dc !important; opacity: 1 !important; }
 
 /* Inputs */
 label {
@@ -626,7 +627,7 @@ async function replaceThumbnails() {
   }
 
   const btn = document.getElementById('replaceThumbBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   showStatus('replaceThumbStatus', 'loading', '이미지 변환 중...');
 
   try {
@@ -668,7 +669,7 @@ async function replaceThumbnails() {
   } catch(e) {
     showStatus('replaceThumbStatus', 'error', '오류: ' + e.message);
   }
-  btn.disabled = false;
+  setBtnLoading(btn, false);
 }
 
 // ── 순서 조정 인풋 정렬 토글 ──
@@ -703,7 +704,7 @@ async function reorderArticles() {
   }
 
   const btn = document.getElementById('reorderBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   showStatus('reorderStatus', 'loading', '파일 읽는 중...');
 
   try {
@@ -770,10 +771,15 @@ async function reorderArticles() {
   } catch(e) {
     showStatus('reorderStatus', 'error', '오류: ' + e.message);
   }
-  btn.disabled = false;
+  setBtnLoading(btn, false);
 }
 
 // ── 유틸 ──
+function setBtnLoading(btn, loading) {
+  btn.disabled = loading;
+  btn.classList.toggle('btn-loading', loading);
+}
+
 function showStatus(id, type, msg) {
   const el = document.getElementById(id);
   el.className = `status ${type}`;
@@ -835,7 +841,7 @@ async function triggerWorkflow(inputs) {
 async function runCuration() {
   if (!checkSettings()) return;
   const btn = document.getElementById('runBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   showStatus('runStatus', 'loading', '워크플로우 실행 요청 중...');
   try {
     const res = await triggerWorkflow({
@@ -852,7 +858,7 @@ async function runCuration() {
   } catch(e) {
     showStatus('runStatus', 'error', '네트워크 오류: ' + e.message);
   }
-  btn.disabled = false;
+  setBtnLoading(btn, false);
 }
 
 // ── 기사 교체 ──
@@ -880,7 +886,7 @@ async function runReplace() {
     return;
   }
   const btn = document.getElementById('replaceBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   showStatus('replaceStatus', 'loading', '기사 교체 워크플로우 실행 중...');
   try {
     const res = await triggerWorkflow({ article_count: '6', custom_date: '', replace_urls: parts.join(','), test_mode: 'true' });
@@ -893,7 +899,7 @@ async function runReplace() {
   } catch(e) {
     showStatus('replaceStatus', 'error', '네트워크 오류: ' + e.message);
   }
-  btn.disabled = false;
+  setBtnLoading(btn, false);
 }
 
 // ── 링크 수정 ──
@@ -937,7 +943,7 @@ async function fixLinks() {
     return;
   }
   const btn = document.getElementById('linkFixBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   const nums = tasks.map(t => t.num).join(', ');
   showStatus('linkFixStatus', 'loading', 'HTML 파일 불러오는 중...');
   try {
@@ -961,7 +967,7 @@ async function fixLinks() {
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
   } finally {
-    btn.disabled = false;
+    setBtnLoading(btn, false);
   }
 }
 
@@ -969,7 +975,7 @@ async function fixLinks() {
 async function runCommand() {
   const prompt = document.getElementById('commandPrompt').value.trim();
   const btn = document.getElementById('commandBtn');
-  btn.disabled = true;
+  setBtnLoading(btn, true);
   showStatus('commandStatus', 'loading', '명령 전달 중...');
   try {
     const res = await fetch(
@@ -980,7 +986,7 @@ async function runCommand() {
     if (res.status === 204) { showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.'); document.getElementById('commandPrompt').value = ''; }
     else { const data = await res.json().catch(()=>({})); showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText)); }
   } catch(e) { showStatus('commandStatus', 'error', '네트워크 오류: ' + e.message); }
-  btn.disabled = false;
+  setBtnLoading(btn, false);
 }
 
 // ── 바로가기 ──
