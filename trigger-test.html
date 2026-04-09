@@ -993,7 +993,9 @@ async function runCommand() {
     );
     if (res.status === 204) {
       showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
-      document.getElementById('commandPrompt').value = '';
+      const ta = document.getElementById('commandPrompt');
+      ta.value = '';
+      ta.style.height = '';
     } else {
       const data = await res.json().catch(() => ({}));
       showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
