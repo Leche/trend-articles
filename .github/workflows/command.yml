@@ -45,6 +45,7 @@ jobs:
           git add -A
           git diff --cached --quiet && echo "변경 없음" && exit 0
           git commit -m "🤖 ${{ github.event.inputs.prompt }}"
+          git pull --rebase
           git push
 
       - name: Notify KakaoWork

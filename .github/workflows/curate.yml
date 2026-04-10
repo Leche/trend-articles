@@ -77,6 +77,7 @@ jobs:
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
+          git pull --rebase
           git push
 
       - name: Notify KakaoWork
