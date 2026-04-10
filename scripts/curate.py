@@ -190,8 +190,21 @@ def _has_real_content(html_text, min_text_len=200):
         return False
 
 
+def _fetch_google_cache(url, timeout=15):
+    """Google 캐시에서 페이지 가져오기 (직접 접근 불가 사이트 fallback)"""
+    cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
+    try:
+        r = requests.get(cache_url, headers=HEADERS, timeout=timeout)
+        if r.status_code == 200 and _has_real_content(r.text):
+            print(f"  ✅ Google 캐시에서 콘텐츠 확보 성공")
+            return r.text
+    except Exception as e:
+        print(f"  ⚠️  Google 캐시 접근 실패: {e}")
+    return None
+
+
 def fetch_page(url, timeout=15):
-    """URL에서 HTML 가져오기 (실제 콘텐츠 부족 시 Playwright 폴백)"""
+    """URL에서 HTML 가져오기 (실제 콘텐츠 부족 시 Playwright → Google 캐시 폴백)"""
     html = None
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
@@ -209,7 +222,16 @@ def fetch_page(url, timeout=15):
         pw_html = fetch_page_playwright(url)
         if pw_html and _has_real_content(pw_html):
             return pw_html
-        # Playwright도 콘텐츠 부족이면 원본이라도 반환
+
+    # Google 캐시 폴백
+    print(f"  🔄 Google 캐시로 재시도: {url}")
+    cache_html = _fetch_google_cache(url, timeout)
+    if cache_html:
+        return cache_html
+
+    # 모두 실패 시 원본이라도 반환
+    if _pw_available():
+        pw_html = fetch_page_playwright(url)
         return pw_html or html
     else:
         print(f"  ❌ Playwright 미설치, 페이지 접근 불가: {url}")
@@ -738,17 +760,27 @@ def summarize_single_article(url):
         if meta_info:
             meta_block = "\n".join(f"- {k}: {v}" for k, v in meta_info.items() if v)
 
+        # 메타 정보도 없어도 Claude가 URL 기반으로 추론 시도
+        if not meta_block:
+            print(f"  ⚠️  메타 정보도 없음 → Claude URL 기반 추론 시도")
+
     if content_available:
         content_section = f"기사 본문:\n{page_text}"
     else:
+        domain = urlparse(url).netloc
+        path_keywords = urlparse(url).path.replace("/", " ").replace("-", " ").replace("_", " ").strip()
         content_section = f"""기사 본문을 직접 가져올 수 없었습니다.
-아래 메타 정보와 URL 구조를 분석하여, 해당 기사의 내용을 최대한 유추하여 요약해주세요.
-URL에 포함된 키워드, 메타태그 정보를 활용해주세요.
+아래 정보를 모두 활용하여 해당 기사의 내용을 최대한 정확하게 추론하여 요약해주세요.
+반드시 모든 필드를 채워주세요. 빈 값은 허용되지 않습니다.
 
-메타 정보:
-{meta_block if meta_block else '(없음)'}
+사이트: {domain}
+URL 경로 키워드: {path_keywords}
+메타 정보: {meta_block if meta_block else '(없음)'}
+전체 URL: {url}
 
-URL 키워드 분석: {url}"""
+위 URL의 사이트 특성, URL 경로에 포함된 키워드, 메타 정보를 종합하여
+이 기사가 어떤 내용인지 추론해주세요. 해당 사이트의 일반적인 콘텐츠 유형과
+URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 
     prompt = f"""아래 기사를 트렌드림 뉴스레터 형식으로 정리해주세요.
 
@@ -790,6 +822,14 @@ URL 키워드 분석: {url}"""
         for k in required_keys:
             if k not in result:
                 result[k] = url if k == "url" else ""
+        # 요약 품질 검증: 빈 값이나 너무 짧은 요약 체크
+        summary_fields = ["title_ko", "one_line", "summary_1", "summary_2", "summary_3"]
+        empty_fields = [k for k in summary_fields if len(result.get(k, "").strip()) < 5]
+        if empty_fields:
+            print(f"  ⚠️  요약 품질 부족 (빈 필드: {empty_fields}) → 수동 패치 필요 표시")
+            result["_needs_manual_patch"] = True
+        if not content_available:
+            result["_needs_manual_patch"] = True
         return result
     return None
 
@@ -922,8 +962,19 @@ def main():
         print(f"\n⚠️  썸네일 미확보 기사: {failed}")
         print("   → 수동으로 이미지를 제공하거나 placeholder가 표시됩니다.")
 
+    # 수동 패치 필요 기사 목록
+    manual_patch = [a["article_num"] for a in enriched if a.get("_needs_manual_patch")]
+    if manual_patch:
+        print(f"\n🚨 수동 패치 필요 기사: {manual_patch}")
+        print("   → 본문 접근 불가 사이트입니다. Cowork에서 수동으로 요약을 입력해주세요.")
+        for a in enriched:
+            if a.get("_needs_manual_patch"):
+                print(f"   기사 {a['article_num']}번: {a['url']}")
+
     print("\n" + "=" * 60)
     print("✅ 큐레이션 완료!")
+    if manual_patch:
+        print(f"⚠️  수동 패치 필요: {len(manual_patch)}개 기사")
     print("=" * 60)
 
 
