@@ -168,25 +168,42 @@ def fetch_page_playwright(url, timeout=20000):
 
 
 # ─── 웹 스크래핑 유틸 ─────────────────────────────────────────
+def _has_real_content(html_text, min_text_len=200):
+    """HTML에서 실제 텍스트 콘텐츠가 충분한지 확인 (JS 렌더링 필요 여부 판단)"""
+    try:
+        soup = BeautifulSoup(html_text, "lxml")
+        for tag in soup.find_all(["script", "style", "noscript", "meta", "link"]):
+            tag.decompose()
+        text = soup.get_text(separator=" ", strip=True)
+        return len(text) >= min_text_len
+    except Exception:
+        return False
+
+
 def fetch_page(url, timeout=15):
-    """URL에서 HTML 가져오기 (실패 시 Playwright 폴백)"""
+    """URL에서 HTML 가져오기 (실제 콘텐츠 부족 시 Playwright 폴백)"""
+    html = None
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
         r.raise_for_status()
-        # 본문이 너무 짧으면 JS 렌더링 필요일 수 있음
-        if len(r.text) > 500:
-            return r.text
-        print(f"  ⚠️  {url} 본문이 너무 짧음 ({len(r.text)}자), Playwright로 재시도")
+        html = r.text
+        if _has_real_content(html):
+            return html
+        print(f"  ⚠️  {url} HTML은 받았으나 텍스트 콘텐츠 부족, Playwright로 재시도")
     except Exception as e:
         print(f"  ⚠️  {url} requests 접근 실패: {e}")
 
     # Playwright 폴백
     if _pw_available():
         print(f"  🔄 Playwright로 재시도: {url}")
-        return fetch_page_playwright(url)
+        pw_html = fetch_page_playwright(url)
+        if pw_html and _has_real_content(pw_html):
+            return pw_html
+        # Playwright도 콘텐츠 부족이면 원본이라도 반환
+        return pw_html or html
     else:
         print(f"  ❌ Playwright 미설치, 페이지 접근 불가: {url}")
-        return None
+        return html
 
 
 def extract_og_image(html_text, base_url=""):
