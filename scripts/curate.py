@@ -669,18 +669,31 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 
 
 # ─── 메인 실행 ────────────────────────────────────────────────
+def _extract_text(html_text, max_len=3000):
+    """HTML에서 본문 텍스트 추출"""
+    if not html_text:
+        return ""
+    soup = BeautifulSoup(html_text, "lxml")
+    for tag in soup.find_all(["script", "style", "nav", "footer", "header", "noscript"]):
+        tag.decompose()
+    return soup.get_text(separator="\n", strip=True)[:max_len]
+
+
 def summarize_single_article(url):
     """단일 기사를 Claude API로 요약"""
     client = anthropic.Anthropic()
 
     html = fetch_page(url)
-    page_text = ""
-    if html:
-        soup = BeautifulSoup(html, "lxml")
-        # 본문 텍스트 추출 (최대 3000자)
-        for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
-            tag.decompose()
-        page_text = soup.get_text(separator="\n", strip=True)[:3000]
+    page_text = _extract_text(html)
+
+    # 텍스트가 너무 짧으면 Playwright로 직접 재시도
+    if len(page_text) < 300 and _pw_available():
+        print(f"  ⚠️  추출 텍스트 {len(page_text)}자로 부족, Playwright로 직접 재시도")
+        pw_html = fetch_page_playwright(url)
+        pw_text = _extract_text(pw_html)
+        if len(pw_text) > len(page_text):
+            page_text = pw_text
+            print(f"  ✅ Playwright로 {len(page_text)}자 추출 성공")
 
     prompt = f"""아래 기사를 트렌드림 뉴스레터 형식으로 정리해주세요.
 
