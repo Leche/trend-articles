@@ -147,18 +147,28 @@ def _pw_available():
         return False
 
 
-def fetch_page_playwright(url, timeout=20000):
+def fetch_page_playwright(url, timeout=30000):
     """Playwright 헤드리스 브라우저로 페이지 접근 (JS 렌더링 지원)"""
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled"])
             page = browser.new_page(
                 user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                            "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/124.0.0.0 Safari/537.36"
+                           "Chrome/126.0.0.0 Safari/537.36"
             )
+            # 봇 감지 우회: webdriver 프로퍼티 제거
+            page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             page.goto(url, wait_until="networkidle", timeout=timeout)
+            # SPA 렌더링 대기: body 내 텍스트가 충분히 로드될 때까지 추가 대기
+            try:
+                page.wait_for_function(
+                    "document.body && document.body.innerText.length > 500",
+                    timeout=10000
+                )
+            except Exception:
+                pass  # 타임아웃이어도 현재 상태로 진행
             html = page.content()
             browser.close()
             return html
@@ -669,6 +679,27 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 
 
 # ─── 메인 실행 ────────────────────────────────────────────────
+def _extract_meta(html_text):
+    """HTML에서 og:title, og:description 등 메타 정보 추출"""
+    meta = {}
+    if not html_text:
+        return meta
+    try:
+        soup = BeautifulSoup(html_text, "lxml")
+        for tag in soup.find_all("meta"):
+            prop = tag.get("property", "") or tag.get("name", "")
+            content = tag.get("content", "")
+            if prop in ("og:title", "og:description", "og:site_name",
+                        "description", "title", "twitter:title", "twitter:description"):
+                meta[prop] = content
+        title_tag = soup.find("title")
+        if title_tag and title_tag.string:
+            meta["page_title"] = title_tag.string.strip()
+    except Exception:
+        pass
+    return meta
+
+
 def _extract_text(html_text, max_len=3000):
     """HTML에서 본문 텍스트 추출"""
     if not html_text:
@@ -694,12 +725,35 @@ def summarize_single_article(url):
         if len(pw_text) > len(page_text):
             page_text = pw_text
             print(f"  ✅ Playwright로 {len(page_text)}자 추출 성공")
+        else:
+            print(f"  ⚠️  Playwright로도 텍스트 부족 ({len(pw_text)}자)")
+
+    # 본문 추출 완전 실패 시: URL 메타데이터 기반 요약 시도
+    content_available = len(page_text) >= 300
+    if not content_available:
+        print(f"  🔄 본문 접근 불가 → URL 메타데이터 기반 요약 시도")
+        # og:title, og:description 등 메타 정보 추출
+        meta_info = _extract_meta(html) if html else {}
+        meta_block = ""
+        if meta_info:
+            meta_block = "\n".join(f"- {k}: {v}" for k, v in meta_info.items() if v)
+
+    if content_available:
+        content_section = f"기사 본문:\n{page_text}"
+    else:
+        content_section = f"""기사 본문을 직접 가져올 수 없었습니다.
+아래 메타 정보와 URL 구조를 분석하여, 해당 기사의 내용을 최대한 유추하여 요약해주세요.
+URL에 포함된 키워드, 메타태그 정보를 활용해주세요.
+
+메타 정보:
+{meta_block if meta_block else '(없음)'}
+
+URL 키워드 분석: {url}"""
 
     prompt = f"""아래 기사를 트렌드림 뉴스레터 형식으로 정리해주세요.
 
 기사 URL: {url}
-기사 본문:
-{page_text}
+{content_section}
 
 아래 JSON 형식으로 답변하세요. JSON만 출력:
 ```json
