@@ -808,28 +808,37 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 - "이 글은", "이 기사는" 등 메타 문장 금지
 - 핵심 내용부터 바로 시작"""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1024,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = response.content[0].text
-    json_match = re.search(r'\{[\s\S]*\}', text)
-    if json_match:
+    # 최대 2회 시도 (빈 값 나오면 재시도)
+    for attempt in range(2):
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text
+        json_match = re.search(r'\{[\s\S]*\}', text)
+        if not json_match:
+            continue
+
         result = json.loads(json_match.group())
         # 필수 키 보정
         required_keys = ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"]
         for k in required_keys:
             if k not in result:
                 result[k] = url if k == "url" else ""
+
         # 요약 품질 검증: 빈 값이나 너무 짧은 요약 체크
         summary_fields = ["title_ko", "one_line", "summary_1", "summary_2", "summary_3"]
         empty_fields = [k for k in summary_fields if len(result.get(k, "").strip()) < 5]
+        if empty_fields and attempt == 0:
+            print(f"  ⚠️  요약 품질 부족 (빈 필드: {empty_fields}) → 재시도")
+            continue
         if empty_fields:
-            print(f"  ⚠️  요약 품질 부족 (빈 필드: {empty_fields}) → 수동 패치 필요 표시")
+            print(f"  ⚠️  재시도 후에도 빈 필드: {empty_fields}")
             result["_needs_manual_patch"] = True
         if not content_available:
-            result["_needs_manual_patch"] = True
+            # 본문 없이 추론한 경우 표시 (검수용)
+            result["_inferred_from_url"] = True
         return result
     return None
 
