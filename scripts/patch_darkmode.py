@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-과거 날짜별 index.html에 다크모드 CSS를 일괄 적용하는 스크립트.
-git repo 루트에서 실행: python scripts/patch_darkmode.py
+모든 index.html에 다크모드 CSS를 일괄 적용하는 스크립트.
+git repo 루트에서 실행: python3 scripts/patch_darkmode.py
 """
 import os
-import re
 import glob
 
-# 다크모드 변수 + 추가 변수
+# ── 패치 대상: :root에 다크모드 변수가 없는 파일 ──
+
+# 기존 :root (다크모드 없는 버전)
 OLD_ROOT = """:root {
   --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
   --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
@@ -16,65 +17,92 @@ OLD_ROOT = """:root {
 NEW_ROOT = """:root {
   --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
   --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
-  --body-bg:#fff; --label-bg:#fbfbfb; --img-bg:#fff; --placeholder-bg:#f5f5f5; --placeholder-text:#bbb;
+  --img-bg:#fff; --cta-bg:#191919; --cta-text:#fff;
 }
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme:dark) {
   :root {
-    --line:#2C2C2C; --text:#E8E8E8; --text2:#D0D0D0; --text3:#A0A0A0; --text4:#777; --text5:#666;
-    --surface:#1E1E1E; --page:#121212; --link-bg:rgba(64,156,255,0.12); --link-border:rgba(64,156,255,0.15); --link-text:#409CFF;
-    --body-bg:#121212; --label-bg:#2A2A2A; --img-bg:#1E1E1E; --placeholder-bg:#2A2A2A; --placeholder-text:#666;
+    --line:#2a2a2a; --text:#e8e8e8; --text2:#ccc; --text3:#aaa; --text4:#888; --text5:#777;
+    --surface:#1a1a1a; --page:#111; --link-bg:rgba(60,140,240,0.12); --link-border:rgba(60,140,240,0.15); --link-text:#6ab0ff;
+    --img-bg:#1a1a1a; --cta-bg:#e8e8e8; --cta-text:#111;
   }
 }"""
 
-# 하드코딩 색상 교체 매핑
+# 하드코딩 색상 → CSS 변수로 교체
 REPLACEMENTS = [
+    # html,body 배경
     ("html,body { width:100%; background:#fff; }",
-     "html,body { width:100%; background:var(--body-bg); }"),
+     "html,body { width:100%; background:var(--surface); }"),
+    # page 배경
     (".page { width:100%; background:#fff; }",
-     ".page { width:100%; background:var(--body-bg); }"),
-    ("background:#fbfbfb;",
-     "background:var(--label-bg);"),
-    (".image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#fff; }",
-     ".image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--img-bg); }"),
+     ".page { width:100%; background:var(--surface); }"),
+    # article-label 배경
+    ("background:#fbfbfb;", "background:var(--surface);"),
+    # image-frame 배경
+    ("border-radius:8px; background:#fff; }",
+     "border-radius:8px; background:var(--img-bg); }"),
     ("background:#fff; border:0;",
      "background:var(--img-bg); border:0;"),
     ("background: #fff; }",
      "background: var(--img-bg); }"),
-    ("background:#f5f5f5; color:#bbb;",
-     "background:var(--placeholder-bg); color:var(--placeholder-text);"),
+    # CTA 버튼
+    ("background: #191919; color: #fff !important;",
+     "background: var(--cta-bg); color: var(--cta-text) !important;"),
+    ("background:#191919; color:#fff !important;",
+     "background:var(--cta-bg); color:var(--cta-text) !important;"),
+    # 썸네일 없음 placeholder → 클래스로
+    ('style="width:100%;aspect-ratio:16/10;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;"',
+     'class="no-thumb"'),
+    ('style="width:100%;aspect-ratio:16/10;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:14px;"',
+     'class="no-thumb"'),
 ]
+
+NO_THUMB_CSS = ".no-thumb { width:100%; aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; background:var(--page); color:var(--text5); font-size:14px; }\n"
 
 
 def patch_file(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    if 'prefers-color-scheme' in html:
+    if "prefers-color-scheme" in html:
         return False  # 이미 적용됨
 
     if OLD_ROOT not in html:
         return False  # 구조가 다른 파일
 
+    original = html
+
+    # :root 교체
     html = html.replace(OLD_ROOT, NEW_ROOT)
+
+    # 하드코딩 색상 교체
     for old, new in REPLACEMENTS:
         html = html.replace(old, new)
 
-    with open(path, 'w', encoding='utf-8') as f:
+    # .no-thumb CSS 추가
+    if ".no-thumb" in html and ".no-thumb {" not in html and ".summary-label" in html:
+        html = html.replace(".summary-label", NO_THUMB_CSS + ".summary-label")
+
+    if html == original:
+        return False
+
+    with open(path, "w", encoding="utf-8") as f:
         f.write(html)
     return True
 
 
 def main():
-    # 날짜별 폴더 찾기
-    folders = sorted(glob.glob("20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/index.html"))
+    targets = ["index.html"]
+    targets += sorted(glob.glob("20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/index.html"))
 
-    if not folders:
-        print("❌ 날짜별 index.html 파일을 찾을 수 없어요. git repo 루트에서 실행해주세요.")
+    if not targets:
+        print("파일을 찾을 수 없어요. git repo 루트에서 실행해주세요.")
         return
 
     patched = []
     skipped = []
-    for path in folders:
+    for path in targets:
+        if not os.path.exists(path):
+            continue
         if patch_file(path):
             patched.append(path)
             print(f"  ✅ {path}")
@@ -82,11 +110,7 @@ def main():
             skipped.append(path)
             print(f"  ⏩ {path} (이미 적용 또는 구조 다름)")
 
-    print(f"\n✅ 완료: {len(patched)}개 적용, {len(skipped)}개 건너뜀")
-
-    if patched:
-        print("\n📋 git 커밋 명령:")
-        print(f'  git add {" ".join(patched)} && git commit -m "feat: apply dark mode to {len(patched)} past article pages" && git pull --rebase && git push')
+    print(f"\n총 {len(patched)}개 적용, {len(skipped)}개 건너뜀")
 
 
 if __name__ == "__main__":
