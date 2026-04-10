@@ -137,15 +137,55 @@ past_links = [a["link"] for a in PAST_ARTICLES if "link" in a]
 print(f"🔍 과거 기사 {len(past_titles)}개 제목, {len(past_links)}개 링크 로드 완료")
 
 
+# ─── Playwright 유틸 ──────────────────────────────────────────
+def _pw_available():
+    """Playwright 사용 가능 여부 확인"""
+    try:
+        import playwright  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def fetch_page_playwright(url, timeout=20000):
+    """Playwright 헤드리스 브라우저로 페이지 접근 (JS 렌더링 지원)"""
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(
+                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                           "AppleWebKit/537.36 (KHTML, like Gecko) "
+                           "Chrome/124.0.0.0 Safari/537.36"
+            )
+            page.goto(url, wait_until="networkidle", timeout=timeout)
+            html = page.content()
+            browser.close()
+            return html
+    except Exception as e:
+        print(f"  ⚠️  Playwright 접근 실패: {e}")
+        return None
+
+
 # ─── 웹 스크래핑 유틸 ─────────────────────────────────────────
 def fetch_page(url, timeout=15):
-    """URL에서 HTML 가져오기"""
+    """URL에서 HTML 가져오기 (실패 시 Playwright 폴백)"""
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
         r.raise_for_status()
-        return r.text
+        # 본문이 너무 짧으면 JS 렌더링 필요일 수 있음
+        if len(r.text) > 500:
+            return r.text
+        print(f"  ⚠️  {url} 본문이 너무 짧음 ({len(r.text)}자), Playwright로 재시도")
     except Exception as e:
-        print(f"  ⚠️  {url} 접근 실패: {e}")
+        print(f"  ⚠️  {url} requests 접근 실패: {e}")
+
+    # Playwright 폴백
+    if _pw_available():
+        print(f"  🔄 Playwright로 재시도: {url}")
+        return fetch_page_playwright(url)
+    else:
+        print(f"  ❌ Playwright 미설치, 페이지 접근 불가: {url}")
         return None
 
 
