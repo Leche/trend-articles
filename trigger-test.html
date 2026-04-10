@@ -959,6 +959,7 @@ async function runCuration() {
       article_count: document.getElementById('articleCount').value || '6',
       custom_date:   document.getElementById('customDate').value || '',
       replace_urls:  '',
+      test_mode:     'true',
     });
     if (res.status === 204) {
       showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
