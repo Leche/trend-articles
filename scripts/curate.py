@@ -660,7 +660,13 @@ def summarize_single_article(url):
     text = response.content[0].text
     json_match = re.search(r'\{[\s\S]*\}', text)
     if json_match:
-        return json.loads(json_match.group())
+        result = json.loads(json_match.group())
+        # 필수 키 보정
+        required_keys = ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"]
+        for k in required_keys:
+            if k not in result:
+                result[k] = url if k == "url" else ""
+        return result
     return None
 
 
@@ -732,7 +738,7 @@ def main():
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
             existing[idx] = new_art
-            print(f"  ✅ 교체 완료: {new_art['title_ko']}")
+            print(f"  ✅ 교체 완료: {new_art.get('title_ko', '(제목 없음)')}")
 
         # 번호 재정렬
         for i, art in enumerate(existing, 1):
