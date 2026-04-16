@@ -92,7 +92,70 @@ jobs:
 
       - name: Notify KakaoWork
         if: success()
+        env:
+          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"text\": \"✨ 트렌드림 기사 큐레이션 완료!\\n\\n📅 ${DATE_FULL}\\n🔗 https://leche.github.io/trend-articles/${DATE_FULL}/\"}"
+          python3 << 'PYEOF'
+          import os, re, json, datetime, urllib.request, urllib.error
+
+          test_mode = os.environ.get('TEST_MODE', '').strip().lower() == 'true'
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          date_full = os.environ.get('DATE_FULL', '').strip()
+
+          if not date_full:
+              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+              date_full = d.strftime('%Y-%m-%d')
+
+          d = datetime.datetime.strptime(date_full, '%Y-%m-%d').date()
+          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
+          weekday_ko = weekdays_ko[d.weekday()]
+          date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekday_ko}"
+
+          html_path = 'test/index.html' if test_mode else f'{date_full}/index.html'
+          link = 'https://leche.github.io/trend-articles/test/' if test_mode else f'https://leche.github.io/trend-articles/{date_full}/'
+
+          if not os.path.exists(html_path):
+              print(f"[WARN] HTML not found at {html_path} — fallback 메시지만 전송")
+              titles = []
+          else:
+              with open(html_path, 'r', encoding='utf-8') as f:
+                  html = f.read()
+              titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
+              print(f"[INFO] {len(titles)}개 기사 제목 추출")
+
+          test_prefix = "[TEST] " if test_mode else ""
+
+          if titles:
+              quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
+              message = (
+                  f"# ⚡️\n"
+                  f"# [{test_prefix}{date_label} 트렌드림 다이제스트]({link})\n"
+                  f"{quote_block}\n"
+                  f"cc. @@moretab @@pfs.design @@trenddaily"
+              )
+          else:
+              message = (
+                  f"# ⚡️\n"
+                  f"# [{test_prefix}{date_label} 트렌드림 다이제스트]({link})\n"
+                  f"cc. @@moretab @@pfs.design @@trenddaily"
+              )
+
+          if not webhook:
+              print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 이 비어있음")
+              raise SystemExit(1)
+
+          data = json.dumps({"text": message}).encode("utf-8")
+          req = urllib.request.Request(
+              webhook,
+              data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"[OK] status={resp.status} body={resp.read().decode('utf-8')}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
+          PYEOF
