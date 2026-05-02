@@ -57,6 +57,9 @@ jobs:
           TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
         run: python scripts/curate.py
 
+      - name: Inject GNB into generated HTML
+        run: python scripts/inject_gnb.py
+
       - name: Commit and push
         id: push
         run: |
