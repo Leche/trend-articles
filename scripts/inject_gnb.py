@@ -93,9 +93,13 @@ GNB_HTML_BODY = (
 GNB_JS_BODY = '''<script>(function(){
 var media=window.matchMedia('(prefers-color-scheme: dark)');
 function syncThemeColor(){
-var meta=document.querySelector('meta[name="theme-color"]');
-if(!meta){meta=document.createElement('meta');meta.setAttribute('name','theme-color');document.head.appendChild(meta);}
-meta.setAttribute('content',media.matches?'#1a1a1a':'#ffffff');
+var color=media.matches?'#1a1a1a':'#ffffff';
+var olds=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<olds.length;i++)olds[i].parentNode.removeChild(olds[i]);
+var meta=document.createElement('meta');
+meta.setAttribute('name','theme-color');
+meta.setAttribute('content',color);
+document.head.appendChild(meta);
 }
 syncThemeColor();
 if(media.addEventListener)media.addEventListener('change',syncThemeColor);
