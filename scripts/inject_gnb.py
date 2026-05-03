@@ -9,7 +9,8 @@ JS_END = '<!--GNB-JS-END-->'
 
 GNB_CSS_BODY = (
     "html{scroll-padding-top:var(--gnb-h,56px);scroll-behavior:smooth;}"
-    ".gnb{position:sticky;top:0;z-index:100;padding-top:env(safe-area-inset-top,0px);background:var(--gnb-bg,rgba(255,255,255,0.85));backdrop-filter:saturate(160%) blur(12px);-webkit-backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--line);}"
+    "body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--gnb-bg,rgba(255,255,255,0.85));backdrop-filter:saturate(160%) blur(12px);-webkit-backdrop-filter:saturate(160%) blur(12px);z-index:200;pointer-events:none;}"
+    ".gnb{position:sticky;top:0;z-index:100;background:var(--gnb-bg,rgba(255,255,255,0.85));backdrop-filter:saturate(160%) blur(12px);-webkit-backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--line);}"
     ".gnb-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;max-width:1320px;margin:0 auto;}"
     ".gnb-brand{display:inline-flex;align-items:baseline;gap:8px;font-size:16px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-0.02em;white-space:nowrap;cursor:pointer;}"
     ".gnb-date{font-weight:500;color:var(--text4);font-variant-numeric:tabular-nums;letter-spacing:0;font-size:14px;}"
@@ -239,18 +240,8 @@ def ensure_viewport_fit_cover(content):
         return attrs.replace(cm.group(0), f'content="{new_val}"')
     return re.sub(r'<meta[^>]*name\s*=\s*"viewport"[^>]*>', repl, content, count=1)
 
-THEME_COLOR_TAGS = (
-    '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">'
-    '<meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">'
-)
-
-def ensure_theme_color(content):
-    content = re.sub(r'<meta[^>]*name\s*=\s*"theme-color"[^>]*>', '', content)
-    vm = re.search(r'<meta[^>]*name\s*=\s*"viewport"[^>]*>', content)
-    if not vm:
-        return content
-    insert_at = vm.end()
-    return content[:insert_at] + THEME_COLOR_TAGS + content[insert_at:]
+def strip_theme_color(content):
+    return re.sub(r'<meta[^>]*name\s*=\s*"theme-color"[^>]*>', '', content)
 
 def strip_existing_gnb(content):
     content = re.sub(re.escape(CSS_START) + r'.*?' + re.escape(CSS_END), '', content, flags=re.DOTALL)
@@ -281,7 +272,7 @@ def process_file(path):
     content = unwrap_page_div(content)
     content = update_agit_label(content)
     content = ensure_viewport_fit_cover(content)
-    content = ensure_theme_color(content)
+    content = strip_theme_color(content)
 
     roots = list(re.finditer(r':root\s*\{[^}]+\}', content))
     if roots:
