@@ -8,18 +8,24 @@ JS_START = '<!--GNB-JS-START-->'
 JS_END = '<!--GNB-JS-END-->'
 
 GNB_CSS_BODY = (
-    "html{scroll-padding-top:var(--gnb-h,56px);scroll-behavior:smooth;}"
-    ".gnb{position:sticky;top:0;z-index:100;padding-top:env(safe-area-inset-top,0px);background-color:var(--surface);border-bottom:1px solid var(--line);}"
-    ".gnb-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;max-width:1320px;margin:0 auto;}"
-    ".gnb-brand{display:inline-flex;align-items:baseline;gap:8px;font-size:16px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-0.02em;white-space:nowrap;cursor:pointer;}"
-    ".gnb-date{font-weight:500;color:var(--text4);font-variant-numeric:tabular-nums;letter-spacing:0;font-size:14px;}"
-    ".gnb-toc-btn{display:inline-flex;align-items:center;gap:9px;padding:7px 8px 7px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);font-family:inherit;line-height:1;transition:all 0.18s;}"
-    ".gnb-toc-btn:hover{border-color:var(--label-border,var(--text4));color:var(--text);}"
-    ".gnb-toc-btn[aria-expanded='true']{background:var(--page);border-color:var(--text4);color:var(--text);}"
-    ".gnb-toc-progress{display:inline-flex;align-items:center;padding:3px 8px;background:var(--page);border-radius:999px;color:var(--text4);font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;letter-spacing:0.02em;transition:all 0.18s;}"
-    ".gnb-toc-btn:hover .gnb-toc-progress,.gnb-toc-btn[aria-expanded='true'] .gnb-toc-progress{background:var(--surface);color:var(--text2);}"
-    ".gnb-progress-track{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:transparent;pointer-events:none;}"
-    ".gnb-progress-fill{height:100%;background:var(--text);width:0;transition:width 0.1s linear;}"
+    "html{scroll-padding-top:var(--gnb-h,77px);scroll-behavior:smooth;}"
+    "body{padding-top:var(--gnb-h,77px);}"
+    # GNB: solid translucent bg + 8px blur (Figma 6948:2157)
+    ":root{--gnb-bg:rgba(255,255,255,0.12);--gnb-date-color:rgba(25,25,25,0.48);}"
+    "@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}"
+    ".gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:77px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}"
+    ".gnb-inner{position:absolute;top:0;left:0;right:0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}"
+    ".gnb-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}"
+    ".gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:20px;line-height:normal;}"
+    ".gnb-date{font-family:'Pretendard',inherit;font-weight:500;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}"
+    # TOC button: solid dark bg + white text (Figma 6948:2162 - updated)
+    ".gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 13px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}"
+    "@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}"
+    ".gnb-toc-btn:active{opacity:0.75;}"
+    ".gnb-toc-label{font-weight:500;font-size:14px;}"
+    ".gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}"
+    # Progress fill — bottom of GNB, no track/guide-line
+    ".gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}"
     "body.toc-open{overflow:hidden;}"
     ".toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}"
     ".toc-panel.open{visibility:visible;pointer-events:auto;}"
@@ -74,13 +80,19 @@ GNB_CSS_BODY = (
 )
 
 GNB_HTML_BODY = (
-    '<nav class="gnb"><div class="gnb-inner">'
-    '<a href="#top" class="gnb-brand" data-gnb-top>트렌드림 <span class="gnb-date"></span></a>'
+    '<nav class="gnb">'
+    '<div class="gnb-inner">'
+    '<a href="#top" class="gnb-brand" data-gnb-top>'
+    '<span class="gnb-brand-name">트렌드림</span>'
+    '<span class="gnb-date"></span>'
+    '</a>'
     '<button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel">'
-    '<span>목차</span>'
+    '<span class="gnb-toc-label">목차</span>'
     '<span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span>'
     '</button>'
-    '</div><div class="gnb-progress-track"><div class="gnb-progress-fill"></div></div></nav>'
+    '</div>'
+    '<div class="gnb-progress-fill"></div>'
+    '</nav>'
     '<aside id="toc-panel" class="toc-panel" aria-hidden="true">'
     '<div class="toc-overlay"></div>'
     '<div class="toc-drawer">'
@@ -90,19 +102,13 @@ GNB_HTML_BODY = (
 )
 
 GNB_JS_BODY = '''<script>(function(){
-var media=window.matchMedia('(prefers-color-scheme: dark)');
-function syncThemeColor(){
-var color=media.matches?'#1a1a1a':'#ffffff';
-var olds=document.querySelectorAll('meta[name="theme-color"]');
-for(var i=0;i<olds.length;i++)olds[i].parentNode.removeChild(olds[i]);
-var meta=document.createElement('meta');
-meta.setAttribute('name','theme-color');
-meta.setAttribute('content',color);
-document.head.appendChild(meta);
+// Naver-style trick: set theme-color content to empty so iOS Safari renders
+// status bar transparent over page content (instead of solid theme-color tint).
+var tcs=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<tcs.length;i++)tcs[i].setAttribute('content','');
+if(!tcs.length){
+var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content','');document.head.appendChild(m);
 }
-syncThemeColor();
-if(media.addEventListener)media.addEventListener('change',syncThemeColor);
-else if(media.addListener)media.addListener(syncThemeColor);
 var arts=document.querySelectorAll('.article-item');
 if(!arts.length)return;
 var gnb=document.querySelector('.gnb');
@@ -111,7 +117,6 @@ var tocBtn=document.querySelector('.gnb-toc-btn');
 var tocPanel=document.getElementById('toc-panel');
 var tocClose=document.querySelector('.toc-close');
 var tocOverlay=document.querySelector('.toc-overlay');
-var fill=document.querySelector('.gnb-progress-fill');
 var curEl=document.querySelector('.gnb-toc-progress .cur');
 var totEl=document.querySelector('.gnb-toc-progress .tot');
 var brand=document.querySelector('[data-gnb-top]');
@@ -121,11 +126,23 @@ var pm=location.pathname.match(/(\\d{4})-(\\d{2})-(\\d{2})/);
 if(pm&&dateEl){
 var y=parseInt(pm[1],10),mo=parseInt(pm[2],10),d=parseInt(pm[3],10);
 var dow=DAYS[new Date(y,mo-1,d).getDay()];
-dateEl.textContent=(y%100)+'. '+mo+'. '+d+' ('+dow+')';
+dateEl.textContent=y+'. '+mo+'. '+d+' '+dow+'요일';
 }
-function updateGnbH(){if(gnb)document.documentElement.style.setProperty('--gnb-h',gnb.offsetHeight+'px');}
+function updateGnbH(){var g=document.querySelector('.gnb');if(g){document.documentElement.style.setProperty('--gnb-h',g.offsetHeight+'px');}}
 updateGnbH();
 window.addEventListener('resize',updateGnbH);
+var progressFill=document.querySelector('.gnb-progress-fill');
+function updateProgress(){
+if(!progressFill)return;
+var d=document.documentElement;
+var total=d.scrollHeight-window.innerHeight;
+var cur=window.scrollY||d.scrollTop;
+var pct=total>0?Math.min(100,(cur/total)*100):0;
+progressFill.style.width=pct+'%';
+}
+updateProgress();
+window.addEventListener('scroll',updateProgress,{passive:true});
+window.addEventListener('resize',updateProgress);
 arts.forEach(function(art,i){
 art.id='article-'+(i+1);
 var num='#'+(i+1);
@@ -174,16 +191,6 @@ setActive(idx);
 },{rootMargin:'-30% 0px -55% 0px',threshold:0});
 arts.forEach(function(a){io.observe(a);});
 }
-function updateProgress(){
-var d=document.documentElement;
-var total=d.scrollHeight-window.innerHeight;
-var cur=window.scrollY||d.scrollTop;
-var pct=total>0?Math.min(100,(cur/total)*100):0;
-fill.style.width=pct+'%';
-}
-window.addEventListener('scroll',updateProgress,{passive:true});
-window.addEventListener('resize',updateProgress);
-updateProgress();
 var cta=document.querySelector('.agit-cta');
 if(cta){
 var bt=document.createElement('button');
@@ -240,15 +247,17 @@ def update_agit_label(content):
     return content.replace('트렌드림 아지트로 돌아가기', '트렌드림 아지트')
 
 def ensure_viewport_fit_cover(content):
+    # Naver/Daum approach: NO viewport-fit=cover.
+    # iOS Safari natively renders translucent status bar that samples page content.
+    # If viewport-fit=cover is present, remove it.
     def repl(m):
         attrs = m.group(0)
         cm = re.search(r'content\s*=\s*"([^"]*)"', attrs)
         if not cm:
             return attrs
         val = cm.group(1)
-        if 'viewport-fit' in val:
-            return attrs
-        new_val = val.rstrip().rstrip(',') + ', viewport-fit=cover'
+        # Strip viewport-fit=cover (and clean trailing/leading commas/spaces)
+        new_val = re.sub(r',?\s*viewport-fit\s*=\s*[^,]+', '', val).strip().strip(',').strip()
         return attrs.replace(cm.group(0), f'content="{new_val}"')
     return re.sub(r'<meta[^>]*name\s*=\s*"viewport"[^>]*>', repl, content, count=1)
 
