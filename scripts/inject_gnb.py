@@ -9,7 +9,7 @@ JS_END = '<!--GNB-JS-END-->'
 
 GNB_CSS_BODY = (
     "html{scroll-padding-top:var(--gnb-h,56px);scroll-behavior:smooth;}"
-    "body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--gnb-bg,rgba(255,255,255,0.85));backdrop-filter:saturate(160%) blur(12px);-webkit-backdrop-filter:saturate(160%) blur(12px);z-index:200;pointer-events:none;}"
+    "body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background-color:var(--surface);z-index:200;pointer-events:none;}"
     ".gnb{position:sticky;top:0;z-index:100;background:var(--gnb-bg,rgba(255,255,255,0.85));backdrop-filter:saturate(160%) blur(12px);-webkit-backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--line);}"
     ".gnb-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;max-width:1320px;margin:0 auto;}"
     ".gnb-brand{display:inline-flex;align-items:baseline;gap:8px;font-size:16px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-0.02em;white-space:nowrap;cursor:pointer;}"
