@@ -18,7 +18,7 @@ GNB_CSS_BODY = (
     ".gnb-toc-btn[aria-expanded='true']{background:var(--page);border-color:var(--text4);color:var(--text);}"
     ".gnb-toc-progress{display:inline-flex;align-items:center;padding:3px 8px;background:var(--page);border-radius:999px;color:var(--text4);font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;letter-spacing:0.02em;transition:all 0.18s;}"
     ".gnb-toc-btn:hover .gnb-toc-progress,.gnb-toc-btn[aria-expanded='true'] .gnb-toc-progress{background:var(--surface);color:var(--text2);}"
-    ".gnb-progress-track{height:2px;background:transparent;}"
+    ".gnb-progress-track{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:transparent;pointer-events:none;}"
     ".gnb-progress-fill{height:100%;background:var(--text);width:0;transition:width 0.1s linear;}"
     "body.toc-open{overflow:hidden;}"
     ".toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}"
