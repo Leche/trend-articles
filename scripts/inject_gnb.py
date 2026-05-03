@@ -239,6 +239,19 @@ def ensure_viewport_fit_cover(content):
         return attrs.replace(cm.group(0), f'content="{new_val}"')
     return re.sub(r'<meta[^>]*name\s*=\s*"viewport"[^>]*>', repl, content, count=1)
 
+THEME_COLOR_TAGS = (
+    '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">'
+    '<meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">'
+)
+
+def ensure_theme_color(content):
+    content = re.sub(r'<meta[^>]*name\s*=\s*"theme-color"[^>]*>', '', content)
+    vm = re.search(r'<meta[^>]*name\s*=\s*"viewport"[^>]*>', content)
+    if not vm:
+        return content
+    insert_at = vm.end()
+    return content[:insert_at] + THEME_COLOR_TAGS + content[insert_at:]
+
 def strip_existing_gnb(content):
     content = re.sub(re.escape(CSS_START) + r'.*?' + re.escape(CSS_END), '', content, flags=re.DOTALL)
     content = re.sub(re.escape(HTML_START) + r'.*?' + re.escape(HTML_END), '', content, flags=re.DOTALL)
@@ -268,6 +281,7 @@ def process_file(path):
     content = unwrap_page_div(content)
     content = update_agit_label(content)
     content = ensure_viewport_fit_cover(content)
+    content = ensure_theme_color(content)
 
     roots = list(re.finditer(r':root\s*\{[^}]+\}', content))
     if roots:

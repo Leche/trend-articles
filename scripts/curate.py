@@ -619,7 +619,7 @@ def generate_html(articles):
     last_2col = total % 2 or 2
     last_3col = total % 3 or 3
 
-    html = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>{DATE_DISPLAY} Trend Article Digest</title><style>
+    html = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)"><title>{DATE_DISPLAY} Trend Article Digest</title><style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 :root {{
