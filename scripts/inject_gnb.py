@@ -25,7 +25,7 @@ GNB_CSS_BODY = (
     ".toc-panel.open{visibility:visible;pointer-events:auto;}"
     ".toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}"
     ".toc-panel.open .toc-overlay{opacity:1;}"
-    ".toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;}"
+    ".toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}"
     ".toc-panel.open .toc-drawer{transform:translateY(0);}"
     ".toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}"
     ".toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}"
