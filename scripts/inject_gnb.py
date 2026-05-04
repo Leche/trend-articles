@@ -42,9 +42,9 @@ GNB_CSS_BODY = (
     ".toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}"
     ".toc-panel.open .toc-item{opacity:1;transform:translateY(0);}"
     ".toc-item:hover{background:var(--page);}"
-    ".toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.16);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}"
-    ".toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.16);word-break:keep-all;font-weight:500;}"
-    "@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.16);}}"
+    ".toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}"
+    ".toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}"
+    "@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}"
     ".toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}"
     # article-label: editorial kicker style (just numbering, no chip)
     ".article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}"
