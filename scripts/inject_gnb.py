@@ -9,6 +9,9 @@ JS_END = '<!--GNB-JS-END-->'
 
 GNB_CSS_BODY = (
     "html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}"
+    # Hide scrollbars while keeping scroll functional (mobile + desktop)
+    "html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}"
+    "html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}"
     "body{padding-top:var(--gnb-h,55px);}"
     # GNB: solid translucent bg + 8px blur (Figma 6948:2157)
     ":root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}"
