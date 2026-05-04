@@ -47,7 +47,7 @@ GNB_CSS_BODY = (
     ".toc-text{font-size:16px;line-height:1.5;color:var(--text);word-break:keep-all;font-weight:500;}"
     ".toc-item.active .toc-text{font-weight:700;}"
     # article-label: editorial kicker style (just numbering, no chip)
-    ".article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--text4);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}"
+    ".article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}"
     ".link-box{padding:8px 12px;}"
     # agit-cta + back-to-top: 2-col flex with identical outline button design
     ".agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}"
