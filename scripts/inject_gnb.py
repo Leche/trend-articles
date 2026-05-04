@@ -19,7 +19,7 @@ GNB_CSS_BODY = (
     ".gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}"
     ".gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}"
     # TOC button: solid dark bg + white text (Figma 6948:2162)
-    ".gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:7px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}"
+    ".gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}"
     "@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}"
     ".gnb-toc-btn:active{opacity:0.75;}"
     ".gnb-toc-label{font-weight:500;font-size:13px;}"
