@@ -51,11 +51,11 @@ GNB_CSS_BODY = (
     ".link-box{padding:8px 12px;}"
     # agit-cta + back-to-top: 2-col flex with identical outline button design
     ".agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}"
-    ".back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:transparent;color:var(--text2) !important;border:1px solid var(--line);border-radius:999px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:border-color 0.18s,color 0.18s,background 0.18s;-webkit-tap-highlight-color:transparent;}"
+    ".back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}"
     "@media (hover:hover){"
-        ".back-to-top:hover,.agit-cta-btn:hover{opacity:1;border-color:var(--text2);color:var(--text) !important;background:var(--page);}"
+        ".back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}"
     "}"
-    ".back-to-top:active,.agit-cta-btn:active{background:var(--page);}"
+    ".back-to-top:active,.agit-cta-btn:active{opacity:0.75;}"
     ".back-to-top:focus,.agit-cta-btn:focus{outline:none;}"
     ".back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}"
     # 768+: remove page frame and card border/radius (since .page wrapper is removed)
