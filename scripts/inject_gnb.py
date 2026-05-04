@@ -43,9 +43,9 @@ GNB_CSS_BODY = (
     ".toc-panel.open .toc-item{opacity:1;transform:translateY(0);}"
     ".toc-item:hover{background:var(--page);}"
     ".toc-item.active{background:var(--page);}"
-    ".toc-num{font-size:11px;font-weight:700;color:var(--text5);letter-spacing:0.08em;padding-top:4px;flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}"
+    ".toc-num{font-size:16px;line-height:1.5;font-weight:500;color:var(--text);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}"
     ".toc-text{font-size:16px;line-height:1.5;color:var(--text);word-break:keep-all;font-weight:500;}"
-    ".toc-item.active .toc-text{font-weight:700;}"
+    ".toc-item.active .toc-num,.toc-item.active .toc-text{font-weight:700;}"
     # article-label: editorial kicker style (just numbering, no chip)
     ".article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}"
     ".link-box{padding:8px 12px;}"
