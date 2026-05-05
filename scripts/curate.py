@@ -585,8 +585,58 @@ def enrich_articles(articles):
 
 
 # ─── HTML 생성 ────────────────────────────────────────────────
+def calculate_reading_time(articles):
+    """전체 기사 텍스트 기반 읽기 시간 추정 (한국어 ~700자/분)"""
+    total = 0
+    for art in articles:
+        for k in ('title_ko', 'one_line', 'summary_1', 'summary_2', 'summary_3'):
+            total += len(art.get(k, '') or '')
+    return max(1, round(total / 700))
+
+
+def generate_intro(articles):
+    """오늘 기사들을 보고 1~2문장 인트로 생성 (Claude)"""
+    client = anthropic.Anthropic()
+    article_text = ""
+    for i, art in enumerate(articles, 1):
+        article_text += f"{i}. [{art.get('title_ko','')}]\n   {art.get('one_line','')}\n\n"
+    prompt = f"""당신은 트렌드림이라는 매일 큐레이션되는 아티클 다이제스트의 큐레이터입니다. 아래는 오늘 큐레이션된 기사 목록입니다.
+
+{article_text}이 기사들을 읽기 전, 독자가 오늘의 흐름을 한눈에 파악할 수 있도록 1~2문장의 친근한 인트로를 작성해주세요.
+
+조건:
+- 친근하고 자연스러운 한국어 ("~요" 톤)
+- 70~120자 내
+- 핵심 테마 1~2개를 자연스럽게 언급
+- 기사 번호 언급 X
+- 광고스럽거나 과장된 표현 X
+- 매번 같은 패턴이 아닌 자연스러운 표현 사용
+
+응답: 인트로 텍스트만 (다른 설명, 따옴표 등 없이)"""
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text.strip()
+    except Exception as e:
+        print(f"[WARN] intro generation failed: {e}")
+        return f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요."
+
+
 def generate_html(articles):
     """확정된 템플릿으로 HTML 생성"""
+
+    # AI 인트로 + 읽기 시간
+    intro_text = generate_intro(articles)
+    reading_mins = calculate_reading_time(articles)
+    intro_html = (
+        f'<section class="digest-intro" data-static-intro>'
+        f'<div class="digest-meta"><span>{len(articles)}개 기사</span><span>·</span><span>약 {reading_mins}분 읽기</span></div>'
+        f'<p class="digest-summary">{intro_text}</p>'
+        f'</section>'
+    )
 
     # 기사 카드 HTML 생성
     cards_html = ""
@@ -703,6 +753,7 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 @media (min-width: 768px) {{ .agit-cta {{ margin: 0 40px; padding: 40px 0 32px; }} .agit-cta-btn {{ display: inline-flex; width: auto; padding: 0 24px; }} }}
 @media (min-width: 1200px) {{ .agit-cta {{ padding: 40px 0 36px; }} }}
 </style></head><body><div class="page"><div class="card"><header class="header"><h1>{DATE_DISPLAY}</h1><div class="header-meta">Trend Article Digest</div></header><main class="article-wrap article-list">
+{intro_html}
 {cards_html}
 </main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트로 돌아가기</a></div></div></div></body></html>"""
 

@@ -78,7 +78,18 @@ GNB_CSS_BODY = (
         ".agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}"
         ".back-to-top,.agit-cta-btn{height:48px;font-size:14px;}"
     "}"
-    "@media (min-width:1200px){.gnb-inner{padding:14px 40px;}.agit-cta{margin:0 40px;}}"
+    # Digest intro section (article count + reading time + tagline)
+    ".digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}"
+    ".digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}"
+    ".digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}"
+    "@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}"
+    "@media (min-width:1200px){.gnb-inner{padding:14px 40px;}.agit-cta{margin:0 40px;}"
+        ".digest-intro{grid-column:1 / -1;padding:36px 0 40px;}"
+        # Subgrid: align all sections across cards in same row
+        # minmax(0,1fr) prevents grid items from overflowing column (default min-width:auto bug)
+        ".article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}"
+        ".article-item > *{min-width:0;}"
+    "}"
     "@media (min-width:1600px){.gnb-inner{max-width:1800px;}}"
 )
 
@@ -114,6 +125,17 @@ var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setA
 }
 var arts=document.querySelectorAll('.article-item');
 if(!arts.length)return;
+// Insert digest intro at top of article-wrap (count + reading time)
+var artWrap=document.querySelector('.article-wrap');
+if(artWrap&&!document.querySelector('.digest-intro')){
+var totalChars=0;
+for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
+var readMins=Math.max(1,Math.round(totalChars/700));
+var intro=document.createElement('section');
+intro.className='digest-intro';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">오늘 트렌드림이 큐레이션한 '+arts.length+'개의 기사예요. 약 '+readMins+'분이면 모두 살펴보실 수 있어요.</p>';
+artWrap.insertBefore(intro,artWrap.firstElementChild);
+}
 var gnb=document.querySelector('.gnb');
 var tocList=document.querySelector('.toc-list');
 var tocBtn=document.querySelector('.gnb-toc-btn');
