@@ -826,7 +826,7 @@ def generate_intro(articles):
 응답: 인트로 텍스트만 (다른 설명, 따옴표 등 없이)"""
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=300,
             messages=[{"role": "user", "content": prompt}]
         )
