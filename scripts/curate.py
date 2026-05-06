@@ -25,6 +25,9 @@ ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "6"))
 CUSTOM_DATE = os.environ.get("CUSTOM_DATE", "").strip()
 REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
 TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
+# CURATE_MODE: "web_search" (default, internet-wide via Claude web_search tool)
+#              | "legacy" (scrape SURFIT_CATEGORIES + PRIORITY_SITES below)
+CURATE_MODE = os.environ.get("CURATE_MODE", "web_search").strip().lower()
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
 SURFIT_CATEGORIES = [
@@ -541,6 +544,120 @@ def curate_with_claude(candidates):
     return articles
 
 
+# ─── Claude web_search로 인터넷 전체 큐레이션 ──────────────────
+def curate_via_web_search():
+    """Claude의 web_search 툴로 인터넷 전체에서 기사 큐레이션.
+    사이트 화이트리스트 없이, 카테고리 가이드와 한국 사이트 균형 요건만 프롬프트로 통제."""
+    client = anthropic.Anthropic()
+
+    past_text = "과거 큐레이션된 기사 제목:\n"
+    for t in past_titles[:80]:
+        past_text += f"- {t}\n"
+    past_text += "\n과거 큐레이션된 기사 링크:\n"
+    for l in past_links[:80]:
+        past_text += f"- {l}\n"
+
+    prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
+트렌드림은 프로덕트, 디자인, 테크, 비즈니스에 관심 있는 한국어권 독자들을 위한 뉴스레터입니다.
+
+## 임무
+오늘({TODAY.isoformat()}) 기준 최근 2주 이내에 발행된 트렌딩 기사 중에서 정확히 {ARTICLE_COUNT}개를 선정합니다.
+**web_search 툴을 적극적으로 활용**하여 인터넷에서 최신 기사를 직접 검색·읽고, 적합한 기사를 골라주세요.
+
+## 카테고리 가이드 ({ARTICLE_COUNT}개 구성)
+- 빅테크(구글/애플/메타/OpenAI/Anthropic/Microsoft 등) 신제품·업데이트: 1~2개
+- 그 외는 다음에서 자유롭게 조합:
+  • 프로덕트 디자인 / UX / UI 트렌드
+  • 프로덕트 그로스 / 비즈니스 인사이트
+  • AI 서비스/툴 활용 및 트렌드
+  • 국내외 스타트업·서비스의 새로운 시도
+  • 사회적으로 주목할 만한 테크/비즈니스 이슈
+- 마케팅 기사는 프로덕트 그로스 관점인 것만 허용
+
+## 출처 다양성 (필수)
+- **한국어 출처 비중 ≥ 40%**: 영어권 사이트에 편향되지 않도록 의식적으로 한국어 기사를 포함하세요.
+  한국 출처 예시:
+    - 한국 기업 공식 블로그/뉴스룸: 토스(toss.tech), 당근(daangn.com), 네이버(naver.com 공식, navercorp), 카카오, 라인, 쿠팡, 우아한형제들(woowahan.com), 올리브영(oliveyoung.tech), SKT, KT, 삼성전자
+    - 한국 IT/테크 언론: IT조선, 디지털타임스, ZDNet Korea, 더 기어(thegear), 블로터(BLOTER), 아웃스탠딩, 모비인사이드, 더밀크(themiilk)
+    - 한국 디자인/리서치 매체: 디자인컴파스(designcompass), brunch story, 퍼블리, 폴인
+- 같은 출처(사이트 도메인)에서 최대 2개까지만 선정
+- 영문 출처도 함께 포함 (TechCrunch, The Verge, 9to5mac/google, Anthropic/OpenAI/Google blog 등)
+
+## 검색 전략
+- **한국어 키워드 검색을 반드시 병행**: 예) "토스 신기능", "네이버 AI 출시", "카카오 새 서비스", "당근마켓 업데이트", "쿠팡 발표"
+- 영어 키워드 검색도 병행: 예) "OpenAI launch this week", "Figma update {TODAY.year}"
+- 카테고리별로 1~2회 검색하여 후보 풀을 만든 뒤 최종 {ARTICLE_COUNT}개 선정
+
+## 다양성
+- 비슷한 주제·출처에 몰리지 않게
+- 다양한 관점·주제·국가가 섞이게
+
+## 과거 기사 (반드시 크로스체크 — 중복 절대 금지)
+{past_text}
+
+## 출력 형식
+선정한 기사들을 아래 JSON 배열 **하나만** 출력. 다른 부가 설명·텍스트 일절 금지:
+
+```json
+[
+  {{
+    "url": "기사 원문 URL (실제 접근 가능한 URL)",
+    "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
+    "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
+    "summary_1": "첫 번째 요약 (약 100자, 해요체)",
+    "summary_2": "두 번째 요약 (약 100자, 해요체)",
+    "summary_3": "세 번째 요약 (약 100자, 해요체)"
+  }}
+]
+```
+
+## 한 줄 요약 규칙
+- 20자 내외, 명사형 + 마침표
+- ~해요/~입니다/~했다/~한 것 사용 금지
+
+## 3줄 요약 규칙
+- 각 줄 약 100자 내외
+- 해요체 (~해요/~돼요/~있어요/~했어요/~거예요)
+- "이 글은", "이 기사는" 등 메타 문장 금지
+- 핵심 내용부터 바로 시작 (현상 → 맥락 → 의미 흐름 권장)
+"""
+
+    print(f"\n🌐 Claude web_search로 인터넷 전체에서 큐레이션 (모델: claude-sonnet-4-6)…")
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=8192,
+        tools=[{
+            "type": "web_search_20250305",
+            "name": "web_search",
+            "max_uses": 25,
+        }],
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    print(f"  stop_reason: {response.stop_reason}")
+    # tool_use 블록 개수 디버그용
+    tool_uses = sum(1 for b in response.content if getattr(b, "type", None) == "server_tool_use")
+    if tool_uses:
+        print(f"  web_search 호출 횟수: {tool_uses}")
+
+    # 최종 어시스턴트 텍스트 블록만 합치기
+    text = ""
+    for block in response.content:
+        if getattr(block, "type", None) == "text":
+            text += getattr(block, "text", "")
+
+    json_match = re.search(r'\[[\s\S]*\]', text)
+    if not json_match:
+        print("❌ Claude 응답에서 JSON을 찾을 수 없습니다.")
+        print(text[:2000])
+        sys.exit(1)
+
+    articles = json.loads(json_match.group())
+    print(f"✅ {len(articles)}개 기사 선정 완료")
+    return articles
+
+
 # ─── 각 기사 상세 읽기 + 썸네일 ───────────────────────────────
 def enrich_articles(articles):
     """각 기사의 원문을 읽고 내용 보강 + 썸네일 다운로드"""
@@ -980,12 +1097,16 @@ def main():
         enriched = existing
     else:
         # ── 일반 모드 ──
-        # 1. 우선 사이트 스캔
-        candidates = scan_priority_sites()
-        print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
-
-        # 2. Claude API로 기사 선정 + 요약
-        articles = curate_with_claude(candidates)
+        if CURATE_MODE == "legacy":
+            print(f"\n🗂  CURATE_MODE=legacy — 기존 사이트 화이트리스트 스캔")
+            # 1. 우선 사이트 스캔
+            candidates = scan_priority_sites()
+            print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
+            # 2. Claude API로 기사 선정 + 요약
+            articles = curate_with_claude(candidates)
+        else:
+            print(f"\n🌐 CURATE_MODE=web_search — Claude 인터넷 검색 큐레이션")
+            articles = curate_via_web_search()
 
         # 기사 수 검증
         if len(articles) != ARTICLE_COUNT:
