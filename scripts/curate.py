@@ -110,10 +110,11 @@ if REPLACEMENTS:
 
 # ─── 과거 기사 크로스체크 ──────────────────────────────────────
 def load_past_articles():
-    """기존 HTML 파일들에서 기사 제목과 링크를 추출"""
+    """기존 HTML 파일들에서 기사 제목과 링크를 추출 (최신 날짜부터)"""
     past = []
     html_files = glob.glob("*.html") + glob.glob("**/*.html", recursive=True)
-    html_files = list(set(html_files))
+    # 최신 날짜 폴더(2026-05-03 등)가 먼저 오도록 내림차순 정렬
+    html_files = sorted(set(html_files), reverse=True)
 
     for fp in html_files:
         if "guide" in fp.lower():
@@ -565,14 +566,15 @@ def curate_via_web_search():
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
     date_range_str = f"{two_weeks_ago.isoformat()} ~ {TODAY.isoformat()}"
 
-    # ── 과거 기사: 링크 전체 + 최근 200개 제목 ──
-    # (링크는 URL 정규화 비교 정확도가 높아 전체 전달, 제목은 컨텍스트로만)
-    past_text = "## 과거 큐레이션 링크 (이 URL 또는 동일 기사 절대 금지)\n"
-    for l in past_links:
-        past_text += f"- {l}\n"
-    past_text += "\n## 과거 큐레이션 제목 (동일·유사 제목 금지, 최근 200개)\n"
-    for t in past_titles[:200]:
+    # ── 과거 기사: 프롬프트에는 최근 30개만 힌트로, 전체는 Python 후처리에서 사용 ──
+    past_text = "## 최근 큐레이션된 기사 (참고용 힌트 — 같은 기사·같은 사건의 다른 매체 보도 금지)\n"
+    past_text += "Python 후처리에서 전체 과거 URL과 제목으로 한 번 더 자동 필터링됩니다. 여기서는 의미적 유사성·최근 트렌드 파악용으로만 활용하세요.\n\n"
+    past_text += "최근 제목 (newest first):\n"
+    for t in past_titles[:30]:
         past_text += f"- {t}\n"
+    past_text += "\n최근 링크 (newest first):\n"
+    for l in past_links[:30]:
+        past_text += f"- {l}\n"
 
     prompt = f"""당신은 **3년 넘게 '트렌드림'을 운영해온 프로덕트 디자이너 본인**입니다.
 트렌드림은 일반 테크 뉴스 게시판이 아니라, 다음 두 가지 축으로 차별화됩니다.
@@ -644,8 +646,11 @@ def curate_via_web_search():
 
 {past_text}
 
-## 출력 형식
-선정한 기사를 아래 JSON 배열 **하나만** 출력. 다른 부가 설명·텍스트 금지:
+## 출력 형식 (엄격)
+- 아래 JSON 배열 **하나만** 출력. 그 외에는 단 한 글자도 출력 금지.
+- **JSON 안에 주석(`//`, `#`) 절대 금지**. JSON 표준에 주석은 없습니다.
+- 추론·고민·후보 비교는 **머릿속으로만** 하고 최종 결과만 JSON으로 출력.
+- 마크다운 코드펜스(\\`\\`\\`)는 사용해도 되고 안 해도 됨. 단 JSON은 반드시 valid해야 함.
 
 ```json
 [
@@ -675,11 +680,11 @@ def curate_via_web_search():
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=16384,
+        max_tokens=24000,
         tools=[{
             "type": "web_search_20250305",
             "name": "web_search",
-            "max_uses": 15,
+            "max_uses": 10,
         }],
         messages=[{"role": "user", "content": prompt}],
     )
