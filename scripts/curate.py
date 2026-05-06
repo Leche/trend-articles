@@ -522,7 +522,7 @@ def curate_with_claude(candidates):
     print("\n🤖 Claude API로 기사 선정 및 요약 중...")
 
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
@@ -871,7 +871,7 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
     # 최대 2회 시도 (빈 값 나오면 재시도)
     for attempt in range(2):
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
