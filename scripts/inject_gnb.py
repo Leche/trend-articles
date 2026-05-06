@@ -83,14 +83,22 @@ GNB_CSS_BODY = (
     ".digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}"
     ".digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}"
     "@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}"
-    "@media (min-width:1200px){.gnb-inner{padding:14px 40px;}.agit-cta{margin:0 40px;}"
+    # PC FAB: 우하단 floating 두 버튼 (맨위로 + 아지트로). 1200+에서만 노출, 스크롤 후 등장.
+    ".pc-fabs{display:none;}"
+    "@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:14px 40px;}.agit-cta{display:none;}"
+        # FAB right 좌표 = 콘텐츠 우측 가장자리에 정렬 (content max-width 1320 - padding 40)
+        ".pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}"
+        ".pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}"
+        ".pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:-0.01em;cursor:pointer;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,0.15);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}"
+        ".pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 10px 26px rgba(0,0,0,0.18);}"
+        ".pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 14px rgba(0,0,0,0.12);}"
         ".digest-intro{grid-column:1 / -1;padding:36px 0 40px;}"
         # Subgrid: align all sections across cards in same row
         # minmax(0,1fr) prevents grid items from overflowing column (default min-width:auto bug)
         ".article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}"
         ".article-item > *{min-width:0;}"
     "}"
-    "@media (min-width:1600px){.gnb-inner{max-width:1800px;}}"
+    "@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}"
 )
 
 GNB_HTML_BODY = (
@@ -125,6 +133,21 @@ var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setA
 }
 var arts=document.querySelectorAll('.article-item');
 if(!arts.length)return;
+// PC FAB: 우하단 floating "맨위로" + "아지트로 →" (1200+ only, scroll-to-show)
+if(!document.querySelector('.pc-fabs')){
+var agitBtn=document.querySelector('.agit-cta-btn');
+var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
+var fabs=document.createElement('div');
+fabs.className='pc-fabs';
+fabs.setAttribute('aria-hidden','true');
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top><span aria-hidden="true">↑</span><span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'"><span>아지트로</span><span aria-hidden="true">→</span></a>';
+document.body.appendChild(fabs);
+var pcTop=fabs.querySelector('[data-pc-top]');
+if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
+function checkPcScroll(){if(window.scrollY>200){fabs.classList.add('visible');}else{fabs.classList.remove('visible');}}
+window.addEventListener('scroll',checkPcScroll,{passive:true});
+checkPcScroll();
+}
 // Insert digest intro at top of article-wrap (count + reading time)
 var artWrap=document.querySelector('.article-wrap');
 if(artWrap&&!document.querySelector('.digest-intro')){
