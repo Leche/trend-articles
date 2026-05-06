@@ -25,9 +25,9 @@ ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "6"))
 CUSTOM_DATE = os.environ.get("CUSTOM_DATE", "").strip()
 REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
 TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
-# CURATE_MODE: "web_search" (default, internet-wide via Claude web_search tool)
-#              | "legacy" (scrape SURFIT_CATEGORIES + PRIORITY_SITES below)
-CURATE_MODE = os.environ.get("CURATE_MODE", "web_search").strip().lower()
+# CURATE_MODE: "legacy" (default, scrape SURFIT_CATEGORIES + PRIORITY_SITES)
+#              | "web_search" (internet-wide via Claude web_search tool — billed per use)
+CURATE_MODE = os.environ.get("CURATE_MODE", "legacy").strip().lower()
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
 SURFIT_CATEGORIES = [
