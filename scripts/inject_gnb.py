@@ -89,9 +89,10 @@ GNB_CSS_BODY = (
         # FAB right 좌표 = 콘텐츠 우측 가장자리에 정렬 (content max-width 1320 - padding 40)
         ".pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}"
         ".pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}"
-        ".pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:-0.01em;cursor:pointer;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,0.15);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}"
-        ".pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 10px 26px rgba(0,0,0,0.18);}"
-        ".pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 14px rgba(0,0,0,0.12);}"
+        ".pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}"
+        ".pc-fab svg{flex-shrink:0;display:block;}"
+        ".pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}"
+        ".pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}"
         ".digest-intro{grid-column:1 / -1;padding:36px 0 40px;}"
         # Subgrid: align all sections across cards in same row
         # minmax(0,1fr) prevents grid items from overflowing column (default min-width:auto bug)
@@ -99,6 +100,7 @@ GNB_CSS_BODY = (
         ".article-item > *{min-width:0;}"
     "}"
     "@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}"
+    "@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}"
 )
 
 GNB_HTML_BODY = (
@@ -140,7 +142,9 @@ var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
 var fabs=document.createElement('div');
 fabs.className='pc-fabs';
 fabs.setAttribute('aria-hidden','true');
-fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top><span aria-hidden="true">↑</span><span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'"><span>아지트로</span><span aria-hidden="true">→</span></a>';
+var upSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1V15M13 6L8 1L3 6"/></svg>';
+var returnSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 5L6 8"/><path d="M3 5H10C10.7956 5 11.5587 5.31607 12.1213 5.87868C12.6839 6.44129 13 7.20435 13 8V14"/></svg>';
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top>'+upSvg+'<span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'">'+returnSvg+'<span>아지트로</span></a>';
 document.body.appendChild(fabs);
 var pcTop=fabs.querySelector('[data-pc-top]');
 if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
