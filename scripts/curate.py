@@ -545,17 +545,34 @@ def curate_with_claude(candidates):
 
 
 # ─── Claude web_search로 인터넷 전체 큐레이션 ──────────────────
+def _normalize_url(u):
+    """URL 정규화: 비교용. 프로토콜·쿼리·프래그먼트 무시, 트레일링 슬래시 제거."""
+    if not u:
+        return ""
+    u = u.strip().lower()
+    u = re.sub(r'^https?://', '', u)
+    u = re.sub(r'^www\.', '', u)
+    u = re.split(r'[?#]', u, 1)[0]
+    return u.rstrip('/')
+
+
 def curate_via_web_search():
     """Claude의 web_search 툴로 인터넷 전체에서 기사 큐레이션.
     사이트 화이트리스트 없이, 카테고리 가이드와 한국 사이트 균형 요건만 프롬프트로 통제."""
     client = anthropic.Anthropic()
 
-    past_text = "과거 큐레이션된 기사 제목:\n"
-    for t in past_titles[:80]:
-        past_text += f"- {t}\n"
-    past_text += "\n과거 큐레이션된 기사 링크:\n"
-    for l in past_links[:80]:
+    # ── 발행일 범위: 오늘로부터 14일 전 ~ 오늘 ──
+    two_weeks_ago = TODAY - datetime.timedelta(days=14)
+    date_range_str = f"{two_weeks_ago.isoformat()} ~ {TODAY.isoformat()}"
+
+    # ── 과거 기사: 링크 전체 + 최근 200개 제목 ──
+    # (링크는 URL 정규화 비교 정확도가 높아 전체 전달, 제목은 컨텍스트로만)
+    past_text = "## 과거 큐레이션 링크 (이 URL 또는 동일 기사 절대 금지)\n"
+    for l in past_links:
         past_text += f"- {l}\n"
+    past_text += "\n## 과거 큐레이션 제목 (동일·유사 제목 금지, 최근 200개)\n"
+    for t in past_titles[:200]:
+        past_text += f"- {t}\n"
 
     prompt = f"""당신은 **3년 넘게 '트렌드림'을 운영해온 프로덕트 디자이너 본인**입니다.
 트렌드림은 일반 테크 뉴스 게시판이 아니라, 다음 두 가지 축으로 차별화됩니다.
@@ -564,8 +581,20 @@ def curate_via_web_search():
 2. **그 안에서 '프로덕트 디자이너의 시선'이 드러나는 글을 함께 큐레이션한다** — 일반 뉴스 게시판과 차별점. 디자이너·메이커가 직접 쓴 글, 디자인 의사결정·UX 디테일이 보이는 분석, 디자인 시스템·도구·조직 글에 가산점.
 
 ## 임무
-오늘({TODAY.isoformat()}) 기준 최근 2주 이내에 발행된 기사 중에서 정확히 {ARTICLE_COUNT}개를 선정합니다.
-**web_search 툴을 적극 활용**하여 인터넷에서 최신 글을 직접 검색·읽고 적합한 기사를 골라주세요.
+오늘은 {TODAY.isoformat()} ({WEEKDAY_KO[TODAY.weekday()]})입니다.
+**발행일이 {date_range_str} 범위 안에 있는 기사만** 선정 대상입니다 (큐레이션 날짜 기준 14일 이내).
+이 범위 밖에 발행된 기사는 어떤 이유로도 선정하지 마세요. 트렌딩이거나 유명해도 14일 초과면 즉시 탈락.
+**web_search 툴을 적극 활용**하여 인터넷에서 최신 글을 직접 검색·읽고 적합한 기사를 정확히 {ARTICLE_COUNT}개 골라주세요.
+
+## 발행일 검증 (필수)
+- 검색 결과에서 각 후보의 **발행일을 반드시 확인**할 것 (페이지의 published date / `<time>` 태그 / og:article:published_time / 본문 첫줄 날짜 등)
+- 발행일이 명시되어 있지 않거나 확인 불가하면 그 기사는 선정 후보에서 제외
+- {date_range_str} 범위를 벗어나는 기사는 절대 선정 금지
+
+## 중복 방지 (필수)
+- 아래 "과거 큐레이션 링크" 섹션에 있는 URL과 **동일하거나 같은 기사를 가리키는** URL은 절대 선정 금지
+- "과거 큐레이션 제목"과 동일하거나 거의 같은 의미의 제목도 금지 (다른 매체의 같은 사건 보도 포함)
+- 같은 사건이라도 제목·관점이 명확히 다르고 새로운 정보가 추가된 경우만 예외적으로 허용
 
 ## 카테고리 가이드 ({ARTICLE_COUNT}개 구성 — 두 축 균형)
 
@@ -613,7 +642,6 @@ def curate_via_web_search():
 - 비슷한 주제·출처에 몰리지 않게
 - 두 축(A·B) 균형, 한국·해외 균형, 카테고리 분산
 
-## 과거 기사 (반드시 크로스체크 — 중복 절대 금지)
 {past_text}
 
 ## 출력 형식
@@ -693,8 +721,30 @@ def curate_via_web_search():
         print(json_str[:5000])
         sys.exit(1)
 
-    print(f"✅ {len(articles)}개 기사 선정 완료")
-    return articles
+    # ── 후처리: URL 기반 중복 제거 (안전망) ──
+    past_link_set = {_normalize_url(l) for l in past_links if l}
+    past_title_set = {(t or "").strip().lower() for t in past_titles}
+
+    deduped = []
+    for art in articles:
+        url_norm = _normalize_url(art.get("url", ""))
+        title_norm = (art.get("title_ko") or "").strip().lower()
+        if url_norm and url_norm in past_link_set:
+            print(f"  ⛔ 중복 URL 제거: {art.get('title_ko', art.get('url'))}")
+            continue
+        if title_norm and title_norm in past_title_set:
+            print(f"  ⛔ 중복 제목 제거: {art.get('title_ko')}")
+            continue
+        deduped.append(art)
+
+    if len(deduped) != len(articles):
+        print(f"  → 중복 제거 {len(articles) - len(deduped)}건, 최종 {len(deduped)}개")
+
+    if len(deduped) < ARTICLE_COUNT:
+        print(f"⚠️  중복 제거 후 {len(deduped)}개만 남음 (요청 {ARTICLE_COUNT}). 프롬프트 강화 필요할 수 있음.")
+
+    print(f"✅ {len(deduped)}개 기사 선정 완료")
+    return deduped
 
 
 # ─── 각 기사 상세 읽기 + 썸네일 ───────────────────────────────
