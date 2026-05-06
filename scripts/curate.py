@@ -647,11 +647,11 @@ def curate_via_web_search():
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=8192,
+        max_tokens=16384,
         tools=[{
             "type": "web_search_20250305",
             "name": "web_search",
-            "max_uses": 25,
+            "max_uses": 15,
         }],
         messages=[{"role": "user", "content": prompt}],
     )
@@ -668,13 +668,31 @@ def curate_via_web_search():
         if getattr(block, "type", None) == "text":
             text += getattr(block, "text", "")
 
-    json_match = re.search(r'\[[\s\S]*\]', text)
-    if not json_match:
+    # JSON 추출: 1) ```json …``` 코드펜스 우선, 2) 폴백 [ … ] 배열 매칭
+    json_str = None
+    fence_match = re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text)
+    if fence_match:
+        json_str = fence_match.group(1)
+    else:
+        bracket_match = re.search(r'\[[\s\S]*\]', text)
+        if bracket_match:
+            json_str = bracket_match.group(0)
+
+    if not json_str:
         print("❌ Claude 응답에서 JSON을 찾을 수 없습니다.")
-        print(text[:2000])
+        print(f"--- stop_reason={response.stop_reason} ---")
+        print(f"--- text 전체 ({len(text)} chars) ---")
+        print(text or "(빈 텍스트)")
         sys.exit(1)
 
-    articles = json.loads(json_match.group())
+    try:
+        articles = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON 파싱 실패: {e}")
+        print(f"--- 추출된 JSON 문자열 ({len(json_str)} chars) ---")
+        print(json_str[:5000])
+        sys.exit(1)
+
     print(f"✅ {len(articles)}개 기사 선정 완료")
     return articles
 
