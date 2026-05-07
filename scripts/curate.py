@@ -810,15 +810,21 @@ def generate_intro(articles):
     client = anthropic.Anthropic()
     article_text = ""
     for i, art in enumerate(articles, 1):
-        article_text += f"{i}. [{art.get('title_ko','')}]\n   {art.get('one_line','')}\n\n"
-    prompt = f"""당신은 트렌드림이라는 매일 큐레이션되는 아티클 다이제스트의 큐레이터입니다. 아래는 오늘 큐레이션된 기사 목록입니다.
+        article_text += f"{i}. [{art.get('title_ko','')}]\n"
+        article_text += f"   한 줄: {art.get('one_line','')}\n"
+        for k in ('summary_1', 'summary_2', 'summary_3'):
+            if art.get(k):
+                article_text += f"   - {art[k]}\n"
+        article_text += "\n"
+    prompt = f"""당신은 트렌드림이라는 매일 큐레이션되는 아티클 다이제스트의 큐레이터입니다. 아래는 오늘 큐레이션된 기사 목록과 각 기사의 요약입니다.
 
-{article_text}이 기사들을 읽기 전, 독자가 오늘의 흐름을 한눈에 파악할 수 있도록 1~2문장의 친근한 인트로를 작성해주세요.
+{article_text}이 기사들을 읽기 전, 독자가 오늘의 핵심 흐름을 한눈에 파악할 수 있도록 1~2문장의 인트로를 작성해주세요.
 
 조건:
 - 친근하고 자연스러운 한국어 ("~요" 톤)
 - 70~120자 내
-- 핵심 테마 1~2개를 자연스럽게 언급
+- 오늘 기사들의 핵심 키워드나 주제 1~2개를 구체적으로 언급 (예: "클로드의 한도 상향", "쿠팡 분기 적자" 등 실제 내용 반영)
+- "오늘 트렌드림이 큐레이션한 N개의 기사예요" 같은 제네릭 표현 금지
 - 기사 번호 언급 X
 - 광고스럽거나 과장된 표현 X
 - 매번 같은 패턴이 아닌 자연스러운 표현 사용
