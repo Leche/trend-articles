@@ -13,6 +13,10 @@ on:
         description: '대기 없이 즉시 게시 (true/false)'
         required: false
         default: 'false'
+      test_mode:
+        description: '테스트 모드 — 개인 아지트로 POST (true/false)'
+        required: false
+        default: 'false'
 
 jobs:
   post:
@@ -52,15 +56,25 @@ jobs:
       - name: Post digest to Agit
         env:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
+          AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
           TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
         run: |
           python3 << 'PYEOF'
           import os, re, json, datetime, urllib.request, urllib.error
 
-          webhook = os.environ.get('AGIT_WEBHOOK_URL', '').strip()
-          if not webhook:
-              print("[ERROR] AGIT_WEBHOOK_URL secret 비어있음")
-              raise SystemExit(1)
+          test_mode = os.environ.get('TEST_MODE', '').strip().lower() == 'true'
+          if test_mode:
+              webhook = os.environ.get('AGIT_TEST_WEBHOOK_URL', '').strip()
+              if not webhook:
+                  print("[ERROR] AGIT_TEST_WEBHOOK_URL secret 비어있음 (테스트 모드)")
+                  raise SystemExit(1)
+              print("[INFO] 🧪 테스트 모드 — 개인 아지트로 POST")
+          else:
+              webhook = os.environ.get('AGIT_WEBHOOK_URL', '').strip()
+              if not webhook:
+                  print("[ERROR] AGIT_WEBHOOK_URL secret 비어있음")
+                  raise SystemExit(1)
 
           target = os.environ.get('TARGET_DATE', '').strip()
           if target:
