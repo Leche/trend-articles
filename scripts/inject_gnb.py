@@ -85,7 +85,7 @@ GNB_CSS_BODY = (
     "@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}"
     # PC FAB: 우하단 floating 두 버튼 (맨위로 + 아지트로). 1200+에서만 노출, 스크롤 후 등장.
     ".pc-fabs{display:none;}"
-    "@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:14px 40px;}.agit-cta{display:none;}"
+    "@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}"
         # FAB right 좌표 = 콘텐츠 우측 가장자리에 정렬 (content max-width 1320 - padding 40)
         ".pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}"
         ".pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}"
