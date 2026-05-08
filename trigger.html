@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>트렌드림 컨트롤러 컨트롤</title>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -60,35 +60,141 @@
   }
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar { width: 0; height: 0; display: none; }
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text-primary);
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 16px;
-  padding-top: max(16px, env(safe-area-inset-top));
-  padding-bottom: max(32px, env(safe-area-inset-bottom));
   -webkit-font-smoothing: antialiased;
 }
-.container { max-width: 440px; margin: 0 auto; }
+body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.container {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 0 16px;
+  padding-top: calc(60px + env(safe-area-inset-top));
+  padding-bottom: calc(72px + env(safe-area-inset-bottom) + 24px);
+}
 
-/* Header */
-.header { padding: 20px 4px 24px; }
-.header h1 {
-  font-size: 26px;
-  font-weight: 650;
-  letter-spacing: -0.5px;
+/* GNB (Global Navigation Bar) */
+.gnb {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg);
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.gnb.scrolled { border-bottom-color: var(--border); }
+.gnb-inner {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+}
+.gnb-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
   line-height: 1.2;
 }
-.header .subtitle {
-  font-size: 14px;
-  font-weight: 420;
-  color: var(--text-secondary);
-  margin-top: 6px;
-  letter-spacing: -0.1px;
+.gnb-actions { display: flex; gap: 4px; align-items: center; }
+.gnb-agit-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
 }
+.gnb-agit-link:active { background: var(--file-btn-bg); }
+.gnb-agit-link svg {
+  width: auto;
+  height: 16px;
+  display: block;
+}
+
+/* Page intro (per-tab subtitle) */
+.page-intro { padding: 18px 4px 14px; }
+.page-intro p {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-secondary);
+  letter-spacing: -0.1px;
+  line-height: 1.5;
+}
+
+/* Tab pages */
+.tab-page { display: none; }
+.tab-page.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.tab-bar.keyboard-hidden,
+body.keyboard-active .tab-bar {
+  transform: translateY(110%);
+  opacity: 0;
+  pointer-events: none;
+}
+body.keyboard-active .ai-composer { bottom: 0; }
+.tab-bar-inner {
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  height: 56px;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+  padding: 6px 4px;
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item svg { width: 26px; height: 26px; }
+.tab-item span { display: none; }
+.tab-item.active { color: var(--accent); }
+.tab-item:active { opacity: 0.6; }
 
 /* Cards */
 .card {
@@ -273,24 +379,121 @@ input:focus, textarea:focus {
 }
 .add-btn:active { opacity: 0.6; }
 
-/* Agit 게시 카드 — 토글 버튼 + 펼치기 영역 */
-.agit-toggle {
+/* AI tab — chat-style composer */
+.ai-greeting {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin: 0 8px 18px;
+}
+.ai-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: calc(100dvh - 220px - env(safe-area-inset-top));
+  padding: 0 4px;
+}
+.ai-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 18px;
+}
+.ai-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  letter-spacing: -0.1px;
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+}
+.ai-quick-action:active { opacity: 0.5; }
+.ai-quick-action svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+.ai-composer {
+  position: fixed;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--bg);
+  padding: 8px 16px 12px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+}
+.ai-composer.active {
+  opacity: 1;
+  visibility: visible;
+}
+.ai-composer-inner {
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 9999px;
+  padding: 6px 6px 6px 18px;
+  pointer-events: auto;
+}
+.ai-composer textarea {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text-primary);
+  resize: none;
+  outline: none;
+  padding: 8px 0;
+  min-height: 24px;
+  max-height: 120px;
+  height: 40px;
+  line-height: 24px;
+  letter-spacing: -0.1px;
+}
+.ai-composer textarea::placeholder { color: var(--text-secondary); font-weight: 400; }
+.ai-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+  padding: 0;
 }
-.agit-toggle .arrow {
-  display: inline-block;
-}
-.agit-advanced {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.2s ease, margin-top 0.3s ease;
-}
-.agit-advanced.open {
-  opacity: 1;
+.ai-send-btn svg { width: 20px; height: 20px; display: block; }
+.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ai-send-btn:active:not(:disabled) { transform: scale(0.92); }
+.ai-composer .status {
+  pointer-events: auto;
+  max-width: 440px;
+  margin: 8px auto 0;
 }
 
 /* Divider */
@@ -414,30 +617,39 @@ input:focus, textarea:focus {
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>트렌드림 컨트롤러</h1>
-    <p class="subtitle">모바일에서 간편하게 아티클들을 컨트롤 하세요</p>
+<!-- GNB -->
+<header class="gnb" id="gnb">
+  <div class="gnb-inner">
+    <h1 class="gnb-title" id="gnbTitle">생성</h1>
+    <div class="gnb-actions">
+      <a href="#" class="gnb-agit-link" id="gnbAgitLink" target="_blank" rel="noopener" aria-label="트렌드림 아지트 열기" onclick="openAgit(event)">
+        <svg viewBox="0 0 160 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="none" stroke-width="1" fill="currentColor" fill-rule="evenodd"><path d="M150.361684,27.2852113 L160,27.2852113 L160,17.6910211 L150.361684,17.6910211 L150.361684,0 L139.640034,0 L139.640034,17.6910211 L134,17.6910211 L134,27.2852113 L139.640034,27.2852113 L139.640034,51.2429577 L139.640034,52.5739437 C139.640034,58.3304577 144.341924,63 150.138316,63 C151.232818,63 159.754296,63 160,63 L160,53.5610915 C160,53.5610915 154.32646,53.5721831 153.712199,53.5610915 C151.858247,53.5721831 150.361684,52.0859155 150.361684,50.2447183 L150.361684,27.2852113 Z M47.5278266,51.2316667 L47.5278266,18.2309524 L36.8424136,18.2309524 L36.8424136,21.2859524 C33.0357352,18.5890476 28.3942589,17 23.3743409,17 C10.4628002,17 0,27.5190476 0,40.5 C0,53.4809524 10.4628002,64 23.3743409,64 C29.0287053,64 34.2155829,61.9857143 38.2560047,58.617381 C40.0702988,61.7507143 43.4428822,63.8657143 47.3052138,63.8880952 C48.3960164,63.8545238 57,63.8880952 57,63.8880952 L57,54.3314286 C57,54.3314286 51.4792033,54.342619 50.8558875,54.3314286 C49.0972466,54.342619 47.6502636,52.9661905 47.5278266,51.2316667 Z M23.3743409,54.0404762 C15.9390744,54.0404762 9.90626831,47.9752381 9.90626831,40.5 C9.90626831,33.0247619 15.9390744,26.9595238 23.3743409,26.9595238 C30.8096075,26.9595238 36.8424136,33.0247619 36.8424136,40.5 C36.8424136,47.9752381 30.8096075,54.0404762 23.3743409,54.0404762 Z M105,58.4216653 L105,18.2189361 L94.2084309,18.2189361 L94.2084309,21.2441139 C90.3639344,18.5735357 85.6763466,17 80.6065574,17 C67.5667447,17 57,27.4163631 57,40.2705985 C57,53.1248338 67.5667447,63.541197 80.6065574,63.541197 C85.8449649,63.541197 90.6786885,61.8568489 94.5906323,59.0200521 C94.5793911,59.4743829 94.5569087,59.9730385 94.523185,60.6268315 C94.4107728,62.4552357 93.7925059,66.6106997 91.7128806,68.6164037 C88.7451991,71.4753629 86.3058548,72.2288871 80.9887588,72.505918 C75.6716628,72.7829489 70.3770492,71.3534693 64.9587822,67.7299047 L59.6079625,75.6640707 C66.3526932,80.2738654 73.7381733,82.3682193 81.7531616,81.9471322 C89.7681499,81.5371265 94.9053864,79.741966 99.7728337,74.8329779 C103.448712,71.1318446 104.325527,65.502576 104.921311,59.3192455 L105,58.499234 L105,58.4216653 L105,58.4216653 Z M80.6065574,53.6788957 C73.0974239,53.6788957 67.0046838,47.672865 67.0046838,40.2705985 C67.0046838,32.8683319 73.0974239,26.8623013 80.6065574,26.8623013 C88.1156909,26.8623013 94.2084309,32.8683319 94.2084309,40.2705985 C94.2084309,47.672865 88.1156909,53.6788957 80.6065574,53.6788957 Z M125.884154,50.2447183 L125.884154,17.7464789 L115.018642,17.7464789 L115.018642,51.2429577 L115.018642,52.5739437 C115.018642,58.3304577 119.783622,63 125.65779,63 L130.988682,63 L130.988682,54.2598592 C131,53.8272887 131,53.5610915 131,53.5610915 C131,53.5610915 129.90213,53.5721831 129.279627,53.5610915 C127.400799,53.5721831 125.884154,52.0859155 125.884154,50.2447183 Z M120.394807,12.5334507 C123.926099,12.5334507 126.789614,9.72728873 126.789614,6.26672535 C126.789614,2.80616197 123.926099,0 120.394807,0 C116.863515,0 114,2.80616197 114,6.26672535 C114,9.72728873 116.863515,12.5334507 120.394807,12.5334507 Z"/></g></svg>
+      </a>
+    </div>
   </div>
+</header>
+
+<div class="container">
+  <!-- 생성 탭 -->
+  <section class="tab-page active" id="tab-create" data-tab="create">
+    <div class="page-intro"><p>오늘 다이제스트를 만들고, 검토 후 아지트에 게시해요.</p></div>
 
   <!-- Agit 게시 -->
   <div class="card">
     <div class="card-title">Agit에 게시</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
-    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">13:30에 Agit에 게시</button>
-    <button class="btn btn-primary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">🧪 테스트 모드로 게시 (개인 아지트)</button>
-    <div class="agit-advanced" id="agitAdvanced">
-      <div class="input-group" style="margin-top:14px;">
-        <label>게시 날짜 (비워두면 오늘)</label>
-        <div class="date-wrapper">
-          <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
-          <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
-          <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-        </div>
+    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">Agit에 13:30 게시로 예약</button>
+    <button class="btn btn-primary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">테스트 모드로 게시</button>
+    <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
+    <div class="input-group">
+      <label>게시 날짜 (비워두면 오늘)</label>
+      <div class="date-wrapper">
+        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
+        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
       </div>
-      <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     </div>
-    <button type="button" class="agit-toggle" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;"><span id="agitToggleLabel">펼치기</span><svg class="arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path id="agitToggleArrowPath" d="M1 1L5 5L9 1"/></svg></button>
+    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -459,15 +671,29 @@ input:focus, textarea:focus {
     <button class="btn btn-primary" id="runBtn" onclick="runCuration()">큐레이션 생성</button>
     <div class="status" id="runStatus"></div>
   </div>
+  </section>
 
-  <!-- AI 명령 -->
-  <div class="card">
-    <div class="card-title">AI 프롬프트 수정</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">수정하고 싶은 내용을 입력하세요</p>
-    <textarea id="commandPrompt" rows="3" placeholder="프롬프트를 입력하여 수정하세요." autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-xs);font-size:14px;font-family:inherit;resize:none;overflow:hidden;background:var(--input-bg);color:var(--text-primary);outline:none;"></textarea>
-    <button class="btn btn-primary" id="commandBtn" onclick="runCommand()" style="margin-top:10px;">실행</button>
-    <div class="status" id="commandStatus"></div>
-  </div>
+  <!-- AI 탭 -->
+  <section class="tab-page" id="tab-ai" data-tab="ai">
+    <div class="ai-empty">
+      <h4 class="ai-greeting">자연어로 오늘 큐레이션을 손볼 수 있어요.</h4>
+      <div class="ai-quick-actions">
+        <button type="button" class="ai-quick-action" onclick="setAIPrompt('1번 기사 제목을 다듬어줘')">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 3.5a2.5 2.5 0 0 1 3.5 0l.5.5a2.5 2.5 0 0 1 0 3.5L8 19.5l-5 1.5 1.5-5L16.5 3.5z"/></svg>
+          기사 제목 다듬기
+        </button>
+        <button type="button" class="ai-quick-action" onclick="setAIPrompt('1번 기사 요약을 다시 생성해줘')">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+          요약 다시 생성
+        </button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 편집 탭 -->
+  <section class="tab-page" id="tab-edit" data-tab="edit">
+    <div class="page-intro"><p>기사 교체·썸네일·순서·링크를 직접 손볼 수 있어요.</p></div>
 
   <!-- 기사 교체 -->
   <div class="card">
@@ -539,6 +765,17 @@ input:focus, textarea:focus {
     <div class="status" id="linkFixStatus"></div>
   </div>
 
+  <!-- 초기화 버튼 -->
+  <button class="reset-btn" id="resetBtn" onclick="resetInputs()">
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5v4h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.05 10a5.5 5.5 0 1 0 .92-5.5L2.5 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    입력 초기화
+  </button>
+  </section>
+
+  <!-- 더보기 탭 -->
+  <section class="tab-page" id="tab-more" data-tab="more">
+    <div class="page-intro"><p>바로가기와 초기 설정을 모아뒀어요.</p></div>
+
   <!-- 바로가기 -->
   <div class="card">
     <div class="card-title">바로가기</div>
@@ -547,12 +784,6 @@ input:focus, textarea:focus {
       <button class="btn btn-secondary" onclick="openActions()">GitHub Actions<span class="arrow">→</span></button>
     </div>
   </div>
-
-  <!-- 초기화 버튼 -->
-  <button class="reset-btn" id="resetBtn" onclick="resetInputs()">
-    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5v4h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.05 10a5.5 5.5 0 1 0 .92-5.5L2.5 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    입력 초기화
-  </button>
 
   <!-- 초기 설정 -->
   <div class="card setup-card" id="setupCard">
@@ -574,7 +805,52 @@ input:focus, textarea:focus {
   </div>
 
   <div class="footer">TRENDREAM CURATION</div>
+  </section>
 </div>
+
+<!-- AI 입력바 (탭과 무관하게 viewport 고정, AI 탭일 때만 visible) -->
+<div class="ai-composer" id="aiComposer">
+  <div class="ai-composer-inner">
+    <textarea id="commandPrompt" rows="1" placeholder="프롬프트를 입력하여 수정하세요." autocorrect="off" autocapitalize="off" spellcheck="false" oninput="autoResizeAI(this)"></textarea>
+    <button class="ai-send-btn" id="commandBtn" onclick="runCommand()" aria-label="전송">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </div>
+  <div class="status" id="commandStatus"></div>
+</div>
+
+<!-- 하단 탭바 -->
+<nav class="tab-bar" role="tablist" aria-label="주요 탭">
+  <div class="tab-bar-inner">
+    <button type="button" class="tab-item active" data-tab-target="create" role="tab" aria-selected="true" aria-label="생성">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M9 2c.45 0 .85.3.99.73l1.18 3.85 3.85 1.18c.43.14.73.54.73.99s-.3.85-.73.99l-3.85 1.18-1.18 3.85c-.14.43-.54.73-.99.73s-.85-.3-.99-.73L6.83 10.92 2.98 9.74C2.55 9.6 2.25 9.2 2.25 8.74s.3-.85.73-.99l3.85-1.18L8.01 2.73C8.15 2.3 8.55 2 9 2z" fill="currentColor"/>
+        <path d="M17.5 13c.32 0 .61.21.7.52l.62 1.93 1.93.62c.31.1.52.39.52.7s-.21.61-.52.7l-1.93.62-.62 1.93c-.1.31-.39.52-.7.52s-.61-.21-.7-.52l-.62-1.93-1.93-.62c-.31-.1-.52-.39-.52-.7s.21-.61.52-.7l1.93-.62.62-1.93c.1-.31.39-.52.7-.52z" fill="currentColor"/>
+      </svg>
+      <span>생성</span>
+    </button>
+    <button type="button" class="tab-item" data-tab-target="ai" role="tab" aria-selected="false" aria-label="AI">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 3a9.5 8 0 1 1-3.25 15.52L5.14 20.71Q3 22 3.71 19.6L4.72 16.14A9.5 8 0 0 1 12 3zm0 4.5c.32 0 .61.21.7.52l.55 1.73 1.73.55c.31.1.52.39.52.7s-.21.61-.52.7l-1.73.55-.55 1.73c-.1.31-.39.52-.7.52s-.61-.21-.7-.52l-.55-1.73-1.73-.55c-.31-.1-.52-.39-.52-.7s.21-.61.52-.7l1.73-.55.55-1.73c.1-.31.39-.52.7-.52z" fill="currentColor"/>
+      </svg>
+      <span>AI</span>
+    </button>
+    <button type="button" class="tab-item" data-tab-target="edit" role="tab" aria-selected="false" aria-label="편집">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16.5 3.1a2.6 2.6 0 0 1 3.7 0l.7.7a2.6 2.6 0 0 1 0 3.7l-1.6 1.6-4.4-4.4 1.6-1.6zM13.5 6.1l4.4 4.4-9 9a2 2 0 0 1-1 .55l-3.7.85a1 1 0 0 1-1.2-1.2l.85-3.7a2 2 0 0 1 .55-1l9-9z" fill="currentColor"/>
+      </svg>
+      <span>편집</span>
+    </button>
+    <button type="button" class="tab-item" data-tab-target="more" role="tab" aria-selected="false" aria-label="더보기">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="4" cy="12" r="2.6" fill="currentColor"/>
+        <circle cx="12" cy="12" r="2.6" fill="currentColor"/>
+        <circle cx="20" cy="12" r="2.6" fill="currentColor"/>
+      </svg>
+      <span>더보기</span>
+    </button>
+  </div>
+</nav>
 
 <script>
 let settings = { token: '', owner: 'Leche', repo: 'trend-articles' };
@@ -597,6 +873,113 @@ function showConnected() {
   document.getElementById('setupCard').classList.add('saved');
   document.getElementById('tokenStatus').innerHTML = '';
 }
+
+// 트렌드림 아지트 shortcut
+function openAgit(e) {
+  if (e) e.preventDefault();
+  window.open('https://kakao.agit.in/g/300044281/wall', '_blank');
+}
+
+// ── AI 탭 보조 ──
+function autoResizeAI(ta) {
+  ta.style.height = 'auto';
+  const max = 120;
+  ta.style.height = Math.min(ta.scrollHeight, max) + 'px';
+}
+function setAIPrompt(text) {
+  const ta = document.getElementById('commandPrompt');
+  ta.value = text;
+  autoResizeAI(ta);
+  ta.focus();
+}
+
+// ── 탭 전환 ──
+const TAB_LABEL = { create: '생성', ai: 'AI', edit: '편집', more: '더보기' };
+function switchTab(target) {
+  // 키보드/포커스 잔재 정리
+  const focused = document.activeElement;
+  if (focused && focused !== document.body && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA')) {
+    focused.blur();
+  }
+  document.body.classList.remove('keyboard-active');
+  const composer = document.querySelector('.ai-composer');
+  if (composer) composer.style.bottom = '';
+  const tabBar = document.querySelector('.tab-bar');
+  if (tabBar) tabBar.classList.remove('keyboard-hidden');
+
+  document.querySelectorAll('.tab-page').forEach(p => {
+    p.classList.toggle('active', p.dataset.tab === target);
+  });
+  document.querySelectorAll('.tab-item').forEach(b => {
+    const isActive = b.dataset.tabTarget === target;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+  // AI composer 표시 여부 토글 (layout 영향 없는 opacity/visibility 방식)
+  if (composer) composer.classList.toggle('active', target === 'ai');
+
+  const title = document.getElementById('gnbTitle');
+  if (title) title.textContent = TAB_LABEL[target] || '';
+  try { localStorage.setItem('trendream:lastTab', target); } catch(_) {}
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+}
+
+document.querySelectorAll('.tab-item').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tabTarget));
+});
+
+// 마지막 활성 탭 복원
+try {
+  const last = localStorage.getItem('trendream:lastTab');
+  if (last && TAB_LABEL[last]) switchTab(last);
+} catch(_) {}
+
+// GNB 스크롤 시 보더 표시
+window.addEventListener('scroll', () => {
+  const gnb = document.getElementById('gnb');
+  if (!gnb) return;
+  gnb.classList.toggle('scrolled', window.scrollY > 4);
+}, { passive: true });
+
+// iOS 키보드 인셋 핸들링
+(function() {
+  const tabBar = document.querySelector('.tab-bar');
+  const composer = document.querySelector('.ai-composer');
+  if (!tabBar || !composer) return;
+
+  // 1) 글로벌 focusin/focusout — 어떤 input이든 focus되면 keyboard-active
+  document.addEventListener('focusin', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+      document.body.classList.add('keyboard-active');
+    }
+  });
+  document.addEventListener('focusout', () => {
+    document.body.classList.remove('keyboard-active');
+    // composer 위치 reset (focus 풀릴 때 inline style 잔재 제거)
+    composer.style.bottom = '';
+    tabBar.classList.remove('keyboard-hidden');
+  });
+
+  // 2) Visual Viewport로 키보드 높이 따라 입력바 위치 보정 — AI 탭 active일 때만
+  if ('visualViewport' in window) {
+    const vv = window.visualViewport;
+    function update() {
+      const aiActive = composer.classList.contains('active');
+      const kbHeight = Math.max(0, window.innerHeight - vv.height);
+      if (aiActive && kbHeight > 80) {
+        tabBar.classList.add('keyboard-hidden');
+        composer.style.bottom = kbHeight + 'px';
+      } else {
+        tabBar.classList.remove('keyboard-hidden');
+        composer.style.bottom = '';
+      }
+    }
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+  }
+})();
 
 // ── 날짜 placeholder 토글 ──
 function toggleDatePlaceholder(input) {
@@ -679,20 +1062,9 @@ function resetInputs() {
   const linkFixList = document.getElementById('linkFixList');
   linkFixList.innerHTML = `<div class="replace-item"><input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
 
-  // Agit 게시 — 날짜 초기화 + 고급 옵션 접기
+  // Agit 게시 — 날짜 초기화
   const agitDate = document.getElementById('agitDate');
   if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
-  const agitAdv = document.getElementById('agitAdvanced');
-  const agitTgl = document.getElementById('agitToggleBtn');
-  if (agitAdv) {
-    agitAdv.classList.remove('open');
-    agitAdv.style.maxHeight = '0';
-  }
-  if (agitTgl) agitTgl.classList.remove('open');
-  const agitTglLabel = document.getElementById('agitToggleLabel');
-  if (agitTglLabel) agitTglLabel.textContent = '펼치기';
-  const agitArrowPath = document.getElementById('agitToggleArrowPath');
-  if (agitArrowPath) agitArrowPath.setAttribute('d', 'M1 1L5 5L9 1');
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1184,47 +1556,6 @@ function toggleAgitDatePlaceholder(input) {
     input.classList.remove('has-value');
     if (ph) ph.style.display = '';
   }
-}
-
-// V → ^ path 모핑 (가운데 꼭지점이 위/아래로 굽혀지는 모션)
-function animateAgitChevron(toUp) {
-  const path = document.getElementById('agitToggleArrowPath');
-  if (!path) return;
-  const duration = 250;
-  const start = performance.now();
-  const fromSide = toUp ? 1 : 5;
-  const toSide   = toUp ? 5 : 1;
-  const fromMid  = toUp ? 5 : 1;
-  const toMid    = toUp ? 1 : 5;
-  const ease = t => t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
-  function frame(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const e = ease(p);
-    const s = fromSide + (toSide - fromSide) * e;
-    const m = fromMid  + (toMid  - fromMid)  * e;
-    path.setAttribute('d', `M1 ${s}L5 ${m}L9 ${s}`);
-    if (p < 1) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-function toggleAgitAdvanced() {
-  const adv = document.getElementById('agitAdvanced');
-  const btn = document.getElementById('agitToggleBtn');
-  const label = document.getElementById('agitToggleLabel');
-  const willOpen = !adv.classList.contains('open');
-  if (willOpen) {
-    adv.classList.add('open');
-    btn.classList.add('open');
-    adv.style.maxHeight = adv.scrollHeight + 'px';
-    label.textContent = '접기';
-  } else {
-    adv.classList.remove('open');
-    btn.classList.remove('open');
-    adv.style.maxHeight = '0';
-    label.textContent = '펼치기';
-  }
-  animateAgitChevron(willOpen);
 }
 
 async function postToAgit(skipWait, testMode) {
