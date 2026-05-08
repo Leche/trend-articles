@@ -465,6 +465,77 @@ input:focus, textarea:focus {
   font-weight: 450;
 }
 
+/* Month publish grid (더보기 탭) */
+.month-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  box-shadow: var(--card-shadow);
+}
+.month-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+.month-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+  color: var(--text-primary);
+}
+.month-summary {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-align: center;
+  letter-spacing: 0;
+}
+.month-weekdays .sun { color: #E15E5E; }
+.month-weekdays .sat { color: #4A8DD4; }
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.month-day {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--input-bg);
+}
+.month-day.published { background: var(--success); }
+.month-day.future { background: transparent; border: 1px dashed var(--border); }
+.month-day.empty { background: transparent; }
+.month-day.today { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+.month-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 450;
+  color: var(--text-secondary);
+}
+.month-legend .legend-item { display: flex; align-items: center; gap: 6px; }
+.month-legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+.month-legend .swatch.published { background: var(--success); }
+.month-legend .swatch.empty { background: var(--input-bg); }
+
 /* AI tab — chat-style composer */
 .ai-greeting {
   font-size: 17px;
@@ -883,6 +954,22 @@ input:focus, textarea:focus {
   <section class="tab-page" id="tab-more" data-tab="more">
     <div class="page-intro"><p>바로가기와 초기 설정을 모아뒀어요.</p></div>
 
+  <!-- 이번 달 발행 그리드 -->
+  <div class="month-card" id="monthCard">
+    <div class="month-header">
+      <span class="month-title" id="monthTitle">이번 달 발행</span>
+      <span class="month-summary" id="monthSummary">불러오는 중…</span>
+    </div>
+    <div class="month-weekdays">
+      <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+    <div class="month-legend">
+      <div class="legend-item"><span class="swatch published"></span><span>발행</span></div>
+      <div class="legend-item"><span class="swatch empty"></span><span>미발행</span></div>
+    </div>
+  </div>
+
   <!-- 바로가기 -->
   <div class="card">
     <div class="card-title">바로가기</div>
@@ -986,6 +1073,7 @@ function showConnected() {
     if (t) t.textContent = 'Connected';
   }
   if (typeof loadDashboard === 'function') loadDashboard();
+  if (typeof loadMonthGrid === 'function') loadMonthGrid();
 }
 
 // ── 오늘 상태 대시보드 ──
@@ -1076,6 +1164,87 @@ async function loadDashboard() {
   } catch(e) {
     renderDashboard({ error: true });
   }
+}
+
+// ── 이번 달 발행 그리드 ──
+async function loadMonthGrid() {
+  const grid    = document.getElementById('monthGrid');
+  const summary = document.getElementById('monthSummary');
+  const title   = document.getElementById('monthTitle');
+  if (!grid || !summary) return;
+
+  const today = getTodayKST();
+  const [yyyy, mm, dd] = today.split('-').map(Number);
+  if (title) title.textContent = `${yyyy}년 ${mm}월 발행`;
+
+  if (!settings.token || !settings.owner || !settings.repo) {
+    summary.textContent = '연결 필요';
+    grid.innerHTML = '';
+    return;
+  }
+
+  let publishedDates = new Set();
+  try {
+    const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, {
+      headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (res.ok) {
+      const items = await res.json();
+      const monthPrefix = `${yyyy}-${String(mm).padStart(2, '0')}`;
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      items.forEach(i => {
+        if (i.type === 'dir' && dateRegex.test(i.name) && i.name.startsWith(monthPrefix)) {
+          publishedDates.add(i.name);
+        }
+      });
+    } else {
+      throw new Error(res.status);
+    }
+  } catch(_) {
+    summary.textContent = '불러오기 실패';
+    grid.innerHTML = '';
+    return;
+  }
+
+  const lastDay = new Date(yyyy, mm, 0).getDate();
+  const firstWeekday = new Date(yyyy, mm - 1, 1).getDay(); // 0=일, 6=토
+
+  let html = '';
+  for (let i = 0; i < firstWeekday; i++) {
+    html += '<div class="month-day empty"></div>';
+  }
+
+  let publishedAll = 0;
+  let publishedWeekdays = 0;
+  let totalWeekdaysPast = 0;
+
+  for (let day = 1; day <= lastDay; day++) {
+    const dateStr  = `${yyyy}-${String(mm).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayObj   = new Date(yyyy, mm - 1, day);
+    const weekday  = dayObj.getDay();
+    const isWeekend = weekday === 0 || weekday === 6;
+    const isFuture  = day > dd;
+    const isToday   = day === dd;
+    const isPublished = publishedDates.has(dateStr);
+
+    if (isPublished) publishedAll++;
+    if (!isFuture && !isWeekend) {
+      totalWeekdaysPast++;
+      if (isPublished) publishedWeekdays++;
+    }
+
+    const classes = ['month-day'];
+    if (isPublished)      classes.push('published');
+    else if (isFuture)    classes.push('future');
+    if (isToday)          classes.push('today');
+
+    const titleAttr = `${dateStr}${isPublished ? ' · 발행' : ''}`;
+    html += `<div class="${classes.join(' ')}" title="${titleAttr}"></div>`;
+  }
+  grid.innerHTML = html;
+
+  const missed = Math.max(0, totalWeekdaysPast - publishedWeekdays);
+  summary.textContent = `${publishedAll}일 발행 · 빠진 평일 ${missed}일`;
 }
 
 // 트렌드림 아지트 shortcut
@@ -1596,7 +1765,7 @@ async function runCuration() {
     });
     if (res.status === 204) {
       showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
-      setTimeout(loadDashboard, 30000);
+      setTimeout(() => { loadDashboard(); loadMonthGrid(); }, 30000);
     } else {
       const data = await res.json();
       showStatus('runStatus', 'error', '오류: ' + (data.message || res.statusText));
@@ -1812,6 +1981,7 @@ function openActions() {
 
 loadSettings();
 loadDashboard();
+loadMonthGrid();
 </script>
 </body>
 </html>
