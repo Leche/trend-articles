@@ -111,8 +111,8 @@ jobs:
           ]
           if intro_text:
               parts.extend(["", intro_text])
-          # CTA 버튼: 인용박스 + 볼드 링크 (모바일 더보기 잘림 영역 위에 배치)
-          parts.extend(["", f"> **[다이제스트 보러가기]({link})**", ""])
+          # CTA 버튼: 인용박스 + h3 헤딩 (Agit이 ** 볼드는 무시하므로 헤딩으로 강조)
+          parts.extend(["", f"> ### ✨ [다이제스트 보러가기]({link})", ""])
           parts.append(quote_block)
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
