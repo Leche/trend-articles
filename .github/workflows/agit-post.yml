@@ -107,10 +107,12 @@ jobs:
 
           parts = [
               f"# ⚡️",
-              f"# [{date_label} 트렌드림 다이제스트]({link})",
+              f"# {date_label} 트렌드림 다이제스트",
           ]
           if intro_text:
-              parts.extend(["", intro_text, ""])
+              parts.extend(["", intro_text])
+          # CTA 버튼: 인용박스 + 볼드 링크 (모바일 더보기 잘림 영역 위에 배치)
+          parts.extend(["", f"> **[다이제스트 보러가기]({link})**", ""])
           parts.append(quote_block)
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
