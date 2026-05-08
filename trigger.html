@@ -404,17 +404,20 @@ input:focus, textarea:focus {
   <div class="card">
     <div class="card-title">Agit에 게시</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
-    <div class="input-group">
-      <label>게시 날짜 (비워두면 오늘)</label>
-      <div class="date-wrapper">
-        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
-        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
-        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-      </div>
-    </div>
     <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">13:30에 Agit에 게시</button>
-    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)" style="margin-top:8px;">즉시 Agit에 게시</button>
     <button class="btn btn-primary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">🧪 테스트 모드로 게시 (개인 아지트)</button>
+    <div id="agitAdvanced" style="display:none;">
+      <div class="input-group" style="margin-top:14px;">
+        <label>게시 날짜 (비워두면 오늘)</label>
+        <div class="date-wrapper">
+          <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
+          <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
+          <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
+    </div>
+    <button type="button" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin-top:12px;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:8px;width:100%;">펼치기 ▼</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -656,9 +659,13 @@ function resetInputs() {
   const linkFixList = document.getElementById('linkFixList');
   linkFixList.innerHTML = `<div class="replace-item"><input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
 
-  // Agit 게시 — 날짜 초기화
+  // Agit 게시 — 날짜 초기화 + 고급 옵션 접기
   const agitDate = document.getElementById('agitDate');
   if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
+  const agitAdv = document.getElementById('agitAdvanced');
+  const agitTgl = document.getElementById('agitToggleBtn');
+  if (agitAdv) agitAdv.style.display = 'none';
+  if (agitTgl) agitTgl.textContent = '펼치기 ▼';
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1150,6 +1157,14 @@ function toggleAgitDatePlaceholder(input) {
     input.classList.remove('has-value');
     if (ph) ph.style.display = '';
   }
+}
+
+function toggleAgitAdvanced() {
+  const adv = document.getElementById('agitAdvanced');
+  const btn = document.getElementById('agitToggleBtn');
+  const hidden = adv.style.display === 'none' || adv.style.display === '';
+  adv.style.display = hidden ? 'block' : 'none';
+  btn.textContent = hidden ? '접기 ▲' : '펼치기 ▼';
 }
 
 async function postToAgit(skipWait, testMode) {
