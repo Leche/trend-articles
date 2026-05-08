@@ -417,7 +417,7 @@ input:focus, textarea:focus {
       </div>
       <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     </div>
-    <button type="button" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;">펼치기 ▼</button>
+    <button type="button" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;">펼치기 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="M1 1L5 5L9 1"/></svg></button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -665,7 +665,7 @@ function resetInputs() {
   const agitAdv = document.getElementById('agitAdvanced');
   const agitTgl = document.getElementById('agitToggleBtn');
   if (agitAdv) agitAdv.style.display = 'none';
-  if (agitTgl) agitTgl.textContent = '펼치기 ▼';
+  if (agitTgl) agitTgl.innerHTML = '펼치기 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="M1 1L5 5L9 1"/></svg>';
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1164,7 +1164,9 @@ function toggleAgitAdvanced() {
   const btn = document.getElementById('agitToggleBtn');
   const hidden = adv.style.display === 'none' || adv.style.display === '';
   adv.style.display = hidden ? 'block' : 'none';
-  btn.textContent = hidden ? '접기 ▲' : '펼치기 ▼';
+  const arrowPath = hidden ? 'M1 5L5 1L9 5' : 'M1 1L5 5L9 1';
+  const label = hidden ? '접기' : '펼치기';
+  btn.innerHTML = `${label} <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="${arrowPath}"/></svg>`;
 }
 
 async function postToAgit(skipWait, testMode) {
