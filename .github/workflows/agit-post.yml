@@ -1,0 +1,97 @@
+name: Agit 게시
+
+# 검토 끝난 후 trigger.html에서 수동 발화 → 해당 날짜의 다이제스트 템플릿을 Agit 그룹 wall에 게시
+on:
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: '대상 날짜 (YYYY-MM-DD, 비워두면 오늘 KST)'
+        required: false
+        default: ''
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Post digest to Agit
+        env:
+          AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, json, datetime, urllib.request, urllib.error
+
+          webhook = os.environ.get('AGIT_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[ERROR] AGIT_WEBHOOK_URL secret 비어있음")
+              raise SystemExit(1)
+
+          target = os.environ.get('TARGET_DATE', '').strip()
+          if target:
+              d = datetime.datetime.strptime(target, '%Y-%m-%d').date()
+          else:
+              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          date_full = d.strftime('%Y-%m-%d')
+
+          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
+          date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekdays_ko[d.weekday()]}"
+          link = f'https://leche.github.io/trend-articles/{date_full}/'
+
+          html_path = f'{date_full}/index.html'
+          if not os.path.exists(html_path):
+              print(f"[ERROR] HTML 파일 없음: {html_path}")
+              raise SystemExit(1)
+
+          with open(html_path, 'r', encoding='utf-8') as f:
+              html = f.read()
+          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
+          if not titles:
+              print("[ERROR] 기사 제목 추출 실패")
+              raise SystemExit(1)
+
+          quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
+          message = (
+              f"# ⚡️\n"
+              f"# [{date_label} 트렌드림 다이제스트]({link})\n"
+              f"{quote_block}\n"
+              f"cc. @@moretab @@pfs.design @@trenddaily"
+          )
+
+          data = json.dumps({"text": message}).encode("utf-8")
+          req = urllib.request.Request(
+              webhook,
+              data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  body = resp.read().decode('utf-8')
+                  print(f"[INFO] HTTP {resp.status} body={body}")
+                  result = json.loads(body)
+                  if result.get("status") != "ok":
+                      print(f"[ERROR] Agit 응답 비정상: {body}")
+                      raise SystemExit(1)
+                  print(f"[OK] Agit 글 ID: {result.get('id')}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
+
+          PYEOF
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"❌ Agit 게시 실패\n로그를 확인해주세요.\"}"

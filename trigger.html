@@ -498,6 +498,22 @@ input:focus, textarea:focus {
     <div class="status" id="linkFixStatus"></div>
   </div>
 
+  <!-- Agit 게시 -->
+  <div class="card">
+    <div class="card-title">Agit에 게시</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토가 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
+    <div class="input-group">
+      <label>게시 날짜 (비워두면 오늘)</label>
+      <div class="date-wrapper">
+        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
+        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit()">Agit에 게시</button>
+    <div class="status" id="agitStatus"></div>
+  </div>
+
   <!-- 바로가기 -->
   <div class="card">
     <div class="card-title">바로가기</div>
@@ -637,6 +653,10 @@ function resetInputs() {
   // 링크 수정 — 첫 행만 남기고 초기화
   const linkFixList = document.getElementById('linkFixList');
   linkFixList.innerHTML = `<div class="replace-item"><input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
+
+  // Agit 게시 — 날짜 초기화
+  const agitDate = document.getElementById('agitDate');
+  if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1115,6 +1135,46 @@ async function fixLinks() {
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
+  }
+}
+
+// ── Agit 게시 ──
+function toggleAgitDatePlaceholder(input) {
+  const ph = document.getElementById('agitDatePlaceholder');
+  if (input.value) {
+    input.classList.add('has-value');
+    if (ph) ph.style.display = 'none';
+  } else {
+    input.classList.remove('has-value');
+    if (ph) ph.style.display = '';
+  }
+}
+
+async function postToAgit() {
+  if (!checkSettings()) return;
+  const targetDate = document.getElementById('agitDate').value || '';
+  showStatus('agitStatus', 'loading', 'Agit 게시 워크플로우 실행 중...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: { target_date: targetDate } }),
+      }
+    );
+    if (res.status === 204) {
+      showStatus('agitStatus', 'success', 'Agit 게시 시작! 잠시 후 트렌드림 그룹 wall에 올라가요.');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
+    }
+  } catch(e) {
+    showStatus('agitStatus', 'error', '네트워크 오류: ' + e.message);
   }
 }
 
