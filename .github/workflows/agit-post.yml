@@ -111,20 +111,8 @@ jobs:
           ]
           if intro_text:
               parts.extend(["", intro_text])
-          # CTA 버튼: 인용박스 + 볼드 syntax 테스트 (어느 게 렌더되는지 확인용)
-          parts.extend([
-              "",
-              f"> A) ✨ **[다이제스트 보러가기]({link})**",
-              ">",
-              f"> B) ✨ [**다이제스트 보러가기**]({link})",
-              ">",
-              f"> C) ✨ __[다이제스트 보러가기]({link})__",
-              ">",
-              f"> D) ✨ [__다이제스트 보러가기__]({link})",
-              ">",
-              f"> E) ✨ ***[다이제스트 보러가기]({link})***",
-              "",
-          ])
+          # CTA 버튼: 인용박스 + 단일 asterisk 강조 (Agit 인용박스 안에서 동작하는 패턴)
+          parts.extend(["", f"> *✨ [다이제스트 보러가기]({link})*", ""])
           parts.append(quote_block)
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
