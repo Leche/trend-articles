@@ -311,9 +311,12 @@ if(artWrap&&!document.querySelector('.digest-intro')){
 var totalChars=0;
 for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
 var readMins=Math.max(1,Math.round(totalChars/700));
+var titles=[];
+for(var ti=0;ti<Math.min(arts.length,3);ti++){var tt=arts[ti].querySelector('.article-title');if(tt)titles.push(tt.textContent.trim());}
+var summaryText=titles.length>0?titles.join(', ')+' 등 '+arts.length+'개의 이야기를 담았어요.':'오늘의 '+arts.length+'개 기사를 확인해보세요.';
 var intro=document.createElement('section');
 intro.className='digest-intro';
-intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">오늘 트렌드림이 큐레이션한 '+arts.length+'개의 기사예요. 약 '+readMins+'분이면 모두 살펴보실 수 있어요.</p>';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">'+summaryText+'</p>';
 artWrap.insertBefore(intro,artWrap.firstElementChild);
 }
 var gnb=document.querySelector('.gnb');
