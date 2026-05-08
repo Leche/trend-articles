@@ -1,7 +1,11 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 수동 실행만 (폰에서 GitHub Actions → Run workflow)
+  # 평일 오전 9시 KST 자동 실행 (UTC 00:00 = KST 09:00, 월~금)
+  # 한국 공휴일은 guard 잡에서 자동 skip
+  schedule:
+    - cron: '0 0 * * 1-5'
+  # 수동 실행 (폰에서 trigger.html 또는 GitHub Actions → Run workflow)
   workflow_dispatch:
     inputs:
       article_count:
@@ -26,7 +30,39 @@ permissions:
   pages: write
 
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - name: Check workday (skip Korean holidays on cron)
+        id: check
+        run: |
+          # 수동 실행은 항상 진행
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "수동 실행 — 진행"
+            exit 0
+          fi
+          # cron path: 한국 공휴일 체크
+          pip install --quiet holidays
+          python << 'PYEOF' >> $GITHUB_OUTPUT
+          import datetime, holidays
+          d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          kr = holidays.KR(years=d.year)
+          if d in kr:
+              print(f"should_run=false")
+              import sys
+              print(f"오늘 ({d}) 은 한국 공휴일: {kr[d]} — 큐레이션 건너뜀", file=sys.stderr)
+          else:
+              print(f"should_run=true")
+              import sys
+              print(f"오늘 ({d}) 은 평일 — 큐레이션 진행", file=sys.stderr)
+          PYEOF
+
   curate:
+    needs: guard
+    if: needs.guard.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

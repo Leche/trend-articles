@@ -1,6 +1,7 @@
 name: Agit 게시
 
-# 검토 끝난 후 trigger.html에서 수동 발화 → 해당 날짜의 다이제스트 템플릿을 Agit 그룹 wall에 게시
+# 검토 끝난 후 trigger.html에서 발화 → 13:30 KST에 Agit 그룹 wall에 자동 게시
+# (skip_wait=true 면 즉시 게시)
 on:
   workflow_dispatch:
     inputs:
@@ -8,11 +9,15 @@ on:
         description: '대상 날짜 (YYYY-MM-DD, 비워두면 오늘 KST)'
         required: false
         default: ''
+      skip_wait:
+        description: '대기 없이 즉시 게시 (true/false)'
+        required: false
+        default: 'false'
 
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 360
 
     steps:
       - name: Checkout repository
@@ -22,6 +27,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Wait until 13:30 KST
+        if: github.event.inputs.skip_wait != 'true'
+        run: |
+          python << 'PYEOF'
+          import datetime, time, sys
+          kst = datetime.timezone(datetime.timedelta(hours=9))
+          now = datetime.datetime.now(kst)
+          target = now.replace(hour=13, minute=30, second=0, microsecond=0)
+          if now >= target:
+              print(f"이미 13:30 KST 지남 ({now.strftime('%H:%M')}) — 즉시 게시")
+              sys.exit(0)
+          wait_sec = (target - now).total_seconds()
+          # GitHub Actions 6시간 한도 안전 버퍼: 5h 45m 초과시 거부
+          if wait_sec > 5 * 3600 + 45 * 60:
+              print(f"::error::대기 시간 {wait_sec/60:.0f}분 — 6시간 한도 초과 우려. 8시 이후 다시 시도하거나 skip_wait=true 사용.")
+              sys.exit(1)
+          print(f"13:30 KST 까지 대기: {wait_sec/60:.1f}분")
+          time.sleep(wait_sec)
+          print(f"대기 완료. 게시 시작.")
+          PYEOF
 
       - name: Post digest to Agit
         env:
