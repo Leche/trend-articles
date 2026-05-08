@@ -527,10 +527,6 @@ input:focus, textarea:focus {
         <div class="input-group"><input type="text" id="repoInput" placeholder="trend-articles" value="trend-articles"></div>
       </div>
     </div>
-    <div class="input-group">
-      <label>카카오워크 웹훅 URL</label>
-      <input type="text" id="webhookInput" placeholder="https://hook.kakaowork.com/..." autocorrect="off" autocapitalize="off" spellcheck="false">
-    </div>
     <button class="btn btn-secondary" id="saveBtn" onclick="saveSettings()">설정 저장</button>
     <button class="btn-connected" id="connectedBtn" style="display:none;">연결됨</button>
     <div id="tokenStatus"></div>
@@ -540,7 +536,7 @@ input:focus, textarea:focus {
 </div>
 
 <script>
-let settings = { token: '', owner: 'Leche', repo: 'trend-articles', webhookUrl: '' };
+let settings = { token: '', owner: 'Leche', repo: 'trend-articles' };
 
 // ── URL 해시로 설정 파싱 ──
 function parseHash() {
@@ -758,7 +754,6 @@ async function replaceThumbnails() {
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
-    let webhookHtml = null;
     async function applyToPath(path) {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
@@ -766,7 +761,6 @@ async function replaceThumbnails() {
         html = replaceImageFrame(html, num, dataUrl);
       }
       await ghPut(path, html, fd.sha, msg);
-      webhookHtml = html;
     }
 
     showStatus('replaceThumbStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
@@ -778,7 +772,6 @@ async function replaceThumbnails() {
     } catch(_) {}
 
     showStatus('replaceThumbStatus', 'success', `${nums}번 기사 썸네일 교체 완료! 1~2분 후 반영돼요.`);
-    if (webhookHtml) sendAgitWebhook('썸네일 교체 완료', webhookHtml, dateVal);
 
     // 파일 인풋 초기화
     document.querySelectorAll('.thumb-item input[type="file"]').forEach(f => { f.value = ''; });
@@ -829,7 +822,6 @@ async function reorderArticles() {
     const moveSummary = moves.map(m => `${m.from}→${m.to}`).join(', ');
     const msg     = `🔀 기사 순서 조정 (${dateVal}): ${moveSummary}`;
 
-    let webhookHtml = null;
     async function reorderHtml(path) {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
@@ -873,7 +865,6 @@ async function reorderArticles() {
         html.substring(wrapEnd);
 
       await ghPut(path, newHtml, fd.sha, msg);
-      webhookHtml = newHtml;
     }
 
     showStatus('reorderStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
@@ -885,7 +876,6 @@ async function reorderArticles() {
     } catch(_) {}
 
     showStatus('reorderStatus', 'success', `순서 조정 완료! (${moveSummary}) 번호 자동 재부여됐어요. 1~2분 후 반영돼요.`);
-    if (webhookHtml) sendAgitWebhook('순서 조정 완료', webhookHtml, dateVal);
     // 인풋 초기화
     document.querySelectorAll('.reorder-item input').forEach(i => { i.value = ''; });
   } catch(e) {
@@ -916,31 +906,28 @@ function showStatus(id, type, msg) {
 function loadSettings() {
   const params = parseHash();
   if (params && params.token) {
-    settings.token      = params.token;
-    settings.owner      = params.owner   || 'Leche';
-    settings.repo       = params.repo    || 'trend-articles';
-    settings.webhookUrl = params.webhook || '';
-    document.getElementById('tokenInput').value   = settings.token;
-    document.getElementById('ownerInput').value   = settings.owner;
-    document.getElementById('repoInput').value    = settings.repo;
-    document.getElementById('webhookInput').value = settings.webhookUrl;
+    settings.token = params.token;
+    settings.owner = params.owner || 'Leche';
+    settings.repo  = params.repo  || 'trend-articles';
+    document.getElementById('tokenInput').value = settings.token;
+    document.getElementById('ownerInput').value = settings.owner;
+    document.getElementById('repoInput').value  = settings.repo;
     showConnected();
   }
 }
 
 function saveSettings() {
-  const token   = document.getElementById('tokenInput').value.trim();
-  const owner   = document.getElementById('ownerInput').value.trim();
-  const repo    = document.getElementById('repoInput').value.trim();
-  const webhook = document.getElementById('webhookInput').value.trim();
+  const token = document.getElementById('tokenInput').value.trim();
+  const owner = document.getElementById('ownerInput').value.trim();
+  const repo  = document.getElementById('repoInput').value.trim();
   if (!token || !owner || !repo) {
     document.getElementById('tokenStatus').innerHTML =
       '<div style="color:var(--error);font-size:13px;margin-top:6px;">모든 필드를 입력해주세요</div>';
     return;
   }
-  settings = { token, owner, repo, webhookUrl: webhook };
+  settings = { token, owner, repo };
   window.location.hash =
-    `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}&webhook=${encodeURIComponent(webhook)}`;
+    `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
   showConnected();
 }
 
@@ -1111,7 +1098,6 @@ async function fixLinks() {
   try {
     const dateVal = getTodayKST();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
-    let webhookHtml = null;
     async function applyToPath(path) {
       const fd = await ghGet(path);
       let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
@@ -1119,7 +1105,6 @@ async function fixLinks() {
         html = fixLinkInHtml(html, num, url);
       }
       await ghPut(path, html, fd.sha, msg);
-      webhookHtml = html;
     }
     showStatus('linkFixStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
     await applyToPath(`${dateVal}/index.html`);
@@ -1128,47 +1113,8 @@ async function fixLinks() {
       await applyToPath('index.html');
     } catch(_) {}
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
-    if (webhookHtml) sendAgitWebhook('링크 수정 완료', webhookHtml, dateVal);
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
-  }
-}
-
-// ── 아지트 포스팅 웹훅 ──
-function parseHtmlForAgitTemplate(html, dateUrl) {
-  const titleMatch = html.match(/(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\s+\S+)\s+Trend Article Digest/);
-  const dateStr = titleMatch ? titleMatch[1] : dateUrl;
-  const titles = [];
-  const re = /<h2 class="article-title">([\s\S]*?)<\/h2>/g;
-  let m;
-  while ((m = re.exec(html)) !== null) titles.push(m[1].trim());
-  return { dateStr, titles };
-}
-
-function buildAgitText(dateStr, dateUrl, titles) {
-  const url = `https://${settings.owner}.github.io/${settings.repo}/${dateUrl}/`;
-  let text = `# ⚡️\n# [${dateStr} 트렌드림 다이제스트](${url})`;
-  titles.forEach((title, i) => {
-    text += `\n> *${i + 1}. ${title}*`;
-    if (i < titles.length - 1) text += '\n>';
-  });
-  text += `\ncc. @@moretab @@pfs.design @@trenddaily`;
-  return text;
-}
-
-async function sendAgitWebhook(actionLabel, html, dateUrl) {
-  if (!settings.webhookUrl) return;
-  try {
-    const { dateStr, titles } = parseHtmlForAgitTemplate(html, dateUrl);
-    if (titles.length === 0) return;
-    const agitText = buildAgitText(dateStr, dateUrl, titles);
-    await fetch(settings.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: `[트렌드림] ${actionLabel}\n\n${agitText}` })
-    });
-  } catch(e) {
-    console.warn('웹훅 전송 오류:', e.message);
   }
 }
 

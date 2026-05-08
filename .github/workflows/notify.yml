@@ -1,5 +1,6 @@
-name: Deploy Notification
+name: Notify Digest
 
+# Pages 배포 성공 시 → 작업 완료 알림 + 다이제스트 템플릿을 KakaoWork로 전송
 on:
   workflow_run:
     workflows: ["pages-build-deployment"]
@@ -11,11 +12,97 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Send Kakao Work Notification
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Send KakaoWork notifications
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
         run: |
-          DEPLOY_DATE=$(TZ=Asia/Seoul date +'%Y. %-m. %-d')
-          curl -s -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"text\": \"✅ 트렌드림 배포 완료!\\n📅 ${DEPLOY_DATE}\\n🔗 https://leche.github.io/trend-articles\"
-            }"
+          python3 << 'PYEOF'
+          import os, re, json, datetime, subprocess, urllib.request, urllib.error
+
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
+              raise SystemExit(1)
+
+          # 1) 최근 커밋 메시지로 액션 라벨 분류
+          commit_msg = subprocess.check_output(
+              ['git', 'log', '-1', '--pretty=%s']
+          ).decode('utf-8').strip()
+
+          if commit_msg.startswith('🤖'):
+              prompt = commit_msg.replace('🤖', '', 1).strip()
+              action_label = f'AI 명령 실행 완료 — {prompt}' if prompt else 'AI 명령 실행 완료'
+          elif '🔀' in commit_msg or '순서 조정' in commit_msg:
+              action_label = '기사 순서 조정 완료'
+          elif '🖼️' in commit_msg or '썸네일' in commit_msg:
+              action_label = '썸네일 교체 완료'
+          elif '🔗' in commit_msg or '링크 수정' in commit_msg:
+              action_label = '링크 수정 완료'
+          elif '큐레이션' in commit_msg:
+              action_label = '기사 큐레이션 완료'
+          else:
+              action_label = '업데이트 완료'
+
+          # 2) 대상 날짜 결정 (커밋 메시지의 YYMMDD/YYYY-MM-DD → 없으면 오늘 KST)
+          d = None
+          ymd = re.search(r'(20\d{2})-(\d{2})-(\d{2})', commit_msg)
+          yymmdd = re.search(r'(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)', commit_msg)
+          if ymd:
+              d = datetime.date(int(ymd.group(1)), int(ymd.group(2)), int(ymd.group(3)))
+          elif yymmdd:
+              d = datetime.date(2000 + int(yymmdd.group(1)), int(yymmdd.group(2)), int(yymmdd.group(3)))
+          if d is None:
+              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+
+          date_full = d.strftime('%Y-%m-%d')
+          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
+          date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekdays_ko[d.weekday()]}"
+          link = f'https://leche.github.io/trend-articles/{date_full}/'
+
+          def post(text):
+              data = json.dumps({"text": text}).encode("utf-8")
+              req = urllib.request.Request(
+                  webhook, data=data,
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as resp:
+                      print(f"[OK] status={resp.status}")
+              except urllib.error.HTTPError as e:
+                  print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+                  raise
+
+          # 3) 완료 알림
+          post(f"✅ {action_label}")
+
+          # 4) 다이제스트 템플릿 알림 (해당 날짜 폴더 우선, 없으면 root index.html)
+          html_path = f'{date_full}/index.html'
+          if not os.path.exists(html_path):
+              html_path = 'index.html'
+
+          if not os.path.exists(html_path):
+              print(f"[WARN] HTML 파일 없음: {html_path} — 다이제스트 알림 생략")
+              raise SystemExit(0)
+
+          with open(html_path, 'r', encoding='utf-8') as f:
+              html = f.read()
+          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
+          if not titles:
+              print("[WARN] 기사 제목 추출 실패 — 다이제스트 알림 생략")
+              raise SystemExit(0)
+
+          quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
+          digest_msg = (
+              f"# ⚡️\n"
+              f"# [{date_label} 트렌드림 다이제스트]({link})\n"
+              f"{quote_block}\n"
+              f"cc. @@moretab @@pfs.design @@trenddaily"
+          )
+          post(digest_msg)
+          PYEOF
