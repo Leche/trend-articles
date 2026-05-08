@@ -273,6 +273,30 @@ input:focus, textarea:focus {
 }
 .add-btn:active { opacity: 0.6; }
 
+/* Agit 게시 카드 — 토글 버튼 + 펼치기 영역 */
+.agit-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.agit-toggle .arrow {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+.agit-toggle.open .arrow {
+  transform: rotate(180deg);
+}
+.agit-advanced {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.2s ease, margin-top 0.3s ease;
+}
+.agit-advanced.open {
+  opacity: 1;
+}
+
 /* Divider */
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
@@ -406,7 +430,7 @@ input:focus, textarea:focus {
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
     <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">13:30에 Agit에 게시</button>
     <button class="btn btn-primary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">🧪 테스트 모드로 게시 (개인 아지트)</button>
-    <div id="agitAdvanced" style="display:none;">
+    <div class="agit-advanced" id="agitAdvanced">
       <div class="input-group" style="margin-top:14px;">
         <label>게시 날짜 (비워두면 오늘)</label>
         <div class="date-wrapper">
@@ -417,7 +441,7 @@ input:focus, textarea:focus {
       </div>
       <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     </div>
-    <button type="button" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;">펼치기 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="M1 1L5 5L9 1"/></svg></button>
+    <button type="button" class="agit-toggle" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;"><span id="agitToggleLabel">펼치기</span><svg class="arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1L5 5L9 1"/></svg></button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -664,8 +688,13 @@ function resetInputs() {
   if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
   const agitAdv = document.getElementById('agitAdvanced');
   const agitTgl = document.getElementById('agitToggleBtn');
-  if (agitAdv) agitAdv.style.display = 'none';
-  if (agitTgl) agitTgl.innerHTML = '펼치기 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="M1 1L5 5L9 1"/></svg>';
+  if (agitAdv) {
+    agitAdv.classList.remove('open');
+    agitAdv.style.maxHeight = '0';
+  }
+  if (agitTgl) agitTgl.classList.remove('open');
+  const agitTglLabel = document.getElementById('agitToggleLabel');
+  if (agitTglLabel) agitTglLabel.textContent = '펼치기';
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1162,11 +1191,19 @@ function toggleAgitDatePlaceholder(input) {
 function toggleAgitAdvanced() {
   const adv = document.getElementById('agitAdvanced');
   const btn = document.getElementById('agitToggleBtn');
-  const hidden = adv.style.display === 'none' || adv.style.display === '';
-  adv.style.display = hidden ? 'block' : 'none';
-  const arrowPath = hidden ? 'M1 5L5 1L9 5' : 'M1 1L5 5L9 1';
-  const label = hidden ? '접기' : '펼치기';
-  btn.innerHTML = `${label} <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px;"><path d="${arrowPath}"/></svg>`;
+  const label = document.getElementById('agitToggleLabel');
+  const willOpen = !adv.classList.contains('open');
+  if (willOpen) {
+    adv.classList.add('open');
+    btn.classList.add('open');
+    adv.style.maxHeight = adv.scrollHeight + 'px';
+    label.textContent = '접기';
+  } else {
+    adv.classList.remove('open');
+    btn.classList.remove('open');
+    adv.style.maxHeight = '0';
+    label.textContent = '펼치기';
+  }
 }
 
 async function postToAgit(skipWait, testMode) {
