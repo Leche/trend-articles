@@ -93,7 +93,7 @@ jobs:
               f"cc. @@moretab @@pfs.design @@trenddaily"
           )
 
-          data = json.dumps({"text": message}).encode("utf-8")
+          data = json.dumps({"text": message, "expire_type": "P5Y"}).encode("utf-8")
           req = urllib.request.Request(
               webhook,
               data=data,
