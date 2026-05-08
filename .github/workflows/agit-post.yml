@@ -85,13 +85,23 @@ jobs:
               print("[ERROR] 기사 제목 추출 실패")
               raise SystemExit(1)
 
+          # 인트로 요약 추출 (있으면 타이틀 아래에 본문 스타일로 삽입)
+          intro_match = re.search(r'<p class="digest-summary">([^<]+)</p>', html)
+          intro_text = intro_match.group(1).strip() if intro_match else ""
+
           quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
-          message = (
-              f"# ⚡️\n"
-              f"# [{date_label} 트렌드림 다이제스트]({link})\n"
-              f"{quote_block}\n"
-              f"cc. @@moretab @@pfs.design @@trenddaily"
-          )
+
+          parts = [
+              f"# ⚡️",
+              f"# [{date_label} 트렌드림 다이제스트]({link})",
+          ]
+          if intro_text:
+              parts.extend(["", intro_text, ""])
+          parts.extend([
+              quote_block,
+              f"cc. @@moretab @@pfs.design @@trenddaily",
+          ])
+          message = "\n".join(parts)
 
           data = json.dumps({"text": message, "expire_type": "P5Y"}).encode("utf-8")
           req = urllib.request.Request(
