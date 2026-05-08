@@ -1075,17 +1075,6 @@ input:focus, textarea:focus {
   <section class="tab-page" id="tab-more" data-tab="more">
     <div class="page-intro"><p>바로가기와 초기 설정을 모아뒀어요.</p></div>
 
-  <!-- 최근 활동 -->
-  <div class="card activity-card">
-    <div class="activity-header">
-      <span class="activity-title">최근 활동</span>
-      <a class="activity-link" onclick="openActions(); event.preventDefault();" href="#">전체 보기 →</a>
-    </div>
-    <div class="activity-list" id="activityList">
-      <div class="activity-empty">불러오는 중…</div>
-    </div>
-  </div>
-
   <!-- 이번 달 발행 그리드 -->
   <div class="month-card" id="monthCard">
     <div class="month-header">
@@ -1096,6 +1085,17 @@ input:focus, textarea:focus {
       <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
     </div>
     <div class="month-grid" id="monthGrid"></div>
+  </div>
+
+  <!-- 최근 활동 -->
+  <div class="card activity-card">
+    <div class="activity-header">
+      <span class="activity-title">최근 활동</span>
+      <a class="activity-link" onclick="openActions(); event.preventDefault();" href="#">전체 보기 →</a>
+    </div>
+    <div class="activity-list" id="activityList">
+      <div class="activity-empty">불러오는 중…</div>
+    </div>
   </div>
 
   <!-- 바로가기 -->
