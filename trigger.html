@@ -401,6 +401,70 @@ input:focus, textarea:focus {
 }
 .add-btn:active { opacity: 0.6; }
 
+/* Dashboard 카드 (오늘 상태) */
+.dashboard-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+.dashboard-card:active { transform: scale(0.992); }
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dash-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+  color: var(--text-primary);
+}
+.dash-arrow {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+.dash-rows { display: flex; flex-direction: column; gap: 8px; }
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  letter-spacing: -0.1px;
+  font-weight: 450;
+}
+.dash-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-dot.green { background: var(--success); }
+.dash-dot.yellow { background: #F5A524; }
+.dash-dot.gray { background: var(--text-tertiary); }
+.dash-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: -0.1px;
+  font-weight: 450;
+}
+
 /* AI tab — chat-style composer */
 .ai-greeting {
   font-size: 17px;
@@ -660,6 +724,23 @@ input:focus, textarea:focus {
   <section class="tab-page active" id="tab-create" data-tab="create">
     <div class="page-intro"><p>오늘 다이제스트를 만들고, 검토 후 아지트에 게시해요.</p></div>
 
+  <!-- 오늘 상태 대시보드 -->
+  <button type="button" class="dashboard-card" id="dashCard" onclick="openLatest()">
+    <div class="dash-header">
+      <span class="dash-title">오늘 상태</span>
+      <span class="dash-arrow">→</span>
+    </div>
+    <div class="dash-rows">
+      <div class="dash-row" id="dashCurationRow">
+        <span class="dash-dot gray"></span><span>불러오는 중…</span>
+      </div>
+      <div class="dash-row" id="dashAgitRow">
+        <span class="dash-dot gray"></span><span>불러오는 중…</span>
+      </div>
+    </div>
+    <div class="dash-footer" id="dashFooter">마지막 발행: —</div>
+  </button>
+
   <!-- Agit 게시 -->
   <div class="card">
     <div class="card-title">Agit에 게시</div>
@@ -903,6 +984,97 @@ function showConnected() {
     status.classList.add('connected');
     const t = status.querySelector('.gnb-status-text');
     if (t) t.textContent = 'Connected';
+  }
+  if (typeof loadDashboard === 'function') loadDashboard();
+}
+
+// ── 오늘 상태 대시보드 ──
+function getCurrentKSTMinutes() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.getUTCHours() * 60 + kst.getUTCMinutes();
+}
+function formatLastDate(dateStr, today) {
+  if (!dateStr) return '—';
+  if (dateStr === today) return '오늘';
+  const d = new Date(dateStr + 'T00:00:00');
+  const t = new Date(today + 'T00:00:00');
+  const diffDays = Math.round((t - d) / 86400000);
+  const md = `${d.getMonth() + 1}/${d.getDate()}`;
+  if (diffDays === 1) return `어제 (${md})`;
+  if (diffDays < 7)  return `${diffDays}일 전 (${md})`;
+  return md;
+}
+function renderDashboard(state) {
+  const cur    = document.getElementById('dashCurationRow');
+  const agit   = document.getElementById('dashAgitRow');
+  const footer = document.getElementById('dashFooter');
+  if (!cur || !agit || !footer) return;
+  if (state.unconnected) {
+    cur.innerHTML    = '<span class="dash-dot gray"></span><span>GitHub 토큰 연결 필요</span>';
+    agit.innerHTML   = '<span class="dash-dot gray"></span><span>—</span>';
+    footer.textContent = '더보기 → 초기 설정에서 연결';
+    return;
+  }
+  if (state.error) {
+    cur.innerHTML    = '<span class="dash-dot gray"></span><span>상태 불러오기 실패</span>';
+    agit.innerHTML   = '<span class="dash-dot gray"></span><span>—</span>';
+    footer.textContent = '';
+    return;
+  }
+  cur.innerHTML = state.todayExists
+    ? '<span class="dash-dot green"></span><span>오늘 큐레이션 생성됨</span>'
+    : '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
+  const past1330 = getCurrentKSTMinutes() >= 13 * 60 + 30;
+  if (state.agitStatus === 'posted' && state.agitTime) {
+    const hh = String(state.agitTime.getHours()).padStart(2, '0');
+    const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
+    agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
+  } else if (!past1330) {
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 13:30 예정</span>';
+  } else {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
+  }
+  footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, getTodayKST())}`;
+}
+async function loadDashboard() {
+  if (!settings.token || !settings.owner || !settings.repo) {
+    renderDashboard({ unconnected: true });
+    return;
+  }
+  const today = getTodayKST();
+  let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null;
+  try {
+    const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
+    const [contentsRes, runsRes] = await Promise.all([
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers })
+    ]);
+    if (contentsRes.ok) {
+      const items = await contentsRes.json();
+      const dateDirs = items
+        .filter(i => i.type === 'dir' && /^\d{4}-\d{2}-\d{2}$/.test(i.name))
+        .map(i => i.name).sort().reverse();
+      todayExists = dateDirs.includes(today);
+      lastDate    = dateDirs[0] || null;
+    }
+    if (runsRes.ok) {
+      const data = await runsRes.json();
+      const runs = data.workflow_runs || [];
+      const todayRuns = runs.filter(r => {
+        const d = new Date(r.created_at);
+        const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+        return kst.toISOString().split('T')[0] === today;
+      });
+      const successful = todayRuns.find(r => r.conclusion === 'success');
+      if (successful) {
+        agitStatus = 'posted';
+        agitTime   = new Date(successful.updated_at);
+      }
+    }
+    renderDashboard({ todayExists, lastDate, agitStatus, agitTime });
+  } catch(e) {
+    renderDashboard({ error: true });
   }
 }
 
@@ -1424,6 +1596,7 @@ async function runCuration() {
     });
     if (res.status === 204) {
       showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
+      setTimeout(loadDashboard, 30000);
     } else {
       const data = await res.json();
       showStatus('runStatus', 'error', '오류: ' + (data.message || res.statusText));
@@ -1619,6 +1792,7 @@ async function postToAgit(skipWait, testMode) {
     );
     if (res.status === 204) {
       showStatus('agitStatus', 'success', successMsg);
+      setTimeout(loadDashboard, 8000);
     } else {
       const data = await res.json().catch(() => ({}));
       showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
@@ -1637,6 +1811,7 @@ function openActions() {
 }
 
 loadSettings();
+loadDashboard();
 </script>
 </body>
 </html>
