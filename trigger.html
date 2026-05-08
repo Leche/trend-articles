@@ -400,6 +400,26 @@ input:focus, textarea:focus {
     <p class="subtitle">모바일에서 간편하게 아티클들을 컨트롤 하세요</p>
   </div>
 
+  <!-- Agit 게시 -->
+  <div class="card">
+    <div class="card-title">Agit에 게시</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">버튼을 누르면 오후 1시 30분(KST)에 자동 게시됩니다. "즉시 게시" 옵션은 테스트/긴급용.</p>
+    <div class="input-group">
+      <label>게시 날짜 (비워두면 오늘)</label>
+      <div class="date-wrapper">
+        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
+        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
+        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);margin-bottom:14px;cursor:pointer;font-weight:500;">
+      <input type="checkbox" id="agitSkipWait" style="width:auto;height:auto;margin:0;cursor:pointer;">
+      즉시 게시 (대기 없음)
+    </label>
+    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit()">Agit에 게시</button>
+    <div class="status" id="agitStatus"></div>
+  </div>
+
   <!-- 새 큐레이션 -->
   <div class="card">
     <div class="card-title">새 큐레이션</div>
@@ -496,26 +516,6 @@ input:focus, textarea:focus {
     <button class="add-btn" onclick="addLinkFixRow()">+ 링크 수정 항목 추가</button>
     <button class="btn btn-primary" id="linkFixBtn" onclick="fixLinks()">링크 수정 실행</button>
     <div class="status" id="linkFixStatus"></div>
-  </div>
-
-  <!-- Agit 게시 -->
-  <div class="card">
-    <div class="card-title">Agit에 게시</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">버튼을 누르면 오후 1시 30분(KST)에 자동 게시됩니다. "즉시 게시" 옵션은 테스트/긴급용.</p>
-    <div class="input-group">
-      <label>게시 날짜 (비워두면 오늘)</label>
-      <div class="date-wrapper">
-        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
-        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
-        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-      </div>
-    </div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);margin-bottom:14px;cursor:pointer;font-weight:500;">
-      <input type="checkbox" id="agitSkipWait" style="width:auto;height:auto;margin:0;cursor:pointer;">
-      즉시 게시 (대기 없음)
-    </label>
-    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit()">Agit에 게시</button>
-    <div class="status" id="agitStatus"></div>
   </div>
 
   <!-- 바로가기 -->
