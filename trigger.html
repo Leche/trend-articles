@@ -283,13 +283,6 @@ input:focus, textarea:focus {
 .agit-toggle .arrow {
   display: inline-block;
 }
-.agit-toggle .arrow path {
-  d: path('M 1 1 L 5 5 L 9 1');
-  transition: d 0.25s ease;
-}
-.agit-toggle.open .arrow path {
-  d: path('M 1 5 L 5 1 L 9 5');
-}
 .agit-advanced {
   max-height: 0;
   overflow: hidden;
@@ -444,7 +437,7 @@ input:focus, textarea:focus {
       </div>
       <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     </div>
-    <button type="button" class="agit-toggle" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;"><span id="agitToggleLabel">펼치기</span><svg class="arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path/></svg></button>
+    <button type="button" class="agit-toggle" id="agitToggleBtn" onclick="toggleAgitAdvanced()" style="margin:22px 0 0 0;background:none;border:none;color:var(--text-secondary);font-size:13px;font-family:inherit;font-weight:500;cursor:pointer;padding:0;width:100%;line-height:1;"><span id="agitToggleLabel">펼치기</span><svg class="arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path id="agitToggleArrowPath" d="M1 1L5 5L9 1"/></svg></button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -698,6 +691,8 @@ function resetInputs() {
   if (agitTgl) agitTgl.classList.remove('open');
   const agitTglLabel = document.getElementById('agitToggleLabel');
   if (agitTglLabel) agitTglLabel.textContent = '펼치기';
+  const agitArrowPath = document.getElementById('agitToggleArrowPath');
+  if (agitArrowPath) agitArrowPath.setAttribute('d', 'M1 1L5 5L9 1');
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1191,6 +1186,28 @@ function toggleAgitDatePlaceholder(input) {
   }
 }
 
+// V → ^ path 모핑 (가운데 꼭지점이 위/아래로 굽혀지는 모션)
+function animateAgitChevron(toUp) {
+  const path = document.getElementById('agitToggleArrowPath');
+  if (!path) return;
+  const duration = 250;
+  const start = performance.now();
+  const fromSide = toUp ? 1 : 5;
+  const toSide   = toUp ? 5 : 1;
+  const fromMid  = toUp ? 5 : 1;
+  const toMid    = toUp ? 1 : 5;
+  const ease = t => t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+  function frame(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const e = ease(p);
+    const s = fromSide + (toSide - fromSide) * e;
+    const m = fromMid  + (toMid  - fromMid)  * e;
+    path.setAttribute('d', `M1 ${s}L5 ${m}L9 ${s}`);
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 function toggleAgitAdvanced() {
   const adv = document.getElementById('agitAdvanced');
   const btn = document.getElementById('agitToggleBtn');
@@ -1207,6 +1224,7 @@ function toggleAgitAdvanced() {
     adv.style.maxHeight = '0';
     label.textContent = '펼치기';
   }
+  animateAgitChevron(willOpen);
 }
 
 async function postToAgit(skipWait, testMode) {
