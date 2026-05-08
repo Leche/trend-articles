@@ -18,7 +18,7 @@
   --success: #05ac36;
   --success-bg: rgba(5,172,54,0.1);
   --error: #CF3030;
-  --error-bg: #FFF0F0;
+  --error-bg: rgba(207,48,48,0.1);
   --loading-bg: rgba(10,115,220,0.1);
   --loading-text: #0a73dc;
   --border: rgba(0,0,0,0.08);
@@ -674,6 +674,24 @@ input:focus, textarea:focus {
   letter-spacing: -0.1px;
 }
 
+/* Cancel button (red) */
+.btn-cancel {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--error-bg);
+  color: var(--error);
+  cursor: pointer;
+  letter-spacing: -0.1px;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+.btn-cancel:active { opacity: 0.75; transform: scale(0.985); }
+
 /* Shortcut buttons */
 .shortcut-stack { display: flex; flex-direction: column; gap: 8px; }
 .shortcut-stack .btn-secondary {
@@ -828,6 +846,7 @@ input:focus, textarea:focus {
       </div>
     </div>
     <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
+    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:8px;">게시 취소</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -1949,6 +1968,63 @@ function toggleAgitDatePlaceholder(input) {
   }
 }
 
+let pendingAgitRunId = null;
+let agitCancelTimer = null;
+
+function showAgitCancel() {
+  const btn = document.getElementById('agitCancelBtn');
+  if (btn) btn.style.display = 'block';
+}
+function hideAgitCancel() {
+  const btn = document.getElementById('agitCancelBtn');
+  if (btn) btn.style.display = 'none';
+  pendingAgitRunId = null;
+  if (agitCancelTimer) { clearTimeout(agitCancelTimer); agitCancelTimer = null; }
+}
+
+async function captureLatestAgitRun(dispatchedAt) {
+  if (!settings.token) return;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=5`,
+      { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    const runs = data.workflow_runs || [];
+    // dispatch 시점 이후 + 아직 완료 안 된 가장 최근 run
+    const recent = runs.find(r => new Date(r.created_at).getTime() >= dispatchedAt - 5000 && r.status !== 'completed');
+    if (recent) pendingAgitRunId = recent.id;
+  } catch(_) {}
+}
+
+async function cancelAgitPost() {
+  if (!pendingAgitRunId) {
+    await captureLatestAgitRun(Date.now() - 30000);
+    if (!pendingAgitRunId) {
+      showStatus('agitStatus', 'error', '취소할 게시를 찾을 수 없어요.');
+      return;
+    }
+  }
+  showStatus('agitStatus', 'loading', '게시 취소 중...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/runs/${pendingAgitRunId}/cancel`,
+      { method: 'POST', headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.ok || res.status === 202) {
+      showStatus('agitStatus', 'success', '게시가 취소됐어요.');
+      hideAgitCancel();
+      setTimeout(loadDashboard, 4000);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('agitStatus', 'error', '취소 실패: ' + (data.message || res.statusText) + ' (이미 게시됐을 수 있어요)');
+    }
+  } catch(e) {
+    showStatus('agitStatus', 'error', '취소 오류: ' + e.message);
+  }
+}
+
 async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   const targetDate = document.getElementById('agitDate').value || '';
@@ -1963,6 +2039,8 @@ async function postToAgit(skipWait, testMode) {
     successMsg = 'Agit 게시 예약 완료! 오후 1시 30분(KST)에 자동 게시됩니다.';
   }
   showStatus('agitStatus', 'loading', '워크플로우 실행 요청 중...');
+  hideAgitCancel(); // 이전 dispatch의 cancel 버튼 정리
+  const dispatchedAt = Date.now();
   try {
     const res = await fetch(
       `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/dispatches`,
@@ -1979,6 +2057,10 @@ async function postToAgit(skipWait, testMode) {
     if (res.status === 204) {
       showStatus('agitStatus', 'success', successMsg);
       setTimeout(loadDashboard, 8000);
+      // 취소 버튼 노출 — 60초 동안
+      showAgitCancel();
+      setTimeout(() => captureLatestAgitRun(dispatchedAt), 3000);
+      agitCancelTimer = setTimeout(hideAgitCancel, 60000);
     } else {
       const data = await res.json().catch(() => ({}));
       showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
