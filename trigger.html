@@ -1093,6 +1093,11 @@ function formatLastDate(dateStr, today) {
   if (diffDays < 7)  return `${diffDays}일 전 (${md})`;
   return md;
 }
+function isWeekendKST(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const w = d.getDay();
+  return w === 0 || w === 6;
+}
 function renderDashboard(state) {
   const cur    = document.getElementById('dashCurationRow');
   const agit   = document.getElementById('dashAgitRow');
@@ -1110,20 +1115,32 @@ function renderDashboard(state) {
     footer.textContent = '';
     return;
   }
-  cur.innerHTML = state.todayExists
-    ? '<span class="dash-dot green"></span><span>오늘 큐레이션 생성됨</span>'
-    : '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
+  const today   = getTodayKST();
+  const weekend = isWeekendKST(today);
+
+  // 큐레이션 상태
+  if (state.todayExists) {
+    cur.innerHTML = '<span class="dash-dot green"></span><span>오늘 큐레이션 생성됨</span>';
+  } else if (weekend) {
+    cur.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 큐레이션 없음)</span>';
+  } else {
+    cur.innerHTML = '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
+  }
+
+  // Agit 게시 상태
   const past1330 = getCurrentKSTMinutes() >= 13 * 60 + 30;
   if (state.agitStatus === 'posted' && state.agitTime) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
     agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
+  } else if (weekend) {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 게시 없음)</span>';
   } else if (!past1330) {
     agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 13:30 예정</span>';
   } else {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
   }
-  footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, getTodayKST())}`;
+  footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, today)}`;
 }
 async function loadDashboard() {
   if (!settings.token || !settings.owner || !settings.repo) {
