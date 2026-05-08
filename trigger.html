@@ -412,12 +412,9 @@ input:focus, textarea:focus {
         <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
       </div>
     </div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);margin-bottom:14px;cursor:pointer;font-weight:500;">
-      <input type="checkbox" id="agitTestMode" style="width:auto;height:auto;margin:0;cursor:pointer;">
-      🧪 테스트 모드 (개인 아지트에 게시)
-    </label>
-    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false)">13:30에 Agit에 게시</button>
-    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true)" style="margin-top:8px;">즉시 Agit에 게시</button>
+    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">13:30에 Agit에 게시</button>
+    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)" style="margin-top:8px;">즉시 Agit에 게시</button>
+    <button class="btn btn-primary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">🧪 테스트 모드로 게시 (개인 아지트)</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -659,11 +656,9 @@ function resetInputs() {
   const linkFixList = document.getElementById('linkFixList');
   linkFixList.innerHTML = `<div class="replace-item"><input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
 
-  // Agit 게시 — 날짜/테스트 모드 초기화
+  // Agit 게시 — 날짜 초기화
   const agitDate = document.getElementById('agitDate');
   if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
-  const agitTestMode = document.getElementById('agitTestMode');
-  if (agitTestMode) agitTestMode.checked = false;
 
   // 상태 메시지 모두 숨기기
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
@@ -1157,16 +1152,19 @@ function toggleAgitDatePlaceholder(input) {
   }
 }
 
-async function postToAgit(skipWait) {
+async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   const targetDate = document.getElementById('agitDate').value || '';
   const skipWaitStr = skipWait ? 'true' : 'false';
-  const testMode = document.getElementById('agitTestMode').checked;
   const testModeStr = testMode ? 'true' : 'false';
-  const targetLabel = testMode ? '🧪 테스트 (개인 아지트)' : 'Agit';
-  const successMsg = skipWait
-    ? `${targetLabel} 즉시 게시 시작! 잠시 후 wall에 올라가요.`
-    : `${targetLabel} 게시 예약 완료! 오후 1시 30분(KST)에 자동 게시됩니다.`;
+  let successMsg;
+  if (testMode) {
+    successMsg = '🧪 테스트 모드 — 개인 아지트로 즉시 게시 시작!';
+  } else if (skipWait) {
+    successMsg = 'Agit 즉시 게시 시작! 잠시 후 wall에 올라가요.';
+  } else {
+    successMsg = 'Agit 게시 예약 완료! 오후 1시 30분(KST)에 자동 게시됩니다.';
+  }
   showStatus('agitStatus', 'loading', '워크플로우 실행 요청 중...');
   try {
     const res = await fetch(
