@@ -101,6 +101,8 @@ GNB_CSS_BODY = (
     "}"
     "@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}"
     "@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}"
+    # 기사 제목/썸네일/요약 영역도 원문으로 이동 (link-box는 기존 그대로)
+    ".article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}"
 )
 
 GNB_HTML_BODY = (
@@ -211,6 +213,21 @@ a.href='#article-'+(i+1);a.className='toc-item';
 var ns=document.createElement('span');ns.className='toc-num';ns.textContent=num;
 var ts=document.createElement('span');ts.className='toc-text';ts.textContent=title;
 a.appendChild(ns);a.appendChild(ts);li.appendChild(a);tocList.appendChild(li);
+// 제목/썸네일/요약 영역도 원문 링크로 이동
+var lk=art.querySelector('.article-link');
+var url=lk?lk.getAttribute('href'):'';
+if(url){
+var targets=['.article-title','.article-summary','.image-frame','.bullet-list'];
+for(var ti2=0;ti2<targets.length;ti2++){
+var el=art.querySelector(targets[ti2]);
+if(!el)continue;
+el.classList.add('clickable-link');
+el.addEventListener('click',function(u){return function(e){
+if(window.getSelection&&window.getSelection().toString().length>0)return;
+window.open(u,'_blank','noopener');
+};}(url));
+}
+}
 });
 totEl.textContent=arts.length;
 var items=document.querySelectorAll('.toc-item');
