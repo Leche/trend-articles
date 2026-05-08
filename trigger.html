@@ -282,10 +282,13 @@ input:focus, textarea:focus {
 }
 .agit-toggle .arrow {
   display: inline-block;
-  transition: transform 0.25s ease;
 }
-.agit-toggle.open .arrow {
-  transform: rotate(180deg);
+.agit-toggle .arrow path {
+  d: path('M 1 1 L 5 5 L 9 1');
+  transition: d 0.25s ease;
+}
+.agit-toggle.open .arrow path {
+  d: path('M 1 5 L 5 1 L 9 5');
 }
 .agit-advanced {
   max-height: 0;
