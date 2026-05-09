@@ -2210,8 +2210,35 @@ async function cancelAgitPost() {
   }
 }
 
+// ── Agit 게시 비밀번호 ──
+const AGIT_PWD_KEY = 'trend_agit_pwd_hash';
+
+async function _sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function _checkAgitPassword() {
+  const stored = localStorage.getItem(AGIT_PWD_KEY);
+  if (!stored) {
+    const set = prompt('Agit 게시 비밀번호를 설정하세요.\n앞으로 모든 게시 액션마다 이 비밀번호를 입력해야 합니다.\n(이 기기에만 저장되며 4자 이상)');
+    if (set === null) return false;
+    if (set.length < 4) { alert('비밀번호는 4자 이상이어야 합니다'); return false; }
+    const confirm2 = prompt('확인을 위해 비밀번호를 다시 입력하세요.');
+    if (confirm2 !== set) { alert('비밀번호가 일치하지 않습니다'); return false; }
+    localStorage.setItem(AGIT_PWD_KEY, await _sha256Hex(set));
+    alert('비밀번호가 설정되었습니다. 이제 게시 액션을 진행합니다.');
+    return true;
+  }
+  const input = prompt('Agit 게시 비밀번호를 입력하세요.');
+  if (input === null) return false;
+  if (await _sha256Hex(input) !== stored) { alert('비밀번호가 틀렸습니다'); return false; }
+  return true;
+}
+
 async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
+  if (!await _checkAgitPassword()) return;
   const targetDate = document.getElementById('agitDate').value || '';
   const skipWaitStr = skipWait ? 'true' : 'false';
   const testModeStr = testMode ? 'true' : 'false';
