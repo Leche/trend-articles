@@ -2285,7 +2285,7 @@ async function captureLatestAgitRun(dispatchedAt) {
   } catch(_) {}
 }
 
-// 워크플로우 완료(성공/실패 무관) 시 취소 버튼 자동 숨김
+// 실패 또는 취소 시 취소 버튼 즉시 숨김. 정상 성공은 60초 타이머가 처리.
 let agitPollTimer = null;
 function startAgitCompletionPoll() {
   if (agitPollTimer) { clearInterval(agitPollTimer); agitPollTimer = null; }
@@ -2299,12 +2299,12 @@ function startAgitCompletionPoll() {
       if (!res.ok) return;
       const run = await res.json();
       if (run.status === 'completed') {
-        hideAgitCancel();
         clearInterval(agitPollTimer); agitPollTimer = null;
         if (run.conclusion === 'failure') {
+          hideAgitCancel();
           showStatus('agitStatus', 'error', '게시 실패. GitHub Actions 로그를 확인해주세요.');
         } else if (run.conclusion === 'cancelled') {
-          showStatus('agitStatus', 'success', '게시 취소됨.');
+          hideAgitCancel();
         }
         loadActivityLog();
       }
@@ -2320,15 +2320,17 @@ async function cancelAgitPost() {
       return;
     }
   }
+  // 클릭 즉시 버튼 숨김 (API 응답 기다리지 않음)
+  const runId = pendingAgitRunId;
+  hideAgitCancel();
   showStatus('agitStatus', 'loading', '게시 취소 중...');
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/runs/${pendingAgitRunId}/cancel`,
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/runs/${runId}/cancel`,
       { method: 'POST', headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
     );
     if (res.ok || res.status === 202) {
       showStatus('agitStatus', 'success', '게시가 취소됐어요.');
-      hideAgitCancel();
       setTimeout(() => { loadDashboard(); loadActivityLog(); }, 4000);
     } else {
       const data = await res.json().catch(() => ({}));
