@@ -963,7 +963,7 @@ body.pwd-modal-open .tab-bar {
 }
 .reset-btn:active { transform: scale(0.985); }
 .reset-btn.done {
-  background: linear-gradient(var(--success-bg), var(--success-bg)), #FFFFFF;
+  background: linear-gradient(var(--success-bg), var(--success-bg)), var(--card);
   color: var(--success);
 }
 .reset-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
@@ -2266,6 +2266,7 @@ function hideAgitCancel() {
   if (btn) btn.style.display = 'none';
   pendingAgitRunId = null;
   if (agitCancelTimer) { clearTimeout(agitCancelTimer); agitCancelTimer = null; }
+  if (agitPollTimer) { clearInterval(agitPollTimer); agitPollTimer = null; }
 }
 
 async function captureLatestAgitRun(dispatchedAt) {
@@ -2282,6 +2283,33 @@ async function captureLatestAgitRun(dispatchedAt) {
     const recent = runs.find(r => new Date(r.created_at).getTime() >= dispatchedAt - 5000 && r.status !== 'completed');
     if (recent) pendingAgitRunId = recent.id;
   } catch(_) {}
+}
+
+// 워크플로우 완료(성공/실패 무관) 시 취소 버튼 자동 숨김
+let agitPollTimer = null;
+function startAgitCompletionPoll() {
+  if (agitPollTimer) { clearInterval(agitPollTimer); agitPollTimer = null; }
+  agitPollTimer = setInterval(async () => {
+    if (!pendingAgitRunId || !settings.token) return;
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/runs/${pendingAgitRunId}`,
+        { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      if (!res.ok) return;
+      const run = await res.json();
+      if (run.status === 'completed') {
+        hideAgitCancel();
+        clearInterval(agitPollTimer); agitPollTimer = null;
+        if (run.conclusion === 'failure') {
+          showStatus('agitStatus', 'error', '게시 실패. GitHub Actions 로그를 확인해주세요.');
+        } else if (run.conclusion === 'cancelled') {
+          showStatus('agitStatus', 'success', '게시 취소됨.');
+        }
+        loadActivityLog();
+      }
+    } catch(_) {}
+  }, 5000);
 }
 
 async function cancelAgitPost() {
@@ -2438,9 +2466,10 @@ async function postToAgit(skipWait, testMode) {
       showStatus('agitStatus', 'success', successMsg);
       setTimeout(loadDashboard, 8000);
       setTimeout(loadActivityLog, 3000);
-      // 취소 버튼 노출 — 60초 동안
+      // 취소 버튼 노출 — 60초 (또는 워크플로우 완료 시 자동 숨김)
       showAgitCancel();
       setTimeout(() => captureLatestAgitRun(dispatchedAt), 3000);
+      setTimeout(startAgitCompletionPoll, 5000);
       agitCancelTimer = setTimeout(hideAgitCancel, 60000);
     } else {
       const data = await res.json().catch(() => ({}));
