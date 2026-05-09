@@ -855,7 +855,10 @@ input:focus, textarea:focus {
 /* Password modal — Agit 게시 비번 입력 */
 .pwd-modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(56px + env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.5);
   display: none;
   align-items: center;
@@ -865,6 +868,11 @@ input:focus, textarea:focus {
   -webkit-tap-highlight-color: transparent;
 }
 .pwd-modal-overlay.open { display: flex; animation: fadeIn 0.18s ease; }
+/* 모달 열렸을 때 키보드 떠도 탭바 안 내려가게 */
+body.pwd-modal-open .tab-bar {
+  transform: none !important;
+  opacity: 1 !important;
+}
 .pwd-modal {
   background: var(--card);
   border-radius: var(--radius);
@@ -2327,11 +2335,13 @@ function showPwdModal({ title = '비밀번호 입력', desc = '', error = '' } =
     input.value = '';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('pwd-modal-open');
     setTimeout(() => input.focus(), 60);
 
     function cleanup(value) {
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('pwd-modal-open');
       okBtn.onclick = null;
       cancelBtn.onclick = null;
       input.onkeydown = null;
