@@ -110,26 +110,31 @@ body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 }
 .gnb-actions { display: flex; gap: 6px; align-items: center; }
 .gnb-status {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
-  padding: 0 4px;
+  color: var(--error);
+  background: var(--error-bg);
+  padding: 4px 10px;
+  border-radius: 999px;
   letter-spacing: -0.1px;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 .gnb-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--text-tertiary);
+  background: var(--error);
   flex-shrink: 0;
   transition: background 0.2s ease;
 }
-.gnb-status.connected { color: var(--success); }
+.gnb-status.connected {
+  color: var(--success);
+  background: var(--success-bg);
+}
 .gnb-status.connected .gnb-status-dot { background: var(--success); }
 .gnb-agit-link {
   display: flex;
