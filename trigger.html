@@ -852,6 +852,83 @@ input:focus, textarea:focus {
 }
 .file-select-btn:active { background: var(--file-btn-active); }
 
+/* Password modal — Agit 게시 비번 입력 */
+.pwd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+.pwd-modal-overlay.open { display: flex; animation: fadeIn 0.18s ease; }
+.pwd-modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  animation: pwdSlideIn 0.22s ease;
+}
+@keyframes pwdSlideIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pwd-modal-title {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.1px;
+}
+.pwd-modal-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 450;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  white-space: pre-line;
+  letter-spacing: -0.1px;
+}
+.pwd-modal #pwdInput {
+  width: 100%;
+  height: 50px;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-xs);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5em;
+  text-align: center;
+  -webkit-appearance: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+.pwd-modal #pwdInput:focus { outline: none; border-color: var(--input-border); }
+.pwd-modal-error {
+  font-size: 12px;
+  color: var(--error);
+  font-weight: 500;
+  margin-bottom: 12px;
+  min-height: 16px;
+  letter-spacing: -0.1px;
+}
+.pwd-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+.pwd-modal-actions .btn {
+  flex: 1;
+  margin: 0;
+}
+
 /* Reset button */
 .reset-btn {
   width: 100%;
@@ -1172,6 +1249,20 @@ input:focus, textarea:focus {
     </button>
   </div>
 </nav>
+
+<!-- 비밀번호 모달 (Agit 게시 액션 보호) -->
+<div class="pwd-modal-overlay" id="pwdModal" aria-hidden="true">
+  <div class="pwd-modal" role="dialog" aria-labelledby="pwdModalTitle" aria-modal="true">
+    <div class="pwd-modal-title" id="pwdModalTitle">비밀번호 입력</div>
+    <div class="pwd-modal-desc" id="pwdModalDesc"></div>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" id="pwdInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="16">
+    <div class="pwd-modal-error" id="pwdModalError"></div>
+    <div class="pwd-modal-actions">
+      <button type="button" class="btn btn-secondary" id="pwdModalCancel">취소</button>
+      <button type="button" class="btn btn-primary" id="pwdModalOk">확인</button>
+    </div>
+  </div>
+</div>
 
 <script>
 let settings = { token: '', owner: 'Leche', repo: 'trend-articles' };
@@ -2218,22 +2309,86 @@ async function _sha256Hex(text) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+// 커스텀 비밀번호 모달 — 숫자 키보드 + 트리거 페이지 톤앤매너
+function showPwdModal({ title = '비밀번호 입력', desc = '', error = '' } = {}) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('pwdModal');
+    const input = document.getElementById('pwdInput');
+    const okBtn = document.getElementById('pwdModalOk');
+    const cancelBtn = document.getElementById('pwdModalCancel');
+    const errEl = document.getElementById('pwdModalError');
+
+    document.getElementById('pwdModalTitle').textContent = title;
+    document.getElementById('pwdModalDesc').textContent = desc;
+    errEl.textContent = error;
+    input.value = '';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => input.focus(), 60);
+
+    function cleanup(value) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      input.onkeydown = null;
+      input.oninput = null;
+      resolve(value);
+    }
+
+    // 숫자만 입력 허용
+    input.oninput = () => { input.value = input.value.replace(/[^0-9]/g, ''); };
+    okBtn.onclick = () => cleanup(input.value);
+    cancelBtn.onclick = () => cleanup(null);
+    input.onkeydown = e => {
+      if (e.key === 'Enter') { e.preventDefault(); cleanup(input.value); }
+      if (e.key === 'Escape') { e.preventDefault(); cleanup(null); }
+    };
+  });
+}
+
 async function _checkAgitPassword() {
   const stored = localStorage.getItem(AGIT_PWD_KEY);
   if (!stored) {
-    const set = prompt('Agit 게시 비밀번호를 설정하세요.\n앞으로 모든 게시 액션마다 이 비밀번호를 입력해야 합니다.\n(이 기기에만 저장되며 4자 이상)');
-    if (set === null) return false;
-    if (set.length < 4) { alert('비밀번호는 4자 이상이어야 합니다'); return false; }
-    const confirm2 = prompt('확인을 위해 비밀번호를 다시 입력하세요.');
-    if (confirm2 !== set) { alert('비밀번호가 일치하지 않습니다'); return false; }
-    localStorage.setItem(AGIT_PWD_KEY, await _sha256Hex(set));
-    alert('비밀번호가 설정되었습니다. 이제 게시 액션을 진행합니다.');
+    // 최초 설정
+    let pwd = null;
+    let err = '';
+    while (true) {
+      const r = await showPwdModal({
+        title: '비밀번호 설정',
+        desc: 'Agit 게시 비밀번호를 새로 설정합니다.\n앞으로 모든 게시 액션마다 입력이 필요합니다. (4자리 이상 숫자)',
+        error: err,
+      });
+      if (r === null) return false;
+      if (r.length < 4) { err = '비밀번호는 4자 이상이어야 합니다'; continue; }
+      pwd = r; break;
+    }
+    err = '';
+    while (true) {
+      const r = await showPwdModal({
+        title: '비밀번호 확인',
+        desc: '한 번 더 입력해주세요.',
+        error: err,
+      });
+      if (r === null) return false;
+      if (r === pwd) break;
+      err = '비밀번호가 일치하지 않습니다. 다시 입력해주세요.';
+    }
+    localStorage.setItem(AGIT_PWD_KEY, await _sha256Hex(pwd));
     return true;
   }
-  const input = prompt('Agit 게시 비밀번호를 입력하세요.');
-  if (input === null) return false;
-  if (await _sha256Hex(input) !== stored) { alert('비밀번호가 틀렸습니다'); return false; }
-  return true;
+  // 이후 검증
+  let err = '';
+  while (true) {
+    const r = await showPwdModal({
+      title: '비밀번호 입력',
+      desc: 'Agit 게시 비밀번호를 입력하세요.',
+      error: err,
+    });
+    if (r === null) return false;
+    if (await _sha256Hex(r) === stored) return true;
+    err = '비밀번호가 일치하지 않습니다';
+  }
 }
 
 async function postToAgit(skipWait, testMode) {
