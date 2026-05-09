@@ -908,7 +908,7 @@ input:focus, textarea:focus {
   letter-spacing: 0.5em;
   text-align: center;
   -webkit-appearance: none;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   box-sizing: border-box;
 }
 .pwd-modal #pwdInput:focus { outline: none; border-color: var(--input-border); }
@@ -916,13 +916,15 @@ input:focus, textarea:focus {
   font-size: 12px;
   color: var(--error);
   font-weight: 500;
-  margin-bottom: 12px;
-  min-height: 16px;
+  margin: 10px 0 0 0;
   letter-spacing: -0.1px;
+  display: none;
 }
+.pwd-modal-error.visible { display: block; }
 .pwd-modal-actions {
   display: flex;
   gap: 8px;
+  margin-top: 22px;
 }
 .pwd-modal-actions .btn {
   flex: 1;
@@ -2321,6 +2323,7 @@ function showPwdModal({ title = '비밀번호 입력', desc = '', error = '' } =
     document.getElementById('pwdModalTitle').textContent = title;
     document.getElementById('pwdModalDesc').textContent = desc;
     errEl.textContent = error;
+    errEl.classList.toggle('visible', !!error);
     input.value = '';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
