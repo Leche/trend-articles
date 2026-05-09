@@ -2285,7 +2285,8 @@ async function captureLatestAgitRun(dispatchedAt) {
   } catch(_) {}
 }
 
-// 워크플로우 완료(성공/실패 무관) 시 취소 버튼 자동 숨김
+// 워크플로우 실패 시에만 취소 버튼 즉시 숨김 + 에러 표시
+// (성공/취소 케이스는 기존 60초 타이머가 그대로 처리)
 let agitPollTimer = null;
 function startAgitCompletionPoll() {
   if (agitPollTimer) { clearInterval(agitPollTimer); agitPollTimer = null; }
@@ -2299,12 +2300,10 @@ function startAgitCompletionPoll() {
       if (!res.ok) return;
       const run = await res.json();
       if (run.status === 'completed') {
-        hideAgitCancel();
         clearInterval(agitPollTimer); agitPollTimer = null;
         if (run.conclusion === 'failure') {
+          hideAgitCancel();
           showStatus('agitStatus', 'error', '게시 실패. GitHub Actions 로그를 확인해주세요.');
-        } else if (run.conclusion === 'cancelled') {
-          showStatus('agitStatus', 'success', '게시 취소됨.');
         }
         loadActivityLog();
       }
