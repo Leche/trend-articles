@@ -708,17 +708,21 @@ input:focus, textarea:focus {
 .ai-composer-inner {
   max-width: 440px;
   margin: 0 auto;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  column-gap: 8px;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 9999px;
-  padding: 6px 6px 6px 18px;
+  border-radius: 24px;
+  padding: 8px 8px 8px 18px;
   pointer-events: auto;
 }
 .ai-composer textarea {
-  flex: 1;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: none;
   background: none;
   font-family: inherit;
@@ -729,9 +733,11 @@ input:focus, textarea:focus {
   padding: 8px 0;
   min-height: 24px;
   max-height: 120px;
-  height: 40px;
   line-height: 24px;
   letter-spacing: -0.1px;
+  overflow-y: auto;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .ai-composer textarea::placeholder { color: var(--text-secondary); font-weight: 400; }
 .ai-send-btn {
