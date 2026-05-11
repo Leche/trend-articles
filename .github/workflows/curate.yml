@@ -1,10 +1,12 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 평일 오전 9시 KST 자동 실행 (UTC 00:00 = KST 09:00, 월~금)
+  # 평일 오전 9시 KST 무렵 자동 실행 (UTC 23:50 일~목 = KST 08:50 월~금)
+  # 정시(UTC 00:00)는 전 세계 cron이 몰려 지연/누락이 잦아 의도적으로 비정시 분으로 분산.
+  # 워크플로우 자체에 ~5분 소요되므로 08:50 시작 → 9시경 결과 도착.
   # 한국 공휴일은 guard 잡에서 자동 skip
   schedule:
-    - cron: '0 0 * * 1-5'
+    - cron: '50 23 * * 0-4'
   # 수동 실행 (폰에서 trigger.html 또는 GitHub Actions → Run workflow)
   workflow_dispatch:
     inputs:
