@@ -230,6 +230,8 @@ window.open(u,'_blank','noopener');
 }
 });
 totEl.textContent=arts.length;
+// 외부 hash 링크(#article-N)로 진입 시 id 부여 후 재점프 보장
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();},0);}
 var items=document.querySelectorAll('.toc-item');
 function setOpen(o){
 if(o){
@@ -318,6 +320,16 @@ def unwrap_page_div(content):
 def update_agit_label(content):
     return content.replace('트렌드림 아지트로 돌아가기', '트렌드림 아지트')
 
+def add_article_anchor_ids(content):
+    # 외부 hash 링크(#article-N)가 페이지 로드 직후 즉시 점프되도록
+    # 빌드 타임에 article-item에 id를 박아둠. (런타임 JS도 동일 id를 덮어쓰지만
+    # 그 시점엔 이미 브라우저가 hash 처리를 끝낸 후라 외부 진입 시 점프 실패함)
+    counter = {'n': 0}
+    def repl(m):
+        counter['n'] += 1
+        return f'<article id="article-{counter["n"]}" class="article-item"'
+    return re.sub(r'<article\s+class="article-item"', repl, content)
+
 def ensure_viewport_fit_cover(content):
     # Naver/Daum approach: NO viewport-fit=cover.
     # iOS Safari natively renders translucent status bar that samples page content.
@@ -377,6 +389,7 @@ def process_file(path):
     content = remove_header_element(content)
     content = unwrap_page_div(content)
     content = update_agit_label(content)
+    content = add_article_anchor_ids(content)
     content = ensure_viewport_fit_cover(content)
     content = ensure_theme_color(content)
 

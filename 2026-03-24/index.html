@@ -149,7 +149,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
   <div class="card">
     <main class="article-wrap article-list"><section class="digest-intro" data-static-intro><div class="digest-meta"><span>7개 기사</span><span>·</span><span>약 3분 읽기</span></div><p class="digest-summary">오늘은 플랫폼들이 새로운 룰을 만들어가는 이야기가 많아요. 애플부터 네이버, 아마존까지 각자의 방식으로 생태계를 다시 그려가고 있거든요.</p></section>
       
-    <article class="article-item">
+    <article id="article-1" class="article-item">
       <div class="article-label">ARTICLE 01</div>
       <h2 class="article-title">애플 WWDC26, 6월 둘째 주에 다시 열린다</h2>
       <p class="article-summary">개발자 생태계의 연례 리셋.</p>
@@ -162,7 +162,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://www.apple.com/newsroom/2026/03/apples-worldwide-developers-conference-returns-the-week-of-june-8/" target="_blank" rel="noopener">https://www.apple.com/newsroom/2026/03/apples-worldwide-developers-conference-returns-the-week-of-june-8/</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-2" class="article-item">
       <div class="article-label">ARTICLE 02</div>
       <h2 class="article-title">네이버, 선거철 정치 기사 댓글 잠정 중단</h2>
       <p class="article-summary">정치 댓글 운영의 재조정.</p>
@@ -175,7 +175,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://designcompass.org/2026/03/24/naver-suspends-comments-on-political-articles-during-election-season/" target="_blank" rel="noopener">https://designcompass.org/2026/03/24/naver-suspends-comments-on-political-articles-during-election-season/</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-3" class="article-item">
       <div class="article-label">ARTICLE 03</div>
       <h2 class="article-title">아마존에 25억 달러 손실을 안긴 다크 패턴</h2>
       <p class="article-summary">단기 전환율의 비싼 대가.</p>
@@ -188,7 +188,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://brunch.co.kr/@0f2edcfe3d1d4c6/26" target="_blank" rel="noopener">https://brunch.co.kr/@0f2edcfe3d1d4c6/26</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-4" class="article-item">
       <div class="article-label">ARTICLE 04</div>
       <h2 class="article-title">신용카드를 맡길 수 없다면, 선불카드를 만들어주면 된다</h2>
       <p class="article-summary">에이전트 결제 권한의 분리.</p>
@@ -201,7 +201,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://maily.so/oz.talking/posts/32z84jm1rn4" target="_blank" rel="noopener">https://maily.so/oz.talking/posts/32z84jm1rn4</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-5" class="article-item">
       <div class="article-label">ARTICLE 05</div>
       <h2 class="article-title">요즘 백화점 매장이 더 자주 바뀌는 이유</h2>
       <p class="article-summary">오프라인 MD의 템포 변화.</p>
@@ -214,7 +214,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://brunch.co.kr/@trendlite/680" target="_blank" rel="noopener">https://brunch.co.kr/@trendlite/680</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-6" class="article-item">
       <div class="article-label">ARTICLE 06</div>
       <h2 class="article-title">유튜브, 브랜드와 크리에이터 협업의 새 시대 제시</h2>
       <p class="article-summary">크리에이터 마케팅의 재정의.</p>
@@ -227,7 +227,7 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
       <div class="link-box"><a class="article-link" href="https://blog.youtube/news-and-events/youtube-creator-partnerships-newfronts-2026/" target="_blank" rel="noopener">https://blog.youtube/news-and-events/youtube-creator-partnerships-newfronts-2026/</a></div>
     </article>
     
-    <article class="article-item">
+    <article id="article-7" class="article-item">
       <div class="article-label">ARTICLE 07</div>
       <h2 class="article-title">1984 매킨토시에서 영감 받은 맥세이프 카드 월렛</h2>
       <p class="article-summary">과거 오브젝트의 휴대화.</p>
@@ -346,6 +346,8 @@ window.open(u,'_blank','noopener');
 }
 });
 totEl.textContent=arts.length;
+// 외부 hash 링크(#article-N)로 진입 시 id 부여 후 재점프 보장
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();},0);}
 var items=document.querySelectorAll('.toc-item');
 function setOpen(o){
 if(o){

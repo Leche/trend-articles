@@ -103,7 +103,10 @@ jobs:
           intro_match = re.search(r'<p class="digest-summary">([^<]+)</p>', html)
           intro_text = intro_match.group(1).strip() if intro_match else ""
 
-          quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
+          # 각 기사 제목을 다이제스트 페이지의 앵커 링크로 연결
+          quote_block = "\n>\n".join(
+              f"> *{i}. [{t}]({link}#article-{i})*" for i, t in enumerate(titles, 1)
+          )
 
           parts = [
               f"# ⚡️",

@@ -198,6 +198,8 @@ window.open(u,'_blank','noopener');
 }
 });
 totEl.textContent=arts.length;
+// 외부 hash 링크(#article-N)로 진입 시 id 부여 후 재점프 보장
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();},0);}
 var items=document.querySelectorAll('.toc-item');
 function setOpen(o){
 if(o){
