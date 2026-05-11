@@ -714,9 +714,13 @@ input:focus, textarea:focus {
   column-gap: 8px;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 24px;
+  border-radius: 9999px;
   padding: 8px 8px 8px 18px;
   pointer-events: auto;
+  transition: border-radius 0.12s ease;
+}
+.ai-composer.multiline .ai-composer-inner {
+  border-radius: 22px;
 }
 .ai-composer textarea {
   display: block;
@@ -762,7 +766,7 @@ input:focus, textarea:focus {
 .ai-composer .status {
   pointer-events: auto;
   max-width: 440px;
-  margin: 8px auto 0;
+  margin: 0 auto 8px;
 }
 
 /* Divider */
@@ -1229,13 +1233,13 @@ body.pwd-modal-open .tab-bar {
 
 <!-- AI 입력바 (탭과 무관하게 viewport 고정, AI 탭일 때만 visible) -->
 <div class="ai-composer" id="aiComposer">
+  <div class="status" id="commandStatus"></div>
   <div class="ai-composer-inner">
     <textarea id="commandPrompt" rows="1" placeholder="프롬프트를 입력하여 수정하세요." autocorrect="off" autocapitalize="off" spellcheck="false" oninput="autoResizeAI(this)"></textarea>
     <button class="ai-send-btn" id="commandBtn" onclick="runCommand()" aria-label="전송">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     </button>
   </div>
-  <div class="status" id="commandStatus"></div>
 </div>
 
 <!-- 하단 탭바 -->
@@ -1589,7 +1593,13 @@ function openAgit(e) {
 function autoResizeAI(ta) {
   ta.style.height = 'auto';
   const max = 120;
-  ta.style.height = Math.min(ta.scrollHeight, max) + 'px';
+  const next = Math.min(ta.scrollHeight, max);
+  ta.style.height = next + 'px';
+  const composer = document.getElementById('aiComposer');
+  if (composer) {
+    // 1줄(=24px line-height + 8px*2 padding ≈ 40px) 초과 시 multiline
+    composer.classList.toggle('multiline', next > 40);
+  }
 }
 function setAIPrompt(text) {
   const ta = document.getElementById('commandPrompt');
@@ -2178,7 +2188,7 @@ async function runCommand() {
       showStatus('commandStatus', 'success', '명령 전달 완료! 2~3분 후 카카오워크로 알림이 와요.');
       const ta = document.getElementById('commandPrompt');
       ta.value = '';
-      ta.style.height = '';
+      autoResizeAI(ta);
     } else {
       const data = await res.json().catch(() => ({}));
       showStatus('commandStatus', 'error', '오류: ' + (data.message || res.statusText));
