@@ -103,6 +103,9 @@ GNB_CSS_BODY = (
     "@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}"
     # 기사 제목/썸네일/요약 영역도 원문으로 이동 (link-box는 기존 그대로)
     ".article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}"
+    # 앵커 점프 시 타깃 카드 outline ring 페이드 (PC 2열 그리드 이상)
+    "@keyframes article-flash{0%{box-shadow:0 0 0 4px var(--success);}100%{box-shadow:0 0 0 0 transparent;}}"
+    "@media (min-width:1200px){.article-item.flash-target{border-radius:8px;animation:article-flash 1.4s ease-out;}}"
 )
 
 GNB_HTML_BODY = (
@@ -230,8 +233,10 @@ window.open(u,'_blank','noopener');
 }
 });
 totEl.textContent=arts.length;
-// 외부 hash 링크(#article-N)로 진입 시 id 부여 후 재점프 보장
-if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();},0);}
+// 외부 hash 진입 / 페이지 내 목차 클릭 모두에서 타깃 카드 flash
+function flashTarget(){if(!location.hash)return;var t=document.querySelector(location.hash);if(!t||!t.classList||!t.classList.contains('article-item'))return;t.classList.remove('flash-target');void t.offsetWidth;t.classList.add('flash-target');}
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();flashTarget();},0);}
+window.addEventListener('hashchange',function(){setTimeout(flashTarget,50);});
 var items=document.querySelectorAll('.toc-item');
 function setOpen(o){
 if(o){
