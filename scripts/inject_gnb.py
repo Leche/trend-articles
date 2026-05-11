@@ -104,7 +104,9 @@ GNB_CSS_BODY = (
     # 기사 제목/썸네일/요약 영역도 원문으로 이동 (link-box는 기존 그대로)
     ".article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}"
     # 앵커 점프 시 타깃 카드 outline ring 페이드 (PC 2열 그리드 이상)
-    "@keyframes article-flash{0%{box-shadow:0 0 0 4px var(--success);}100%{box-shadow:0 0 0 0 transparent;}}"
+    ":root{--gnb-flash:#05ac36;}"
+    "@media (prefers-color-scheme:dark){:root{--gnb-flash:#34C759;}}"
+    "@keyframes article-flash{0%{box-shadow:0 0 0 4px var(--gnb-flash);}100%{box-shadow:0 0 0 0 transparent;}}"
     "@media (min-width:1200px){.article-item.flash-target{border-radius:8px;animation:article-flash 1.4s ease-out;}}"
 )
 
