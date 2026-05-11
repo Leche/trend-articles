@@ -872,7 +872,12 @@ def generate_html(articles):
 
         # 썸네일 처리
         if art.get("thumbnail_b64"):
-            img_html = f'<div class="image-frame"><img class="article-image" src="{art["thumbnail_b64"]}" alt="썸네일"></div>'
+            b64 = art["thumbnail_b64"]
+            # mp4/webm은 <video>로 — img에 video data URL 넣으면 크롬에서 깨진 이미지로 표시됨.
+            if b64.startswith("data:video/"):
+                img_html = f'<div class="image-frame"><video class="article-image" src="{b64}" autoplay muted loop playsinline preload="metadata"></video></div>'
+            else:
+                img_html = f'<div class="image-frame"><img class="article-image" src="{b64}" alt="썸네일"></div>'
         else:
             img_html = '<div class="image-frame"><div class="no-thumb">썸네일 없음</div></div>'
 
