@@ -110,7 +110,7 @@ GNB_CSS_BODY = (
     "@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}"
     "@media (min-width:1200px){"
         ".article-item{position:relative;isolation:isolate;}"
-        ".article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out;}"
+        ".article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}"
     "}"
 )
 
