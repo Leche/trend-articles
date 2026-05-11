@@ -115,8 +115,6 @@ jobs:
           if intro_text:
               parts.extend(["", intro_text])
           parts.extend(["", quote_block])
-          # CTA 버튼: 단체 멘션 바로 위에 배치
-          parts.extend(["", f"> *✨ [다이제스트 보러가기]({link})*"])
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
               parts.append(f"cc. @@moretab @@pfs.design @@trenddaily")
