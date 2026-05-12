@@ -99,8 +99,12 @@ jobs:
               print("[ERROR] 기사 제목 추출 실패")
               raise SystemExit(1)
 
-          # 인트로 요약 추출 (있으면 타이틀 아래에 본문 스타일로 삽입)
-          intro_match = re.search(r'<p class="digest-summary">([^<]+)</p>', html)
+          # 인트로 요약 추출 — 반드시 정적 intro section 안의 것만 매칭.
+          # (런타임 JS 코드에 같은 셀렉터 리터럴이 들어있어 단순 매칭 시 더미 텍스트 잡힘)
+          intro_match = re.search(
+              r'<section[^>]*data-static-intro[^>]*>.*?<p class="digest-summary">([^<]+)</p>.*?</section>',
+              html, re.DOTALL
+          )
           intro_text = intro_match.group(1).strip() if intro_match else ""
 
           # 각 기사 제목을 다이제스트 페이지의 앵커 링크로 연결
