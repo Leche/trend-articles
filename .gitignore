@@ -1,0 +1,10 @@
+# macOS Finder 메타
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
+.idea/
