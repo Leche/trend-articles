@@ -1,12 +1,13 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 평일 오전 9시 KST 무렵 자동 실행 (UTC 23:50 일~목 = KST 08:50 월~금)
-  # 정시(UTC 00:00)는 전 세계 cron이 몰려 지연/누락이 잦아 의도적으로 비정시 분으로 분산.
-  # 워크플로우 자체에 ~5분 소요되므로 08:50 시작 → 9시경 결과 도착.
-  # 한국 공휴일은 guard 잡에서 자동 skip
+  # 1차: 평일 KST 08:50 (UTC 일~목 23:50) — 메인 트리거
+  # 2차: 평일 KST 10:00 (UTC 월~금 01:00) — 1차가 누락됐을 때만 작동하는 백업.
+  #      guard 잡에서 당일 폴더가 이미 있으면 skip해 중복 실행 방지.
+  # 한국 공휴일은 guard 잡에서 자동 skip.
   schedule:
     - cron: '50 23 * * 0-4'
+    - cron: '0 1 * * 1-5'
   # 수동 실행 (폰에서 trigger.html 또는 GitHub Actions → Run workflow)
   workflow_dispatch:
     inputs:
@@ -37,7 +38,8 @@ jobs:
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
-      - name: Check workday (skip Korean holidays on cron)
+      - uses: actions/checkout@v4
+      - name: Check workday + dedup
         id: check
         run: |
           # 수동 실행은 항상 진행
@@ -46,20 +48,23 @@ jobs:
             echo "수동 실행 — 진행"
             exit 0
           fi
-          # cron path: 한국 공휴일 체크
+          # cron path: 한국 공휴일 + 중복 실행 방지
           pip install --quiet holidays
           python << 'PYEOF' >> $GITHUB_OUTPUT
-          import datetime, holidays
+          import datetime, holidays, os, sys
           d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
           kr = holidays.KR(years=d.year)
           if d in kr:
-              print(f"should_run=false")
-              import sys
+              print("should_run=false")
               print(f"오늘 ({d}) 은 한국 공휴일: {kr[d]} — 큐레이션 건너뜀", file=sys.stderr)
-          else:
-              print(f"should_run=true")
-              import sys
-              print(f"오늘 ({d}) 은 평일 — 큐레이션 진행", file=sys.stderr)
+              raise SystemExit
+          # 1차(08:50)가 이미 성공해서 폴더가 있으면 백업(10:00) cron은 skip
+          if os.path.isdir(d.strftime('%Y-%m-%d')):
+              print("should_run=false")
+              print(f"오늘 ({d}) 큐레이션 이미 완료 — 백업 cron skip", file=sys.stderr)
+              raise SystemExit
+          print("should_run=true")
+          print(f"오늘 ({d}) 은 평일 — 큐레이션 진행", file=sys.stderr)
           PYEOF
 
   curate:
