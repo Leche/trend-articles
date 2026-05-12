@@ -1998,15 +1998,17 @@ async function reorderArticles() {
           .replace(/id="article-\d+"/, `id="article-${i + 1}"`);
       });
 
-      // article-wrap 교체
-      const wrapStart = html.indexOf('<main class="article-wrap article-list">');
-      const wrapEnd   = html.indexOf('</main>', wrapStart) + 7;
-      const newHtml   =
-        html.substring(0, wrapStart) +
-        '<main class="article-wrap article-list"> ' +
+      // article 블록 영역만 교체 — main wrap 안의 다른 콘텐츠(정적 digest-intro 등)는 보존.
+      // 첫 article ~ 마지막 article 구간만 새 순서로 join 후 갈아끼움.
+      articleRegex.lastIndex = 0;
+      const matches = [...html.matchAll(articleRegex)];
+      const firstStart = matches[0].index;
+      const lastMatch = matches[matches.length - 1];
+      const lastEnd = lastMatch.index + lastMatch[0].length;
+      const newHtml =
+        html.substring(0, firstStart) +
         renumbered.join(' ') +
-        ' </main>' +
-        html.substring(wrapEnd);
+        html.substring(lastEnd);
 
       await ghPut(path, newHtml, fd.sha, msg);
     }
