@@ -1976,18 +1976,9 @@ async function reorderArticles() {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
-      // article 블록 추출
-      const startTag = '<article class="article-item">';
-      const endTag   = '</article>';
-      const blocks   = [];
-      let cursor     = 0;
-      while (true) {
-        const s = html.indexOf(startTag, cursor);
-        if (s === -1) break;
-        const e = html.indexOf(endTag, s) + endTag.length;
-        blocks.push(html.substring(s, e));
-        cursor = e;
-      }
+      // article 블록 추출 — inject_gnb.py가 id="article-N"을 박아넣을 수 있어 정규식으로 매칭
+      const articleRegex = /<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?<\/article>/g;
+      const blocks = html.match(articleRegex) || [];
       if (blocks.length === 0) throw new Error('기사 블록을 찾을 수 없어요.');
 
       // 이동 순차 적용 (각 이동마다 현재 blocks 배열 기준으로 처리)
@@ -1999,10 +1990,13 @@ async function reorderArticles() {
         blocks.splice(to - 1, 0, moved);
       }
 
-      // ARTICLE 번호 재부여 (새 위치 기준 01, 02, 03...)
-      const renumbered = blocks.map((b, i) =>
-        b.replace(/ARTICLE \d{2}/, `ARTICLE ${String(i + 1).padStart(2, '0')}`)
-      );
+      // ARTICLE 라벨 + id 둘 다 새 위치 기준으로 재부여 (GNB 네비게이션이 id로 점프)
+      const renumbered = blocks.map((b, i) => {
+        const num = String(i + 1).padStart(2, '0');
+        return b
+          .replace(/ARTICLE \d{2}/, `ARTICLE ${num}`)
+          .replace(/id="article-\d+"/, `id="article-${i + 1}"`);
+      });
 
       // article-wrap 교체
       const wrapStart = html.indexOf('<main class="article-wrap article-list">');
