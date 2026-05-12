@@ -21,7 +21,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # ─── 설정 ────────────────────────────────────────────────────
-ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "6"))
+ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "8"))
 CUSTOM_DATE = os.environ.get("CUSTOM_DATE", "").strip()
 REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
 TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"

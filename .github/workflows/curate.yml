@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       article_count:
-        description: '기사 개수 (기본 6개)'
+        description: '기사 개수 (기본 8개)'
         required: false
-        default: '6'
+        default: '8'
       custom_date:
         description: '날짜 지정 (YYYY-MM-DD, 비워두면 오늘)'
         required: false
@@ -96,7 +96,7 @@ jobs:
       - name: Run curation script
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ARTICLE_COUNT: ${{ github.event.inputs.article_count || '6' }}
+          ARTICLE_COUNT: ${{ github.event.inputs.article_count || '8' }}
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
           TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
