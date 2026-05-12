@@ -1,15 +1,9 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 평일 KST 08:50 첫 시도 후 15분 간격으로 KST 11:35까지 재시도 (최대 12회).
-  # guard 잡이 당일 폴더 존재 여부를 매번 체크해, 한 번 성공하면 후속 트리거는
-  # 자동으로 skip된다 → 사실상 "성공 시 멈춤" 동작.
-  # 한국 공휴일은 guard 잡에서 자동 skip.
-  schedule:
-    - cron: '50 23 * * 0-4'            # KST 월~금 08:50 (1차)
-    - cron: '5,20,35,50 0,1 * * 1-5'   # KST 월~금 09:05 ~ 10:50 (15분 간격)
-    - cron: '5,20,35 2 * * 1-5'        # KST 월~금 11:05 ~ 11:35 (마지막 3회)
-  # 수동 실행 (폰에서 trigger.html 또는 GitHub Actions → Run workflow)
+  # GitHub Actions schedule은 인덱싱이 비결정적이라 신뢰 불가 →
+  # 외부 cron(cron-job.org 등)이 workflow_dispatch를 호출하는 구조로 운영.
+  # guard 잡의 한국 공휴일·중복 실행 체크는 외부 cron 사용 시에도 보호 장치로 유지.
   workflow_dispatch:
     inputs:
       article_count:
