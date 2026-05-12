@@ -1,13 +1,14 @@
 name: 트렌드림 기사 큐레이션
 
 on:
-  # 1차: 평일 KST 08:50 (UTC 일~목 23:50) — 메인 트리거
-  # 2차: 평일 KST 10:00 (UTC 월~금 01:00) — 1차가 누락됐을 때만 작동하는 백업.
-  #      guard 잡에서 당일 폴더가 이미 있으면 skip해 중복 실행 방지.
+  # 평일 KST 08:50 첫 시도 후 15분 간격으로 KST 11:35까지 재시도 (최대 12회).
+  # guard 잡이 당일 폴더 존재 여부를 매번 체크해, 한 번 성공하면 후속 트리거는
+  # 자동으로 skip된다 → 사실상 "성공 시 멈춤" 동작.
   # 한국 공휴일은 guard 잡에서 자동 skip.
   schedule:
-    - cron: '50 23 * * 0-4'
-    - cron: '0 1 * * 1-5'
+    - cron: '50 23 * * 0-4'            # KST 월~금 08:50 (1차)
+    - cron: '5,20,35,50 0,1 * * 1-5'   # KST 월~금 09:05 ~ 10:50 (15분 간격)
+    - cron: '5,20,35 2 * * 1-5'        # KST 월~금 11:05 ~ 11:35 (마지막 3회)
   # 수동 실행 (폰에서 trigger.html 또는 GitHub Actions → Run workflow)
   workflow_dispatch:
     inputs:
@@ -31,6 +32,13 @@ on:
 permissions:
   contents: write
   pages: write
+
+# 15분 간격 재시도 중 이전 인스턴스가 아직 실행 중일 수 있어, 한 번에 하나만
+# 실행되도록 직렬화. cancel-in-progress=false → 진행 중인 큐레이션은 살리고
+# 다음 트리거는 큐로 들어가며, 큐된 트리거는 차례가 오면 dedup guard에서 skip된다.
+concurrency:
+  group: curate
+  cancel-in-progress: false
 
 jobs:
   guard:
