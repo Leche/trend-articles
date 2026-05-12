@@ -32,6 +32,44 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Validate digest data
+        env:
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, datetime, sys
+
+          target = os.environ.get('TARGET_DATE', '').strip()
+          if target:
+              d = datetime.datetime.strptime(target, '%Y-%m-%d').date()
+          else:
+              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
+          html_path = f"{d.strftime('%Y-%m-%d')}/index.html"
+
+          if not os.path.exists(html_path):
+              print(f"[ERROR] HTML 파일 없음: {html_path}")
+              sys.exit(1)
+
+          with open(html_path, 'r', encoding='utf-8') as f:
+              html = f.read()
+
+          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
+          if not titles:
+              print("[ERROR] 기사 제목 추출 실패")
+              sys.exit(1)
+
+          intro_section_exists = re.search(r'<section[^>]*data-static-intro', html)
+          intro_match = re.search(
+              r'<section[^>]*data-static-intro[^>]*>.*?<p class="digest-summary">([^<]+)</p>.*?</section>',
+              html, re.DOTALL
+          )
+          if intro_section_exists and not intro_match:
+              print("[ERROR] intro section은 있는데 digest-summary 추출 실패 — 정규식·구조 점검 필요")
+              sys.exit(1)
+
+          print(f"[OK] 검증 통과: 기사 {len(titles)}개, intro {'있음' if intro_match else '없음'}")
+          PYEOF
+
       - name: Wait until 13:30 KST
         if: github.event.inputs.skip_wait != 'true'
         run: |
