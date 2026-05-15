@@ -449,7 +449,7 @@ def scan_priority_sites():
 # ─── Claude API로 기사 선정 및 요약 ──────────────────────────
 def curate_with_claude(candidates):
     """Claude API를 사용하여 기사 선정, 제목 번역, 요약 생성"""
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=8)
 
     # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
@@ -560,7 +560,7 @@ def _normalize_url(u):
 def curate_via_web_search():
     """Claude의 web_search 툴로 인터넷 전체에서 기사 큐레이션.
     사이트 화이트리스트 없이, 카테고리 가이드와 한국 사이트 균형 요건만 프롬프트로 통제."""
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=8)
 
     # ── 발행일 범위: 오늘로부터 14일 전 ~ 오늘 ──
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
@@ -807,7 +807,7 @@ def calculate_reading_time(articles):
 
 def generate_intro(articles):
     """오늘 기사들을 보고 1~2문장 인트로 생성 (Claude)"""
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=8)
     article_text = ""
     for i, art in enumerate(articles, 1):
         article_text += f"{i}. [{art.get('title_ko','')}]\n"
@@ -1026,7 +1026,7 @@ def _extract_text(html_text, max_len=3000):
 
 def summarize_single_article(url):
     """단일 기사를 Claude API로 요약"""
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=8)
 
     html = fetch_page(url)
     page_text = _extract_text(html)
