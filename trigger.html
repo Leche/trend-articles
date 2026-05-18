@@ -2107,6 +2107,7 @@ async function runCuration() {
       article_count: document.getElementById('articleCount').value || '8',
       custom_date:   document.getElementById('customDate').value || '',
       replace_urls:  '',
+      force_run:     'true',
     });
     if (res.status === 204) {
       showStatus('runStatus', 'success', '워크플로우가 시작되었어요! 카카오워크로 완료 알림이 올 거예요.');
@@ -2147,7 +2148,7 @@ async function runReplace() {
   }
   showStatus('replaceStatus', 'loading', '기사 교체 워크플로우 실행 중...');
   try {
-    const res = await triggerWorkflow({ article_count: '8', custom_date: '', replace_urls: parts.join(',') });
+    const res = await triggerWorkflow({ article_count: '8', custom_date: '', replace_urls: parts.join(','), force_run: 'true' });
     if (res.status === 204) {
       showStatus('replaceStatus', 'success', `기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`);
     } else {
