@@ -22,14 +22,18 @@ on:
         description: '테스트 모드 (true이면 test/ 폴더에만 저장, 실 데이터 보호)'
         required: false
         default: 'false'
+      force_run:
+        description: '강제 실행 (true면 공휴일·당일 중복 체크 무시 — trigger.html 수동 실행용)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
   pages: write
 
-# 15분 간격 재시도 중 이전 인스턴스가 아직 실행 중일 수 있어, 한 번에 하나만
-# 실행되도록 직렬화. cancel-in-progress=false → 진행 중인 큐레이션은 살리고
-# 다음 트리거는 큐로 들어가며, 큐된 트리거는 차례가 오면 dedup guard에서 skip된다.
+# 외부 cron 자동 호출과 수동 실행이 겹칠 때를 대비해 한 번에 하나만 실행되도록 직렬화.
+# cancel-in-progress=false → 진행 중인 큐레이션은 살리고 다음 트리거는 큐로 들어가며,
+# 큐된 트리거는 차례가 오면 guard의 중복 체크에서 skip된다.
 concurrency:
   group: curate
   cancel-in-progress: false
@@ -44,13 +48,13 @@ jobs:
       - name: Check workday + dedup
         id: check
         run: |
-          # 수동 실행은 항상 진행
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # trigger.html 수동 실행(force_run=true)은 공휴일·중복 체크 무시하고 항상 진행
+          if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
-            echo "수동 실행 — 진행"
+            echo "수동 강제 실행(force_run) — 진행"
             exit 0
           fi
-          # cron path: 한국 공휴일 + 중복 실행 방지
+          # 그 외(cron-job.org 등 자동 호출): 한국 공휴일 + 당일 중복 실행 방지
           pip install --quiet holidays
           python << 'PYEOF' >> $GITHUB_OUTPUT
           import datetime, holidays, os, sys
@@ -60,10 +64,10 @@ jobs:
               print("should_run=false")
               print(f"오늘 ({d}) 은 한국 공휴일: {kr[d]} — 큐레이션 건너뜀", file=sys.stderr)
               raise SystemExit
-          # 1차(08:50)가 이미 성공해서 폴더가 있으면 백업(10:00) cron은 skip
+          # 오늘치 폴더가 이미 있으면 (수동 등으로 이미 생성됨) 자동 트리거는 skip
           if os.path.isdir(d.strftime('%Y-%m-%d')):
               print("should_run=false")
-              print(f"오늘 ({d}) 큐레이션 이미 완료 — 백업 cron skip", file=sys.stderr)
+              print(f"오늘 ({d}) 큐레이션 이미 완료 — 자동 트리거 skip", file=sys.stderr)
               raise SystemExit
           print("should_run=true")
           print(f"오늘 ({d}) 은 평일 — 큐레이션 진행", file=sys.stderr)
