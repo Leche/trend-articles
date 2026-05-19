@@ -498,6 +498,9 @@ def curate_with_claude(candidates):
     """Claude API를 사용하여 기사 선정, 제목 번역, 요약 생성"""
     client = anthropic.Anthropic(max_retries=8)
 
+    # 중복·차단 도메인으로 빠지는 분을 감안해 여유있게 선정 요청 → 후처리 후 ARTICLE_COUNT개로 맞춤
+    select_count = ARTICLE_COUNT + 4
+
     # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
     candidate_text = ""
     for i, c in enumerate(candidates[:100], 1):
@@ -519,7 +522,7 @@ def curate_with_claude(candidates):
 
 ## 기사 선정 기준
 1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내 기사만
-2. 구성 가이드 (전체 {ARTICLE_COUNT}개 기준):
+2. 구성 가이드 (전체 {select_count}개 기준):
    - 빅테크(구글, 애플, 메타, OpenAI 등) 신제품/업데이트 소식: 1~2개
    - 나머지는 아래 범주에서 자유롭게 조합:
      • 프로덕트 디자인 / UX / UI 트렌드
@@ -539,7 +542,7 @@ def curate_with_claude(candidates):
 
 ## 요청
 위 후보 중에서, 그리고 필요하다면 후보에 없더라도 직접 떠올린 최근 빅테크/프로덕트 뉴스를 포함하여,
-정확히 {ARTICLE_COUNT}개의 기사를 선정해주세요.
+정확히 {select_count}개의 기사를 선정해주세요. (후처리 중복 제거를 거쳐 최종 {ARTICLE_COUNT}개로 추려집니다)
 
 **출처 다양성 필수**: 같은 출처(사이트)에서 최대 2개까지만 선정하세요. 가능한 한 서로 다른 사이트에서 기사를 골라야 합니다.
 **중복 기사는 절대 선정하지 마세요.** 과거 기사 목록에 있는 제목이나 링크와 동일하거나 유사한 기사는 제외합니다.
@@ -889,13 +892,17 @@ def curate_via_web_search():
 
 
 # ─── 각 기사 상세 읽기 + 썸네일 ───────────────────────────────
-def enrich_articles(articles):
-    """각 기사의 원문을 읽고 내용 보강 + 썸네일 다운로드"""
+def enrich_articles(articles, target_count=None):
+    """각 기사의 원문을 읽고 내용 보강 + 썸네일 다운로드.
+    target_count 지정 시 차단 도메인을 건너뛰며 그 개수만큼 채워지면 멈춤
+    (앞 단계에서 여유분을 받아두면 차단·중복 제거 후에도 정확히 채울 수 있음)."""
     enriched = []
     thumb_success = []
     thumb_fail = []
 
     for art in articles:
+        if target_count is not None and len(enriched) >= target_count:
+            break
         url = art["url"]
         # 차단 도메인(서핏 리다이렉트 최종 목적지 포함) 기사 제외
         if is_blocked_domain(url):
@@ -1385,13 +1392,12 @@ def main():
             print(f"\n🌐 CURATE_MODE=web_search — Claude 인터넷 검색 큐레이션")
             articles = curate_via_web_search()
 
-        # 기사 수 검증
-        if len(articles) != ARTICLE_COUNT:
-            print(f"⚠️  요청 {ARTICLE_COUNT}개 vs 선정 {len(articles)}개 — 조정 필요")
-            articles = articles[:ARTICLE_COUNT]
+        # 기사 수 검증 — 여유분은 enrich 단계에서 ARTICLE_COUNT개까지만 채움
+        if len(articles) < ARTICLE_COUNT:
+            print(f"⚠️  중복 제거 후 {len(articles)}개 — 요청 {ARTICLE_COUNT}개 미달 가능")
 
-        # 3. 각 기사 상세 + 썸네일
-        enriched = enrich_articles(articles)
+        # 3. 각 기사 상세 + 썸네일 (차단 도메인 건너뛰며 ARTICLE_COUNT개 채움)
+        enriched = enrich_articles(articles, ARTICLE_COUNT)
 
     # 4. HTML 생성
     html_content = generate_html(enriched)
