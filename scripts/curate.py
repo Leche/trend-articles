@@ -119,8 +119,13 @@ def load_past_articles():
     # 최신 날짜 폴더(2026-05-03 등)가 먼저 오도록 내림차순 정렬
     html_files = sorted(set(html_files), reverse=True)
 
+    today_folder = TODAY.strftime("%Y-%m-%d")
     for fp in html_files:
         if "guide" in fp.lower():
+            continue
+        # 루트 파일(index.html 등)·test 폴더는 아카이브가 아니므로 과거 대상에서 제외.
+        # 오늘 날짜 폴더도 제외 — 재실행 시 자기 자신을 '과거 중복'으로 보지 않도록.
+        if "/" not in fp or fp.startswith("test/") or fp.startswith(today_folder + "/"):
             continue
         try:
             with open(fp, "r", encoding="utf-8") as f:
