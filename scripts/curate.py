@@ -542,7 +542,12 @@ def curate_with_claude(candidates):
 
 ## 요청
 위 후보 중에서, 그리고 필요하다면 후보에 없더라도 직접 떠올린 최근 빅테크/프로덕트 뉴스를 포함하여,
-정확히 {select_count}개의 기사를 선정해주세요. (후처리 중복 제거를 거쳐 최종 {ARTICLE_COUNT}개로 추려집니다)
+서로 다른 실제 기사 {select_count}개를 선정해주세요. (후처리 중복 제거 후 최종 {ARTICLE_COUNT}개로 추려집니다)
+
+**절대 규칙**: 모든 항목은 실제로 존재하는 개별 기사여야 합니다.
+- 중복이거나 적합한 기사를 못 찾으면 그 자리에 **다른 기사**를 고르세요.
+- '중복', '재선정 제외', 'placeholder' 등의 표시를 제목·요약에 넣은 가짜 항목을 절대 만들지 마세요.
+- {select_count}개를 채우지 못하겠으면 가짜로 채우지 말고 차라리 더 적은 개수로 응답하세요.
 
 **출처 다양성 필수**: 같은 출처(사이트)에서 최대 2개까지만 선정하세요. 가능한 한 서로 다른 사이트에서 기사를 골라야 합니다.
 **중복 기사는 절대 선정하지 마세요.** 과거 기사 목록에 있는 제목이나 링크와 동일하거나 유사한 기사는 제외합니다.
@@ -654,25 +659,18 @@ def resolve_final_url(url, timeout=8):
         return url
 
 
-def is_blocked_domain(url):
-    """url(필요 시 리다이렉트 최종 목적지)의 도메인이 BLOCKED_DOMAINS에 속하는지."""
-    if not url:
-        return False
-    netloc = urlparse(url).netloc.lower()
-    if any(b in netloc for b in BLOCKED_DOMAINS):
-        return True
-    # 서핏 등 리다이렉트 링크는 최종 목적지로 한 번 더 확인
-    if "surfit.io/link/" in url:
-        final = resolve_final_url(url)
-        final_netloc = urlparse(final).netloc.lower()
-        if any(b in final_netloc for b in BLOCKED_DOMAINS):
-            return True
-    return False
+def _is_placeholder_article(art):
+    """LLM이 기사를 채우지 못해 넣은 메타/placeholder 항목인지 판별.
+    (예: 제목에 '(재선정 제외 — 중복)', 요약에 '중복 기사 제외.' 같은 표현)"""
+    text = ((art.get("title_ko") or "") + " " + (art.get("one_line") or "")).lower()
+    markers = ["재선정 제외", "중복으로 제외", "중복 기사 제외",
+               "(중복)", "— 중복", "duplicate", "placeholder"]
+    return any(m in text for m in markers)
 
 
 def dedup_articles(articles):
-    """같은 큐레이션 내 중복(self) + 과거 큐레이션 기사 중복을 모두 제거.
-    URL(정규화)·제목(소문자) 양쪽 기준."""
+    """placeholder/메타 항목 + 같은 큐레이션 내 중복(self) + 과거 큐레이션
+    중복을 모두 제거. URL(정규화)·제목(소문자) 양쪽 기준."""
     past_link_set = {_normalize_url(l) for l in past_links if l}
     past_title_set = {(t or "").strip().lower() for t in past_titles}
 
@@ -684,6 +682,9 @@ def dedup_articles(articles):
         title_norm = (art.get("title_ko") or "").strip().lower()
         label = art.get("title_ko") or art.get("url") or "(제목 없음)"
 
+        if _is_placeholder_article(art):
+            print(f"  ⛔ placeholder/메타 항목 제거: {label}")
+            continue
         if url_norm and url_norm in seen_urls:
             print(f"  ⛔ 동일 큐레이션 내 중복 URL 제거: {label}")
             continue
@@ -904,9 +905,12 @@ def enrich_articles(articles, target_count=None):
         if target_count is not None and len(enriched) >= target_count:
             break
         url = art["url"]
-        # 차단 도메인(서핏 리다이렉트 최종 목적지 포함) 기사 제외
-        if is_blocked_domain(url):
-            print(f"\n⛔ 차단 도메인 기사 제외: {url}")
+        # 서핏 등 리다이렉트 링크는 실제 기사 URL로 해석 — 차단 판정·썸네일 referer에 사용.
+        # (referer가 서핏 URL이면 designcompass 등의 hotlink 차단에 걸려 썸네일 실패)
+        final_url = resolve_final_url(url) if "surfit.io/link/" in url else url
+        final_netloc = urlparse(final_url).netloc.lower()
+        if any(b in final_netloc for b in BLOCKED_DOMAINS):
+            print(f"\n⛔ 차단 도메인 기사 제외: {final_url}")
             continue
 
         num = len(enriched) + 1
@@ -918,11 +922,11 @@ def enrich_articles(articles, target_count=None):
         thumb_b64 = None
 
         if html:
-            # og:image로 썸네일 시도 (referer 전달 → hotlink 차단 우회)
-            og_img = extract_og_image(html, url)
+            # og:image 추출·다운로드는 실제 기사 URL(final_url) 기준
+            og_img = extract_og_image(html, final_url)
             if og_img:
                 print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
-                thumb_b64 = download_image_as_base64(og_img, referer=url)
+                thumb_b64 = download_image_as_base64(og_img, referer=final_url)
 
         if thumb_b64:
             thumb_success.append(num)
