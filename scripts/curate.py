@@ -559,6 +559,10 @@ def curate_with_claude(candidates):
 ]
 ```
 
+## JSON 출력 주의 (필수)
+- 유효한 JSON만 출력. 문자열 값 안의 큰따옴표(")는 반드시 \\" 로 이스케이프.
+- 문자열 안에 줄바꿈·제어문자 금지. 배열 마지막 요소 뒤 trailing comma 금지.
+
 ## 한 줄 요약 규칙
 - 20자 내외, 명사형 + 마침표
 - ~해요, ~입니다, ~했다, ~한 것 사용 금지
@@ -572,21 +576,47 @@ def curate_with_claude(candidates):
 
     print("\n🤖 Claude API로 기사 선정 및 요약 중...")
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    # 최대 3회 시도 — LLM이 깨진 JSON을 반환하면 재생성
+    articles = None
+    for attempt in range(3):
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=8192,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text
 
-    # JSON 추출
-    text = response.content[0].text
-    json_match = re.search(r'\[[\s\S]*\]', text)
-    if not json_match:
-        print("❌ Claude 응답에서 JSON을 찾을 수 없습니다.")
-        print(text[:500])
+        # 코드펜스(```json … ```) 우선, 없으면 최외곽 대괄호 매칭
+        fence_match = re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text)
+        if fence_match:
+            json_str = fence_match.group(1)
+        else:
+            bracket_match = re.search(r'\[[\s\S]*\]', text)
+            json_str = bracket_match.group(0) if bracket_match else None
+
+        if not json_str:
+            print(f"  ⚠️  JSON 블록을 찾을 수 없음 (시도 {attempt + 1}/3)")
+            continue
+
+        try:
+            articles = json.loads(json_str)
+            break
+        except json.JSONDecodeError as e:
+            print(f"  ⚠️  JSON 파싱 실패 (시도 {attempt + 1}/3): {e}")
+            # 흔한 LLM 오류 보정: 제어문자 제거 + trailing comma 제거
+            cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_str)
+            cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)
+            try:
+                articles = json.loads(cleaned)
+                print(f"  ✅ 보정 후 파싱 성공")
+                break
+            except json.JSONDecodeError:
+                continue
+
+    if articles is None:
+        print("❌ 3회 시도 후에도 Claude 응답 JSON 파싱 실패")
         sys.exit(1)
 
-    articles = json.loads(json_match.group())
     print(f"✅ {len(articles)}개 기사 1차 선정")
 
     # 후처리: 같은 큐레이션 내 + 과거 중복 제거 (legacy 모드도 안전망 적용)
