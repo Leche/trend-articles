@@ -72,6 +72,9 @@ HEADERS = {
                   "Chrome/124.0.0.0 Safari/537.36"
 }
 
+# 큐레이션에서 제외할 도메인 (서핏 등 리다이렉트 링크는 최종 목적지 기준)
+BLOCKED_DOMAINS = ["ditoday.com"]
+
 # ─── 날짜 계산 ───────────────────────────────────────────────
 if CUSTOM_DATE:
     TODAY = datetime.datetime.strptime(CUSTOM_DATE, "%Y-%m-%d").date()
@@ -243,21 +246,45 @@ def fetch_page(url, timeout=15):
 
 
 def extract_og_image(html_text, base_url=""):
-    """og:image 메타태그에서 썸네일 URL 추출"""
+    """썸네일 이미지 URL 추출. og:image → twitter:image → link[image_src] 순으로 시도.
+    designcompass 등 og:image 의 property/name 표기가 제각각인 사이트 대응."""
     soup = BeautifulSoup(html_text, "lxml")
-    og = soup.find("meta", property="og:image")
-    if og and og.get("content"):
-        img_url = og["content"]
-        if img_url.startswith("/"):
+    candidates = []
+    for attrs in (
+        {"property": "og:image"},
+        {"property": "og:image:secure_url"},
+        {"name": "og:image"},
+        {"name": "twitter:image"},
+        {"property": "twitter:image"},
+        {"name": "twitter:image:src"},
+    ):
+        for tag in soup.find_all("meta", attrs=attrs):
+            content = tag.get("content")
+            if content and content.strip():
+                candidates.append(content.strip())
+    link = soup.find("link", rel="image_src")
+    if link and link.get("href"):
+        candidates.append(link["href"].strip())
+
+    for img_url in candidates:
+        if img_url.startswith("//"):
+            img_url = "https:" + img_url
+        elif img_url.startswith("/"):
             img_url = urljoin(base_url, img_url)
-        return img_url
+        if img_url.startswith("http"):
+            return img_url
     return None
 
 
-def download_image_as_base64(img_url, max_size_kb=500):
-    """이미지를 다운로드하여 base64로 인코딩"""
+def download_image_as_base64(img_url, max_size_kb=500, referer=None):
+    """이미지를 다운로드하여 base64로 인코딩.
+    referer: hotlink 차단(designcompass 등) 우회용 — 기사 페이지 URL을 넘기면
+    이미지 CDN이 정상 요청으로 인식할 확률이 높아짐."""
     try:
-        r = requests.get(img_url, headers=HEADERS, timeout=15)
+        headers = dict(HEADERS)
+        if referer:
+            headers["Referer"] = referer
+        r = requests.get(img_url, headers=headers, timeout=15)
         r.raise_for_status()
         content_type = r.headers.get("Content-Type", "image/jpeg")
 
@@ -435,6 +462,21 @@ def scan_priority_sites():
         candidates.extend(site_candidates[:MAX_PER_SITE])
         print(f"  → {len(links_found)}개 발견, {min(len(site_candidates), MAX_PER_SITE)}개 선택")
 
+    # 후보 URL 중복 제거 (여러 카테고리에 같은 기사가 잡히는 경우 방지)
+    seen_cand = set()
+    unique = []
+    for c in candidates:
+        key = _normalize_url(c["url"])
+        if key and key in seen_cand:
+            continue
+        if key:
+            seen_cand.add(key)
+        unique.append(c)
+    dropped = len(candidates) - len(unique)
+    if dropped:
+        print(f"\n🧹 후보 중복 URL {dropped}건 제거")
+    candidates = unique
+
     # 출처 분포 리포트
     source_counts = {}
     for c in candidates:
@@ -540,7 +582,11 @@ def curate_with_claude(candidates):
         sys.exit(1)
 
     articles = json.loads(json_match.group())
-    print(f"✅ {len(articles)}개 기사 선정 완료")
+    print(f"✅ {len(articles)}개 기사 1차 선정")
+
+    # 후처리: 같은 큐레이션 내 + 과거 중복 제거 (legacy 모드도 안전망 적용)
+    articles = dedup_articles(articles)
+    print(f"✅ 중복 제거 후 {len(articles)}개")
 
     return articles
 
@@ -555,6 +601,74 @@ def _normalize_url(u):
     u = re.sub(r'^www\.', '', u)
     u = re.split(r'[?#]', u, 1)[0]
     return u.rstrip('/')
+
+
+def resolve_final_url(url, timeout=8):
+    """리다이렉트(서핏 link 등)를 따라가 최종 URL 반환. 실패 시 원본 반환."""
+    try:
+        r = requests.head(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
+        if r.url:
+            return r.url
+        # 일부 서버는 HEAD 미지원 → GET 으로 재시도
+        r = requests.get(url, headers=HEADERS, timeout=timeout, allow_redirects=True, stream=True)
+        return r.url or url
+    except Exception:
+        return url
+
+
+def is_blocked_domain(url):
+    """url(필요 시 리다이렉트 최종 목적지)의 도메인이 BLOCKED_DOMAINS에 속하는지."""
+    if not url:
+        return False
+    netloc = urlparse(url).netloc.lower()
+    if any(b in netloc for b in BLOCKED_DOMAINS):
+        return True
+    # 서핏 등 리다이렉트 링크는 최종 목적지로 한 번 더 확인
+    if "surfit.io/link/" in url:
+        final = resolve_final_url(url)
+        final_netloc = urlparse(final).netloc.lower()
+        if any(b in final_netloc for b in BLOCKED_DOMAINS):
+            return True
+    return False
+
+
+def dedup_articles(articles):
+    """같은 큐레이션 내 중복(self) + 과거 큐레이션 기사 중복을 모두 제거.
+    URL(정규화)·제목(소문자) 양쪽 기준."""
+    past_link_set = {_normalize_url(l) for l in past_links if l}
+    past_title_set = {(t or "").strip().lower() for t in past_titles}
+
+    seen_urls = set()
+    seen_titles = set()
+    result = []
+    for art in articles:
+        url_norm = _normalize_url(art.get("url", ""))
+        title_norm = (art.get("title_ko") or "").strip().lower()
+        label = art.get("title_ko") or art.get("url") or "(제목 없음)"
+
+        if url_norm and url_norm in seen_urls:
+            print(f"  ⛔ 동일 큐레이션 내 중복 URL 제거: {label}")
+            continue
+        if title_norm and title_norm in seen_titles:
+            print(f"  ⛔ 동일 큐레이션 내 중복 제목 제거: {label}")
+            continue
+        if url_norm and url_norm in past_link_set:
+            print(f"  ⛔ 과거 큐레이션 중복 URL 제거: {label}")
+            continue
+        if title_norm and title_norm in past_title_set:
+            print(f"  ⛔ 과거 큐레이션 중복 제목 제거: {label}")
+            continue
+
+        if url_norm:
+            seen_urls.add(url_norm)
+        if title_norm:
+            seen_titles.add(title_norm)
+        result.append(art)
+
+    removed = len(articles) - len(result)
+    if removed:
+        print(f"  → 중복 {removed}건 제거, 최종 {len(result)}개")
+    return result
 
 
 def curate_via_web_search():
@@ -624,6 +738,9 @@ def curate_via_web_search():
 - SEO 광고성 마케팅 글 (제품 본질 없이 키워드만 나열)
 - 정치·사회 이슈 (테크·프로덕트와 무관한 것)
 - 디자인·UX 함의 없는 순수 스펙 비교
+
+## 제외 도메인 (절대 선정 금지)
+- ditoday.com — 이 도메인의 기사는 어떤 경우에도 선정하지 마세요.
 
 ## 출처 다양성 (필수)
 - **한국어 출처 비중 ≥ 40%** — 영어권 편향 방지
@@ -726,24 +843,8 @@ def curate_via_web_search():
         print(json_str[:5000])
         sys.exit(1)
 
-    # ── 후처리: URL 기반 중복 제거 (안전망) ──
-    past_link_set = {_normalize_url(l) for l in past_links if l}
-    past_title_set = {(t or "").strip().lower() for t in past_titles}
-
-    deduped = []
-    for art in articles:
-        url_norm = _normalize_url(art.get("url", ""))
-        title_norm = (art.get("title_ko") or "").strip().lower()
-        if url_norm and url_norm in past_link_set:
-            print(f"  ⛔ 중복 URL 제거: {art.get('title_ko', art.get('url'))}")
-            continue
-        if title_norm and title_norm in past_title_set:
-            print(f"  ⛔ 중복 제목 제거: {art.get('title_ko')}")
-            continue
-        deduped.append(art)
-
-    if len(deduped) != len(articles):
-        print(f"  → 중복 제거 {len(articles) - len(deduped)}건, 최종 {len(deduped)}개")
+    # ── 후처리: 같은 큐레이션 내 + 과거 중복 제거 (안전망) ──
+    deduped = dedup_articles(articles)
 
     if len(deduped) < ARTICLE_COUNT:
         print(f"⚠️  중복 제거 후 {len(deduped)}개만 남음 (요청 {ARTICLE_COUNT}). 프롬프트 강화 필요할 수 있음.")
@@ -759,9 +860,15 @@ def enrich_articles(articles):
     thumb_success = []
     thumb_fail = []
 
-    for i, art in enumerate(articles, 1):
+    for art in articles:
         url = art["url"]
-        print(f"\n📖 기사 {i}: {art['title_ko']}")
+        # 차단 도메인(서핏 리다이렉트 최종 목적지 포함) 기사 제외
+        if is_blocked_domain(url):
+            print(f"\n⛔ 차단 도메인 기사 제외: {url}")
+            continue
+
+        num = len(enriched) + 1
+        print(f"\n📖 기사 {num}: {art['title_ko']}")
         print(f"   URL: {url}")
 
         # 페이지 접근 시도
@@ -769,23 +876,23 @@ def enrich_articles(articles):
         thumb_b64 = None
 
         if html:
-            # og:image로 썸네일 시도
+            # og:image로 썸네일 시도 (referer 전달 → hotlink 차단 우회)
             og_img = extract_og_image(html, url)
             if og_img:
                 print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
-                thumb_b64 = download_image_as_base64(og_img)
+                thumb_b64 = download_image_as_base64(og_img, referer=url)
 
         if thumb_b64:
-            thumb_success.append(i)
+            thumb_success.append(num)
             print(f"   ✅ 썸네일 임베드 성공")
         else:
-            thumb_fail.append(i)
+            thumb_fail.append(num)
             print(f"   ❌ 썸네일 다운로드 실패")
 
         enriched.append({
             **art,
             "thumbnail_b64": thumb_b64,
-            "article_num": i,
+            "article_num": num,
         })
 
     print(f"\n📊 썸네일 결과:")
@@ -1218,7 +1325,7 @@ def main():
             if html:
                 og_img = extract_og_image(html, new_url)
                 if og_img:
-                    thumb_b64 = download_image_as_base64(og_img)
+                    thumb_b64 = download_image_as_base64(og_img, referer=new_url)
 
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
