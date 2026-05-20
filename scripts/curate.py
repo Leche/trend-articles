@@ -1311,7 +1311,10 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 
 
 def load_existing_articles():
-    """오늘 날짜의 기존 HTML에서 기사 데이터를 추출"""
+    """오늘 날짜의 기존 HTML에서 기사 데이터를 추출.
+    lxml/libxml2는 매우 큰 attribute(수십 MB base64 GIF 썸네일 등)를 잘라먹어
+    src를 빈 문자열로 반환하는 케이스가 있다. 그래서 정규식 기반으로 추출 —
+    img/video 양쪽의 article-image 모두 매칭하고 한계 없음."""
     archive_dir = "test" if TEST_MODE else TODAY.strftime("%Y-%m-%d")
     archive_path = f"{archive_dir}/index.html"
     if not os.path.exists(archive_path):
@@ -1321,25 +1324,24 @@ def load_existing_articles():
     with open(archive_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    soup = BeautifulSoup(content, "lxml")
     articles = []
-    for item in soup.find_all("article", class_="article-item"):
-        title = item.find(class_="article-title")
-        summary = item.find(class_="article-summary")
-        bullets = item.find_all(class_="bullet-item")
-        link = item.find(class_="article-link")
-        img = item.find(class_="article-image")
-
-        art = {
-            "title_ko": title.get_text(strip=True) if title else "",
-            "one_line": summary.get_text(strip=True) if summary else "",
-            "summary_1": bullets[0].get_text(strip=True) if len(bullets) > 0 else "",
-            "summary_2": bullets[1].get_text(strip=True) if len(bullets) > 1 else "",
-            "summary_3": bullets[2].get_text(strip=True) if len(bullets) > 2 else "",
-            "url": link["href"] if link else "",
-            "thumbnail_b64": img["src"] if img and img.get("src", "").startswith("data:") else None,
-        }
-        articles.append(art)
+    block_re = re.compile(r'<article[^>]*class="article-item">.*?</article>', re.DOTALL)
+    for block in block_re.findall(content):
+        title_m   = re.search(r'class="article-title"[^>]*>([^<]+)', block)
+        summary_m = re.search(r'class="article-summary"[^>]*>([^<]+)', block)
+        bullets   = re.findall(r'class="bullet-item"[^>]*>([^<]+)', block)
+        link_m    = re.search(r'class="article-link"[^>]*href="([^"]+)"', block)
+        # img/video 양쪽 매칭 — src 가 data:URL 인 경우만 thumbnail_b64 로 인정
+        thumb_m   = re.search(r'class="article-image"[^>]*src="(data:[^"]+)"', block)
+        articles.append({
+            "title_ko":      title_m.group(1).strip()   if title_m   else "",
+            "one_line":      summary_m.group(1).strip() if summary_m else "",
+            "summary_1":     bullets[0].strip() if len(bullets) > 0 else "",
+            "summary_2":     bullets[1].strip() if len(bullets) > 1 else "",
+            "summary_3":     bullets[2].strip() if len(bullets) > 2 else "",
+            "url":           link_m.group(1) if link_m else "",
+            "thumbnail_b64": thumb_m.group(1) if thumb_m else None,
+        })
 
     print(f"📂 기존 기사 {len(articles)}개 로드 완료")
     return articles
