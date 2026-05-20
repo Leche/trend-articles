@@ -1827,7 +1827,25 @@ async function ghGet(path) {
   return fd;
 }
 
+// UTF-8 문자열을 base64로 비동기 인코딩 — 큰 HTML에 대해 btoa(unescape(encodeURIComponent))
+// 패턴은 iOS Safari에서 메모리 폭증·메인 스레드 블록으로 fetch가 "Load failed"로 죽음.
+// FileReader는 네이티브 구현이라 큰 입력에도 안정적.
+function utf8ToBase64Async(str) {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([str], { type: 'text/plain;charset=utf-8' });
+    const r = new FileReader();
+    r.onload = () => {
+      const dataUrl = String(r.result);
+      const i = dataUrl.indexOf(',');
+      resolve(i >= 0 ? dataUrl.slice(i + 1) : '');
+    };
+    r.onerror = () => reject(new Error('base64 인코딩 실패'));
+    r.readAsDataURL(blob);
+  });
+}
+
 async function ghPut(path, newContent, sha, message) {
+  const content = await utf8ToBase64Async(newContent);
   const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
     method: 'PUT',
     headers: {
@@ -1835,7 +1853,7 @@ async function ghPut(path, newContent, sha, message) {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(newContent))), sha })
+    body: JSON.stringify({ message, content, sha })
   });
   if (!res.ok) {
     const d = await res.json();
