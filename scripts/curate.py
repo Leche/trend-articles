@@ -63,7 +63,6 @@ PRIORITY_SITES = [
     "https://about.daangn.com/company/pr/",
     "https://oliveyoung.tech",
     "https://www.woowahan.com/newsroom/report?page=1",
-    "https://bcut.baemin.com/category/eat/",
     # 디자인 툴
     "https://www.figma.com/ko-kr/release-notes/",
 ]
