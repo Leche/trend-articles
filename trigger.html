@@ -1168,9 +1168,9 @@ body.pwd-modal-open .tab-bar {
   <div class="card">
     <div class="card-title">기사 순서 조정</div>
     <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">기사를 불러온 뒤 끌어서 순서를 바꾸고 적용하세요</div>
-    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()">현재 기사 불러오기</button>
     <div id="reorderList" style="margin-top:12px;"></div>
     <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()" style="display:none;">순서 적용</button>
+    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:8px;">현재 기사 불러오기</button>
     <div class="status" id="reorderStatus"></div>
   </div>
 
@@ -1797,8 +1797,8 @@ function resetInputs() {
   const agitDate = document.getElementById('agitDate');
   if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
 
-  // 상태 메시지 모두 숨기기
-  document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; });
+  // 상태 메시지 모두 숨기기 (인라인 display 도 제거해 빈 박스 공간 제거)
+  document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; s.style.display = ''; });
 
   // 버튼 피드백
   const btn = document.getElementById('resetBtn');
@@ -2098,9 +2098,11 @@ function setBtnComplete(btn) {
 
 function showStatus(id, type, msg) {
   const el = document.getElementById(id);
-  el.className = `status ${type}`;
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.className = type ? `status ${type}` : 'status';
+  el.textContent = msg || '';
+  // display 는 인라인으로 박지 않고 CSS class 에 위임 — 빈 status(.status)는
+  // display:none 이라, 메시지를 비우면 버튼 아래 빈 박스 공간이 남지 않는다.
+  el.style.display = '';
 }
 
 // ── 설정 ──
