@@ -384,9 +384,10 @@ input:focus, textarea:focus {
 .reorder-card.sortable-drag { opacity: 0.95; }
 .reorder-handle {
   flex-shrink: 0;
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
   color: var(--text-secondary);
-  line-height: 1;
 }
 .reorder-num {
   flex-shrink: 0;
@@ -1991,7 +1992,7 @@ async function loadReorderList() {
       const t = document.createElement('span');
       t.className = 'reorder-title';
       t.textContent = title;
-      card.append(handle, num, t);
+      card.append(num, t, handle);
       list.appendChild(card);
     });
 
