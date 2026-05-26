@@ -261,9 +261,3 @@ jobs:
           git pull --rebase
           git push
 
-      - name: Notify failure
-        if: failure()
-        run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"text\": \"❌ Agit 게시 실패\n로그를 확인해주세요.\"}"

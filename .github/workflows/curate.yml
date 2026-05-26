@@ -153,9 +153,3 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pages/builds
 
-      - name: Notify failure
-        if: failure()
-        run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"text\": \"❌ 큐레이션 워크플로우 실패\n로그를 확인해주세요.\"}"

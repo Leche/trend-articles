@@ -59,16 +59,3 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pages/builds
 
-      - name: Notify no-change
-        if: steps.push.outputs.pushed == 'false'
-        run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "$(jq -n --arg prompt "${{ github.event.inputs.prompt }}" '{text: ("⚠️ AI 명령: 변경 사항 없음\n\n📝 " + $prompt + "\n\n명령을 이해하지 못했거나 대상 텍스트를 찾지 못해 적용되지 않았어요. 더 구체적으로 지시해 보세요 (예: \"1번 기사 제목을 X로 바꿔줘\", \"3번 기사 원본과 맞춰줘\").")}')"
-
-      - name: Notify failure
-        if: failure()
-        run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"text\": \"❌ AI 명령 실행 실패\n\n📝 ${{ github.event.inputs.prompt }}\n로그를 확인해주세요.\"}"

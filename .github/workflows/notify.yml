@@ -15,99 +15,73 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # 성공·실패만 알림. 'cancelled' / 'skipped' 는 사용자 의도와 무관한 경우가 많아 생략.
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Send KakaoWork notifications
+      - name: Send KakaoWork notification
         env:
           KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           python3 << 'PYEOF'
-          import os, re, json, datetime, subprocess, urllib.request, urllib.error
+          import os, json, subprocess, urllib.request, urllib.error
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
               print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
               raise SystemExit(1)
 
-          # 1) 최근 커밋 메시지로 액션 라벨 분류
-          commit_msg = subprocess.check_output(
-              ['git', 'log', '-1', '--pretty=%s']
-          ).decode('utf-8').strip()
+          name = os.environ.get('WORKFLOW_NAME', '').strip()
+          conclusion = os.environ.get('WORKFLOW_CONCLUSION', '').strip()
+          run_url = os.environ.get('WORKFLOW_URL', '').strip()
 
-          if commit_msg.startswith('🤖'):
-              prompt = commit_msg.replace('🤖', '', 1).strip()
-              action_label = f'AI 명령 실행 완료 — {prompt}' if prompt else 'AI 명령 실행 완료'
-          elif '🔀' in commit_msg or '순서 조정' in commit_msg:
-              action_label = '기사 순서 조정 완료'
-          elif '🖼️' in commit_msg or '썸네일' in commit_msg:
-              action_label = '썸네일 교체 완료'
-          elif '🔗' in commit_msg or '링크 수정' in commit_msg:
-              action_label = '링크 수정 완료'
-          elif '큐레이션' in commit_msg:
-              action_label = '기사 큐레이션 완료'
-          else:
-              action_label = '업데이트 완료'
+          # 워크플로우 이름 기반 기본 라벨
+          base_labels = {
+              '트렌드림 기사 큐레이션': '기사 큐레이션',
+              '트렌드림 AI 명령 실행': 'AI 명령 실행',
+              'Agit 게시': 'Agit 발행',
+          }
+          action_label = base_labels.get(name, name)
 
-          # 2) 대상 날짜 결정 (커밋 메시지의 YYMMDD/YYYY-MM-DD → 없으면 오늘 KST)
-          d = None
-          ymd = re.search(r'(20\d{2})-(\d{2})-(\d{2})', commit_msg)
-          yymmdd = re.search(r'(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)', commit_msg)
-          if ymd:
-              d = datetime.date(int(ymd.group(1)), int(ymd.group(2)), int(ymd.group(3)))
-          elif yymmdd:
-              d = datetime.date(2000 + int(yymmdd.group(1)), int(yymmdd.group(2)), int(yymmdd.group(3)))
-          if d is None:
-              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
-
-          date_full = d.strftime('%Y-%m-%d')
-          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
-          date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekdays_ko[d.weekday()]}"
-          link = f'https://leche.github.io/trend-articles/{date_full}/'
-
-          def post(text):
-              data = json.dumps({"text": text}).encode("utf-8")
-              req = urllib.request.Request(
-                  webhook, data=data,
-                  headers={"Content-Type": "application/json"},
-                  method="POST",
-              )
+          # 큐레이션 워크플로우는 여러 액션(큐레이션·교체·썸네일·순서·링크)을 한 yml 에서
+          # 처리하므로, 직전 커밋 메시지로 세부 라벨을 보강한다.
+          if name == '트렌드림 기사 큐레이션':
               try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      print(f"[OK] status={resp.status}")
-              except urllib.error.HTTPError as e:
-                  print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
-                  raise
+                  commit_msg = subprocess.check_output(
+                      ['git', 'log', '-1', '--pretty=%s']
+                  ).decode('utf-8').strip()
+              except Exception:
+                  commit_msg = ''
+              if '🔀' in commit_msg or '순서 조정' in commit_msg:
+                  action_label = '기사 순서 조정'
+              elif '🖼️' in commit_msg or '썸네일' in commit_msg:
+                  action_label = '썸네일 교체'
+              elif '🔗' in commit_msg or '링크 수정' in commit_msg:
+                  action_label = '링크 수정'
+              elif '교체' in commit_msg:
+                  action_label = '기사 교체'
 
-          # 3) 완료 알림
-          post(f"✅ {action_label}")
+          icon = '✅' if conclusion == 'success' else '❌'
+          verb = '완료' if conclusion == 'success' else '실패'
+          text = f"{icon} {action_label} {verb}\n{run_url}"
 
-          # 4) 다이제스트 템플릿 알림 (해당 날짜 폴더 우선, 없으면 root index.html)
-          html_path = f'{date_full}/index.html'
-          if not os.path.exists(html_path):
-              html_path = 'index.html'
-
-          if not os.path.exists(html_path):
-              print(f"[WARN] HTML 파일 없음: {html_path} — 다이제스트 알림 생략")
-              raise SystemExit(0)
-
-          with open(html_path, 'r', encoding='utf-8') as f:
-              html = f.read()
-          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
-          if not titles:
-              print("[WARN] 기사 제목 추출 실패 — 다이제스트 알림 생략")
-              raise SystemExit(0)
-
-          quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
-          digest_msg = (
-              f"# ⚡️\n"
-              f"# [{date_label} 트렌드림 다이제스트]({link})\n"
-              f"{quote_block}\n"
-              f"cc. @@moretab @@pfs.design @@trenddaily"
+          data = json.dumps({"text": text}).encode("utf-8")
+          req = urllib.request.Request(
+              webhook, data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
           )
-          post(digest_msg)
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"[OK] status={resp.status}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
           PYEOF
