@@ -34,9 +34,10 @@ jobs:
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 << 'PYEOF'
-          import os, json, subprocess, urllib.request, urllib.error
+          import os, re, json, subprocess, urllib.request, urllib.error
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
@@ -46,6 +47,16 @@ jobs:
           name = os.environ.get('WORKFLOW_NAME', '').strip()
           conclusion = os.environ.get('WORKFLOW_CONCLUSION', '').strip()
           run_url = os.environ.get('WORKFLOW_URL', '').strip()
+          repo = os.environ.get('GITHUB_REPOSITORY', 'Leche/trend-articles')
+          owner, repo_name = repo.split('/', 1)
+
+          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트
+          folders = sorted(
+              [d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d)],
+              reverse=True
+          )
+          latest_folder = folders[0] if folders else ''
+          digest_link = f'https://{owner.lower()}.github.io/{repo_name}/{latest_folder}/' if latest_folder else ''
 
           # 워크플로우 이름 기반 기본 라벨
           base_labels = {
@@ -77,7 +88,9 @@ jobs:
 
           icon = '✅' if conclusion == 'success' else '❌'
           verb = '완료' if conclusion == 'success' else '실패'
-          text = f"{icon} {action_label} {verb}\n{run_url}"
+          # 성공 → 다이제스트 페이지 / 실패 → 디버깅용 Actions 로그
+          link = digest_link if (conclusion == 'success' and digest_link) else run_url
+          text = f"{icon} {action_label} {verb}\n{link}"
 
           data = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
@@ -106,14 +119,18 @@ jobs:
        startsWith(github.event.head_commit.message, '🔀') ||
        startsWith(github.event.head_commit.message, '🔗'))
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Send KakaoWork notification (direct commit)
         env:
           KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           COMMIT_URL: ${{ github.event.head_commit.url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 << 'PYEOF'
-          import os, json, urllib.request, urllib.error
+          import os, re, json, urllib.request, urllib.error
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
@@ -121,7 +138,17 @@ jobs:
               raise SystemExit(1)
 
           msg = os.environ.get('COMMIT_MSG', '')
-          url = os.environ.get('COMMIT_URL', '')
+          commit_url = os.environ.get('COMMIT_URL', '')
+          repo = os.environ.get('GITHUB_REPOSITORY', 'Leche/trend-articles')
+          owner, repo_name = repo.split('/', 1)
+
+          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트
+          folders = sorted(
+              [d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d)],
+              reverse=True
+          )
+          latest_folder = folders[0] if folders else ''
+          digest_link = f'https://{owner.lower()}.github.io/{repo_name}/{latest_folder}/' if latest_folder else commit_url
 
           # commit message 첫 글자(이모지)로 라벨 결정. 본문에 이모지가 있어도 무시.
           if msg.startswith('🖼️'):
@@ -133,7 +160,7 @@ jobs:
           else:
               label = '업데이트'
 
-          text = f"✅ {label} 완료\n{url}"
+          text = f"✅ {label} 완료\n{digest_link}"
           data = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,
