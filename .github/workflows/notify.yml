@@ -83,8 +83,24 @@ jobs:
           latest = folders[0] if folders else ''
           link = f'https://{owner.lower()}.github.io/{repo_name}/{latest}/' if latest else ''
 
-          text = f"✅ {label} 완료\n{link}"
-          data = json.dumps({"text": text}).encode("utf-8")
+          # Block Kit: header + 설명 + CTA 버튼 (다이제스트 페이지로 이동)
+          title = f"✅ {label} 완료"
+          desc = '방금 만든 다이제스트를 확인해 보세요.'
+          payload = {
+              "text": f"{title}\n👉 {link}",  # blocks 미지원 시 text fallback
+              "blocks": [
+                  {"type": "header", "text": title, "style": "blue"},
+                  {"type": "text", "text": desc},
+                  {
+                      "type": "button",
+                      "text": "다이제스트 보기 →",
+                      "style": "default",
+                      "action_type": "open_system_browser",
+                      "value": link,
+                  },
+              ],
+          }
+          data = json.dumps(payload).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,
               headers={"Content-Type": "application/json"},
@@ -129,8 +145,24 @@ jobs:
           }
           label = labels.get(name, name)
 
-          text = f"❌ {label} 실패\n{run_url}"
-          data = json.dumps({"text": text}).encode("utf-8")
+          # Block Kit: header + 설명 + CTA 버튼 (Actions 로그로 이동)
+          title = f"❌ {label} 실패"
+          desc = '워크플로우 로그를 확인해 주세요.'
+          payload = {
+              "text": f"{title}\n👉 {run_url}",  # blocks 미지원 시 text fallback
+              "blocks": [
+                  {"type": "header", "text": title, "style": "red"},
+                  {"type": "text", "text": desc},
+                  {
+                      "type": "button",
+                      "text": "로그 보기 →",
+                      "style": "default",
+                      "action_type": "open_system_browser",
+                      "value": run_url,
+                  },
+              ],
+          }
+          data = json.dumps(payload).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,
               headers={"Content-Type": "application/json"},
