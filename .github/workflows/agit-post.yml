@@ -134,6 +134,7 @@ jobs:
         env:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
           AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
           TARGET_DATE: ${{ steps.params.outputs.target_date }}
           TEST_MODE: ${{ steps.params.outputs.test_mode }}
         run: |
@@ -221,6 +222,57 @@ jobs:
               print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
               raise
 
+          # ── 카카오워크 발행 완료 알림 (CTA 버튼 포함) ────────────────
+          kw_webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if kw_webhook:
+              # Agit 응답에서 thread URL 추출 시도 (응답 필드명 불확실 → 가능한 키 순회)
+              thread_url = (
+                  result.get('url')
+                  or result.get('permalink')
+                  or result.get('link')
+                  or result.get('post_url')
+                  or ''
+              )
+              # 못 찾으면 다이제스트 페이지로 fallback
+              if not thread_url:
+                  thread_url = link
+
+              test_prefix = '🧪 ' if test_mode else ''
+              title = f'{test_prefix}Agit 발행 완료'
+              desc = (
+                  f'{date_label} 다이제스트가 '
+                  f'{"개인 아지트(테스트)" if test_mode else "트렌드림 아지트"}에 올라갔어요.'
+              )
+
+              payload = {
+                  "text": f"✅ {title}\n👉 {thread_url}",  # blocks 미지원 시 text fallback
+                  "blocks": [
+                      {"type": "header", "text": title, "style": "blue"},
+                      {"type": "text", "text": desc},
+                      {
+                          "type": "button",
+                          "text": "스레드 보기 →",
+                          "style": "default",
+                          "action_type": "open_system_browser",
+                          "value": thread_url,
+                      },
+                  ],
+              }
+              notify_req = urllib.request.Request(
+                  kw_webhook,
+                  data=json.dumps(payload).encode('utf-8'),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(notify_req, timeout=10) as notify_resp:
+                      print(f"[OK] 카웍 알림 발사: status={notify_resp.status}")
+              except Exception as e:
+                  # 알림 실패해도 발행 자체는 성공 → 워크플로우는 통과
+                  print(f"[WARN] 카웍 알림 발사 실패: {e}")
+          else:
+              print("[INFO] KAKAOWORK_WEBHOOK_URL 비어있음 — 카웍 알림 생략")
+
           PYEOF
 
       - name: Clear pending-publish.json
@@ -257,7 +309,9 @@ jobs:
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
           git add pending-publish.json
-          git commit -m "📨 ${PUBLISHED_DATE} Agit 발행 완료"
+          # 발행 완료 알림은 Post digest step 에서 이미 발사했으므로, 여기 commit 메시지는
+          # notify.yml 의 이모지 라벨링에 잡히지 않도록 일반 chore: 로 둔다.
+          git commit -m "chore(publish): pending-publish.json 비우기 (${PUBLISHED_DATE} 발행 후)"
           git pull --rebase
           git push
 
