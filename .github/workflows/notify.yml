@@ -19,9 +19,11 @@ on:
 
 jobs:
   # Pages 빌드 성공 → 콘텐츠 알림 (commit 메시지 첫 글자 이모지로 라벨)
+  # workflow_run.name 은 GitHub 표시 명에 따라 'pages-build-deployment' 또는
+  # 'pages build and deployment' 둘 중 하나로 떨어질 수 있어 contains 로 잡는다.
   notify-on-deploy:
     if: |
-      github.event.workflow_run.name == 'pages-build-deployment' &&
+      contains(github.event.workflow_run.name, 'pages') &&
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +101,7 @@ jobs:
   # 콘텐츠 워크플로우 실패 → 실패 알림 (Actions 로그 링크로 디버깅 유도)
   notify-on-content-failure:
     if: |
-      github.event.workflow_run.name != 'pages-build-deployment' &&
+      !contains(github.event.workflow_run.name, 'pages') &&
       github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     steps:
