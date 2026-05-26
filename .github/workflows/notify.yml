@@ -1,9 +1,14 @@
 name: Notify Digest
 
-# Pages 배포 성공 시 → 작업 완료 알림 + 다이제스트 템플릿을 KakaoWork로 전송
+# 큐레이션·AI 명령·발행 워크플로우가 끝났을 때 작업 완료 알림 + 다이제스트 템플릿을
+# KakaoWork로 전송. (이전엔 pages-build-deployment 완료에 트리거했는데, 그건 trigger.html
+# 같은 코드 푸시에도 발사돼서 카웍에 잘못된 알림이 나가는 문제가 있었음.)
 on:
   workflow_run:
-    workflows: ["pages-build-deployment"]
+    workflows:
+      - 트렌드림 기사 큐레이션
+      - 트렌드림 AI 명령 실행
+      - Agit 게시
     types:
       - completed
 
