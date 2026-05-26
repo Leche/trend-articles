@@ -1,27 +1,29 @@
 name: Notify Digest
 
-# 두 경로로 알림 발사:
-#  (A) workflow_run completed — 큐레이션·AI 명령·발행 워크플로우의 성공·실패
-#  (B) main push — trigger.html 이 contents API 로 직접 commit 한 액션
-#      (썸네일 교체 🖼️ / 기사 순서 조정 🔀 / 링크 수정 🔗).
-#      trend-bot 의 자동 commit 은 (A) 에서 이미 처리되므로 (B) 에서는 제외.
+# 알림 정책:
+#  - 콘텐츠 결과물 변경(큐레이션·교체·썸네일·순서·링크·AI·발행)이 main 에 commit·push
+#    되면 GitHub Pages 가 빌드를 돌린다. 그 빌드가 끝난 시점(=실제로 페이지가 새 내용을
+#    서빙하기 시작한 시점)에 성공 알림 발사. commit 메시지 첫 글자(이모지)로 어떤 액션
+#    이었는지 라벨 분류하고, 다이제스트 페이지 링크로 안내한다.
+#  - 콘텐츠 워크플로우(큐레이션·AI·Agit)가 실패하면 push 가 일어나지 않아 위 경로로 못
+#    잡히므로, 워크플로우 실패 자체로 별도 알림 (Actions 로그 링크).
 on:
   workflow_run:
     workflows:
+      - pages-build-deployment
       - 트렌드림 기사 큐레이션
       - 트렌드림 AI 명령 실행
       - Agit 게시
     types:
       - completed
-  push:
-    branches:
-      - main
 
 jobs:
-  notify:
+  # Pages 빌드 성공 → 콘텐츠 알림 (commit 메시지 첫 글자 이모지로 라벨)
+  notify-on-deploy:
+    if: |
+      github.event.workflow_run.name == 'pages-build-deployment' &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    # 성공·실패만 알림. 'cancelled' / 'skipped' 는 사용자 의도와 무관한 경우가 많아 생략.
-    if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,9 +33,6 @@ jobs:
       - name: Send KakaoWork notification
         env:
           KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
-          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
-          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 << 'PYEOF'
@@ -44,54 +43,45 @@ jobs:
               print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
               raise SystemExit(1)
 
-          name = os.environ.get('WORKFLOW_NAME', '').strip()
-          conclusion = os.environ.get('WORKFLOW_CONCLUSION', '').strip()
-          run_url = os.environ.get('WORKFLOW_URL', '').strip()
+          try:
+              commit_msg = subprocess.check_output(
+                  ['git', 'log', '-1', '--pretty=%s']
+              ).decode('utf-8').strip()
+          except Exception:
+              commit_msg = ''
+
+          # commit 첫 글자(이모지)로 라벨 결정. 매칭되지 않으면 알림 skip
+          # (예: trigger.html 의 root 동기화 commit, 본문에 이모지가 들어간 일반 코드 commit)
+          emoji_labels = [
+              ('✨', '기사 큐레이션'),
+              ('🔄', '기사 교체'),
+              ('🖼️', '썸네일 교체'),
+              ('🔀', '기사 순서 조정'),
+              ('🔗', '링크 수정'),
+              ('🤖', 'AI 명령 실행'),
+              ('📨', 'Agit 발행'),
+          ]
+          label = None
+          for emoji, action_name in emoji_labels:
+              if commit_msg.startswith(emoji):
+                  label = action_name
+                  break
+
+          if not label:
+              print(f"[INFO] commit '{commit_msg[:60]}' 에 알림 대상 이모지 없음 — skip")
+              raise SystemExit(0)
+
+          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트 페이지
           repo = os.environ.get('GITHUB_REPOSITORY', 'Leche/trend-articles')
           owner, repo_name = repo.split('/', 1)
-
-          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트
           folders = sorted(
               [d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d)],
               reverse=True
           )
-          latest_folder = folders[0] if folders else ''
-          digest_link = f'https://{owner.lower()}.github.io/{repo_name}/{latest_folder}/' if latest_folder else ''
+          latest = folders[0] if folders else ''
+          link = f'https://{owner.lower()}.github.io/{repo_name}/{latest}/' if latest else ''
 
-          # 워크플로우 이름 기반 기본 라벨
-          base_labels = {
-              '트렌드림 기사 큐레이션': '기사 큐레이션',
-              '트렌드림 AI 명령 실행': 'AI 명령 실행',
-              'Agit 게시': 'Agit 발행',
-          }
-          action_label = base_labels.get(name, name)
-
-          # 큐레이션 워크플로우는 여러 액션(큐레이션·교체·썸네일·순서·링크)을 한 yml 에서
-          # 처리하므로, 워크플로우가 직접 만든 commit(=trend-bot author) 메시지로 세부 라벨을
-          # 보강한다. head_sha 의 commit 을 그대로 보면, 워크플로우 트리거 시점의 main HEAD
-          # 가 무관한 코드 commit 인 경우 메시지가 잘못 매칭됨.
-          if name == '트렌드림 기사 큐레이션':
-              try:
-                  commit_msg = subprocess.check_output(
-                      ['git', 'log', '-1', '--author=trend-bot', '--pretty=%s']
-                  ).decode('utf-8').strip()
-              except Exception:
-                  commit_msg = ''
-              if commit_msg.startswith('🔀'):
-                  action_label = '기사 순서 조정'
-              elif commit_msg.startswith('🖼️'):
-                  action_label = '썸네일 교체'
-              elif commit_msg.startswith('🔗'):
-                  action_label = '링크 수정'
-              elif commit_msg.startswith('🔄'):
-                  action_label = '기사 교체'
-
-          icon = '✅' if conclusion == 'success' else '❌'
-          verb = '완료' if conclusion == 'success' else '실패'
-          # 성공 → 다이제스트 페이지 / 실패 → 디버깅용 Actions 로그
-          link = digest_link if (conclusion == 'success' and digest_link) else run_url
-          text = f"{icon} {action_label} {verb}\n{link}"
-
+          text = f"✅ {label} 완료\n{link}"
           data = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,
@@ -106,61 +96,38 @@ jobs:
               raise
           PYEOF
 
-  notify-direct-push:
-    runs-on: ubuntu-latest
-    # trigger.html 이 contents API 로 직접 만든 액션 commit 만 잡는다.
-    # trend-bot 의 자동 commit (큐레이션·발행 등) 은 위 notify 잡에서 처리되므로 제외.
-    # startsWith 로 검사 — 본문에 이모지가 들어간 다른 commit (예: fix 설명) 이 잘못
-    # 매칭되지 않도록 commit 메시지 첫 글자만 본다.
+  # 콘텐츠 워크플로우 실패 → 실패 알림 (Actions 로그 링크로 디버깅 유도)
+  notify-on-content-failure:
     if: |
-      github.event_name == 'push' &&
-      github.event.head_commit.author.name != 'trend-bot' &&
-      (startsWith(github.event.head_commit.message, '🖼️') ||
-       startsWith(github.event.head_commit.message, '🔀') ||
-       startsWith(github.event.head_commit.message, '🔗'))
+      github.event.workflow_run.name != 'pages-build-deployment' &&
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Send KakaoWork notification (direct commit)
+      - name: Send KakaoWork notification (failure)
         env:
           KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-          COMMIT_URL: ${{ github.event.head_commit.url }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           python3 << 'PYEOF'
-          import os, re, json, urllib.request, urllib.error
+          import os, json, urllib.request, urllib.error
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
               print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
               raise SystemExit(1)
 
-          msg = os.environ.get('COMMIT_MSG', '')
-          commit_url = os.environ.get('COMMIT_URL', '')
-          repo = os.environ.get('GITHUB_REPOSITORY', 'Leche/trend-articles')
-          owner, repo_name = repo.split('/', 1)
+          name = os.environ.get('WORKFLOW_NAME', '')
+          run_url = os.environ.get('WORKFLOW_URL', '')
 
-          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트
-          folders = sorted(
-              [d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d)],
-              reverse=True
-          )
-          latest_folder = folders[0] if folders else ''
-          digest_link = f'https://{owner.lower()}.github.io/{repo_name}/{latest_folder}/' if latest_folder else commit_url
+          labels = {
+              '트렌드림 기사 큐레이션': '기사 큐레이션',
+              '트렌드림 AI 명령 실행': 'AI 명령 실행',
+              'Agit 게시': 'Agit 발행',
+          }
+          label = labels.get(name, name)
 
-          # commit message 첫 글자(이모지)로 라벨 결정. 본문에 이모지가 있어도 무시.
-          if msg.startswith('🖼️'):
-              label = '썸네일 교체'
-          elif msg.startswith('🔀'):
-              label = '기사 순서 조정'
-          elif msg.startswith('🔗'):
-              label = '링크 수정'
-          else:
-              label = '업데이트'
-
-          text = f"✅ {label} 완료\n{digest_link}"
+          text = f"❌ {label} 실패\n{run_url}"
           data = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,

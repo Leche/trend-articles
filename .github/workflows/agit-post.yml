@@ -257,7 +257,7 @@ jobs:
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
           git add pending-publish.json
-          git commit -m "chore(publish): pending-publish.json 비우기 (발행 완료)"
+          git commit -m "📨 ${PUBLISHED_DATE} Agit 발행 완료"
           git pull --rebase
           git push
 

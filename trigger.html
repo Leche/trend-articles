@@ -1961,22 +1961,25 @@ async function replaceThumbnails() {
     const dateVal = getActiveCurationDate();
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
+    // root index 동기화 commit 은 emoji prefix 제거 — notify.yml 이 첫 글자로
+    // 라벨링하므로 두 번째 commit 에서는 알림이 발사되지 않는다.
+    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
 
-    async function applyToPath(path) {
+    async function applyToPath(path, commitMsg) {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, dataUrl } of converted) {
         html = replaceImageFrame(html, num, dataUrl);
       }
-      await ghPut(path, html, fd.sha, msg);
+      await ghPut(path, html, fd.sha, commitMsg);
     }
 
     showStatus('replaceThumbStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`);
+    await applyToPath(`${dateVal}/index.html`, msg);
 
     try {
       showStatus('replaceThumbStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html');
+      await applyToPath('index.html', rootMsg);
     } catch(_) {}
 
     showStatus('replaceThumbStatus', 'success', `${nums}번 기사 썸네일 교체 완료! 1~2분 후 반영돼요.`);
@@ -2064,8 +2067,9 @@ async function reorderArticles() {
   try {
     const dateVal = getActiveCurationDate();
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
+    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
 
-    async function reorderHtml(path) {
+    async function reorderHtml(path, commitMsg) {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
@@ -2096,15 +2100,15 @@ async function reorderArticles() {
         reordered.join(' ') +
         html.substring(lastEnd);
 
-      await ghPut(path, newHtml, fd.sha, msg);
+      await ghPut(path, newHtml, fd.sha, commitMsg);
     }
 
     showStatus('reorderStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await reorderHtml(`${dateVal}/index.html`);
+    await reorderHtml(`${dateVal}/index.html`, msg);
 
     try {
       showStatus('reorderStatus', 'loading', 'index.html 업데이트 중...');
-      await reorderHtml('index.html');
+      await reorderHtml('index.html', rootMsg);
     } catch(_) {}
 
     showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.');
@@ -2336,19 +2340,20 @@ async function fixLinks() {
   try {
     const dateVal = getActiveCurationDate();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
-    async function applyToPath(path) {
+    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
+    async function applyToPath(path, commitMsg) {
       const fd = await ghGet(path);
       let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, url } of tasks) {
         html = fixLinkInHtml(html, num, url);
       }
-      await ghPut(path, html, fd.sha, msg);
+      await ghPut(path, html, fd.sha, commitMsg);
     }
     showStatus('linkFixStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`);
+    await applyToPath(`${dateVal}/index.html`, msg);
     try {
       showStatus('linkFixStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html');
+      await applyToPath('index.html', rootMsg);
     } catch(_) {}
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
   } catch(e) {
