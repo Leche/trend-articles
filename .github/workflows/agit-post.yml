@@ -230,6 +230,8 @@ jobs:
         run: |
           # 방금 발행한 날짜와 pending.date가 일치할 때만 비운다.
           # (즉시 게시했는데 미래 날짜 발행 예약이 있던 경우, 그 예약은 보존)
+          # python heredoc 안의 sys.exit 은 부모 bash 를 끊지 못하므로,
+          # 변경 여부는 그 뒤 git status --porcelain 으로 다시 판단한다.
           python3 << 'PYEOF'
           import json, os, pathlib, sys
           published = os.environ.get('PUBLISHED_DATE','').strip()
@@ -247,8 +249,9 @@ jobs:
               sys.exit(0)
           p.write_text(json.dumps({}, ensure_ascii=False) + "\n", encoding='utf-8')
           PYEOF
-          if git diff --quiet pending-publish.json; then
-            echo "pending-publish.json 변경 없음"
+          # 변경 사항이 없으면 (파일이 처음부터 없었거나, 보존 케이스) commit·push 생략.
+          if [ -z "$(git status --porcelain pending-publish.json 2>/dev/null)" ]; then
+            echo "pending-publish.json 변경 없음 (커밋 불필요)"
             exit 0
           fi
           git config user.name "trend-bot"
