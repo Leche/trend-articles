@@ -1,8 +1,10 @@
 name: Notify Digest
 
-# 큐레이션·AI 명령·발행 워크플로우가 끝났을 때 작업 완료 알림 + 다이제스트 템플릿을
-# KakaoWork로 전송. (이전엔 pages-build-deployment 완료에 트리거했는데, 그건 trigger.html
-# 같은 코드 푸시에도 발사돼서 카웍에 잘못된 알림이 나가는 문제가 있었음.)
+# 두 경로로 알림 발사:
+#  (A) workflow_run completed — 큐레이션·AI 명령·발행 워크플로우의 성공·실패
+#  (B) main push — trigger.html 이 contents API 로 직접 commit 한 액션
+#      (썸네일 교체 🖼️ / 기사 순서 조정 🔀 / 링크 수정 🔗).
+#      trend-bot 의 자동 commit 은 (A) 에서 이미 처리되므로 (B) 에서는 제외.
 on:
   workflow_run:
     workflows:
@@ -11,12 +13,15 @@ on:
       - Agit 게시
     types:
       - completed
+  push:
+    branches:
+      - main
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     # 성공·실패만 알림. 'cancelled' / 'skipped' 는 사용자 의도와 무관한 경우가 많아 생략.
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
+    if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,6 +77,58 @@ jobs:
           verb = '완료' if conclusion == 'success' else '실패'
           text = f"{icon} {action_label} {verb}\n{run_url}"
 
+          data = json.dumps({"text": text}).encode("utf-8")
+          req = urllib.request.Request(
+              webhook, data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"[OK] status={resp.status}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
+          PYEOF
+
+  notify-direct-push:
+    runs-on: ubuntu-latest
+    # trigger.html 이 contents API 로 직접 만든 액션 commit 만 잡는다.
+    # trend-bot 의 자동 commit (큐레이션·발행 등) 은 위 notify 잡에서 처리되므로 제외.
+    if: |
+      github.event_name == 'push' &&
+      github.event.head_commit.author.name != 'trend-bot' &&
+      (contains(github.event.head_commit.message, '🖼️') ||
+       contains(github.event.head_commit.message, '🔀') ||
+       contains(github.event.head_commit.message, '🔗'))
+    steps:
+      - name: Send KakaoWork notification (direct commit)
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, urllib.error
+
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
+              raise SystemExit(1)
+
+          msg = os.environ.get('COMMIT_MSG', '')
+          url = os.environ.get('COMMIT_URL', '')
+
+          if '🖼️' in msg or '썸네일' in msg:
+              label = '썸네일 교체'
+          elif '🔀' in msg or '순서 조정' in msg:
+              label = '기사 순서 조정'
+          elif '🔗' in msg or '링크 수정' in msg:
+              label = '링크 수정'
+          else:
+              label = '업데이트'
+
+          text = f"✅ {label} 완료\n{url}"
           data = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
               webhook, data=data,
