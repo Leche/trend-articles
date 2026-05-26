@@ -124,6 +124,7 @@ jobs:
         env:
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           FOR_TOMORROW: ${{ github.event.inputs.for_tomorrow || 'false' }}
+          REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
         run: |
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
@@ -138,9 +139,15 @@ jobs:
               d = base + datetime.timedelta(days=1) if ft else base
           print(d.strftime('%y%m%d'))
           ")
+          # 액션별 commit message — notify.yml 이 첫 글자(이모지)로 라벨 분류한다.
+          if [ -n "${REPLACE_URLS}" ]; then
+            COMMIT_MSG="🔄 ${DATE_LABEL} 기사 교체"
+          else
+            COMMIT_MSG="✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
+          fi
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && echo "pushed=false" >> $GITHUB_OUTPUT && exit 0
-          git commit -m "✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
+          git commit -m "${COMMIT_MSG}"
           git pull --rebase
           git push
           echo "pushed=true" >> $GITHUB_OUTPUT

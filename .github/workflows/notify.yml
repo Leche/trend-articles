@@ -56,21 +56,23 @@ jobs:
           action_label = base_labels.get(name, name)
 
           # 큐레이션 워크플로우는 여러 액션(큐레이션·교체·썸네일·순서·링크)을 한 yml 에서
-          # 처리하므로, 직전 커밋 메시지로 세부 라벨을 보강한다.
+          # 처리하므로, 워크플로우가 직접 만든 commit(=trend-bot author) 메시지로 세부 라벨을
+          # 보강한다. head_sha 의 commit 을 그대로 보면, 워크플로우 트리거 시점의 main HEAD
+          # 가 무관한 코드 commit 인 경우 메시지가 잘못 매칭됨.
           if name == '트렌드림 기사 큐레이션':
               try:
                   commit_msg = subprocess.check_output(
-                      ['git', 'log', '-1', '--pretty=%s']
+                      ['git', 'log', '-1', '--author=trend-bot', '--pretty=%s']
                   ).decode('utf-8').strip()
               except Exception:
                   commit_msg = ''
-              if '🔀' in commit_msg or '순서 조정' in commit_msg:
+              if commit_msg.startswith('🔀'):
                   action_label = '기사 순서 조정'
-              elif '🖼️' in commit_msg or '썸네일' in commit_msg:
+              elif commit_msg.startswith('🖼️'):
                   action_label = '썸네일 교체'
-              elif '🔗' in commit_msg or '링크 수정' in commit_msg:
+              elif commit_msg.startswith('🔗'):
                   action_label = '링크 수정'
-              elif '교체' in commit_msg:
+              elif commit_msg.startswith('🔄'):
                   action_label = '기사 교체'
 
           icon = '✅' if conclusion == 'success' else '❌'
@@ -95,12 +97,14 @@ jobs:
     runs-on: ubuntu-latest
     # trigger.html 이 contents API 로 직접 만든 액션 commit 만 잡는다.
     # trend-bot 의 자동 commit (큐레이션·발행 등) 은 위 notify 잡에서 처리되므로 제외.
+    # startsWith 로 검사 — 본문에 이모지가 들어간 다른 commit (예: fix 설명) 이 잘못
+    # 매칭되지 않도록 commit 메시지 첫 글자만 본다.
     if: |
       github.event_name == 'push' &&
       github.event.head_commit.author.name != 'trend-bot' &&
-      (contains(github.event.head_commit.message, '🖼️') ||
-       contains(github.event.head_commit.message, '🔀') ||
-       contains(github.event.head_commit.message, '🔗'))
+      (startsWith(github.event.head_commit.message, '🖼️') ||
+       startsWith(github.event.head_commit.message, '🔀') ||
+       startsWith(github.event.head_commit.message, '🔗'))
     steps:
       - name: Send KakaoWork notification (direct commit)
         env:
@@ -119,11 +123,12 @@ jobs:
           msg = os.environ.get('COMMIT_MSG', '')
           url = os.environ.get('COMMIT_URL', '')
 
-          if '🖼️' in msg or '썸네일' in msg:
+          # commit message 첫 글자(이모지)로 라벨 결정. 본문에 이모지가 있어도 무시.
+          if msg.startswith('🖼️'):
               label = '썸네일 교체'
-          elif '🔀' in msg or '순서 조정' in msg:
+          elif msg.startswith('🔀'):
               label = '기사 순서 조정'
-          elif '🔗' in msg or '링크 수정' in msg:
+          elif msg.startswith('🔗'):
               label = '링크 수정'
           else:
               label = '업데이트'
