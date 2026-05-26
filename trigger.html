@@ -1075,8 +1075,9 @@ body.pwd-modal-open .tab-bar {
   <!-- Agit 게시 -->
   <div class="card">
     <div class="card-title">Agit에 게시</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
-    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">Agit에 13:30 게시로 예약</button>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
+    <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
+    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:8px;">예약 취소</button>
     <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">테스트 모드로 게시</button>
     <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
     <div class="input-group">
@@ -1391,19 +1392,27 @@ function renderDashboard(state) {
     cur.innerHTML = '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
   }
 
-  // Agit 게시 상태
-  const past1330 = getCurrentKSTMinutes() >= 13 * 60 + 30;
+  // Agit 게시 상태 — 09:30 KST 발행 예약 모델 기준
+  const past0930 = getCurrentKSTMinutes() >= 9 * 60 + 30;
+  const pendingToday = state.pending && state.pending.date === today;
   if (state.agitStatus === 'posted' && state.agitTime) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
     agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
   } else if (weekend) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 게시 없음)</span>';
-  } else if (!past1330) {
-    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 13:30 예정</span>';
+  } else if (pendingToday && !past0930) {
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 09:30 예정</span>';
+  } else if (pendingToday && past0930) {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>발행 대기 중 (cron 호출 전)</span>';
+  } else if (!past0930) {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>예약 없음</span>';
   } else {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
   }
+  // 예약 취소 버튼 토글
+  if (pendingToday && !past0930) showScheduleCancel();
+  else hideScheduleCancel();
   footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, today)}`;
 }
 async function loadDashboard() {
@@ -1412,12 +1421,13 @@ async function loadDashboard() {
     return;
   }
   const today = getTodayKST();
-  let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null;
+  let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null, pending = null;
   try {
     const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
-    const [contentsRes, runsRes] = await Promise.all([
+    const [contentsRes, runsRes, pendingRes] = await Promise.all([
       fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers }),
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers })
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main`, { headers })
     ]);
     if (contentsRes.ok) {
       const items = await contentsRes.json();
@@ -1441,7 +1451,15 @@ async function loadDashboard() {
         agitTime   = new Date(successful.updated_at);
       }
     }
-    renderDashboard({ todayExists, lastDate, agitStatus, agitTime });
+    if (pendingRes.ok) {
+      try {
+        const data = await pendingRes.json();
+        const raw = atob((data.content || '').replace(/\n/g, ''));
+        const parsed = JSON.parse(decodeURIComponent(escape(raw)) || '{}');
+        if (parsed && parsed.date) pending = parsed;
+      } catch(_) { pending = null; }
+    }
+    renderDashboard({ todayExists, lastDate, agitStatus, agitTime, pending });
   } catch(e) {
     renderDashboard({ error: true });
   }
@@ -2148,6 +2166,7 @@ function checkSettings() {
 
 // ── 새 큐레이션 ──
 async function triggerWorkflow(inputs) {
+  // trigger.html에서 호출하는 큐레이션·교체는 항상 손으로 누른 것이므로 force=true로 가드 우회.
   const url = `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/curate.yml/dispatches`;
   return fetch(url, {
     method: 'POST',
@@ -2156,7 +2175,7 @@ async function triggerWorkflow(inputs) {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ref: 'main', inputs }),
+    body: JSON.stringify({ ref: 'main', inputs: { force_run: 'true', ...inputs } }),
   });
 }
 
@@ -2520,6 +2539,106 @@ async function _checkAgitPassword() {
   }
 }
 
+// ── 발행 예약 (pending-publish.json commit) ──
+const PENDING_PATH = 'pending-publish.json';
+
+function _tomorrowKST() {
+  const now = new Date();
+  // KST = UTC+9. UTC 기준 millisecond 더해서 KST 시각 산출.
+  const kst = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
+  kst.setDate(kst.getDate() + 1);
+  return kst.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function _b64encUtf8(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+async function _getContentSha(path) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}?ref=main`,
+      { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('contents GET 실패: ' + res.status);
+    const data = await res.json();
+    return data.sha;
+  } catch(e) {
+    throw new Error('파일 sha 확인 실패: ' + e.message);
+  }
+}
+
+async function _putContent(path, contentObj, message) {
+  const sha = await _getContentSha(path);
+  const body = {
+    message,
+    content: _b64encUtf8(JSON.stringify(contentObj, null, 2) + '\n'),
+    branch: 'main',
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(
+    `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${settings.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || ('contents PUT 실패: ' + res.status));
+  }
+  return res.json();
+}
+
+function showScheduleCancel() {
+  const btn = document.getElementById('scheduleCancelBtn');
+  if (btn) btn.style.display = 'block';
+}
+function hideScheduleCancel() {
+  const btn = document.getElementById('scheduleCancelBtn');
+  if (btn) btn.style.display = 'none';
+}
+
+async function schedulePublish(testMode) {
+  if (!checkSettings()) return;
+  if (!await _checkAgitPassword()) return;
+  const date = _tomorrowKST();
+  showStatus('agitStatus', 'loading', '발행 예약 등록 중...');
+  try {
+    await _putContent(
+      PENDING_PATH,
+      { date, test_mode: !!testMode, scheduled_at: new Date().toISOString() },
+      `chore(publish): ${date} 09:30 발행 예약`,
+    );
+    showStatus('agitStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
+    showScheduleCancel();
+    setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
+  } catch(e) {
+    showStatus('agitStatus', 'error', '예약 실패: ' + e.message);
+  }
+}
+
+async function cancelScheduledPublish() {
+  if (!checkSettings()) return;
+  if (!await _checkAgitPassword()) return;
+  showStatus('agitStatus', 'loading', '예약 취소 중...');
+  try {
+    await _putContent(PENDING_PATH, {}, 'chore(publish): 발행 예약 취소');
+    showStatus('agitStatus', 'success', '발행 예약 취소 완료.');
+    hideScheduleCancel();
+    setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
+  } catch(e) {
+    showStatus('agitStatus', 'error', '취소 실패: ' + e.message);
+  }
+}
+
+// 즉시 게시 / 테스트 게시 전용. 예약 발행은 schedulePublish() 사용.
 async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;

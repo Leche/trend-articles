@@ -1,27 +1,31 @@
 name: Agit 게시
 
-# 검토 끝난 후 trigger.html에서 발화 → 13:30 KST에 Agit 그룹 wall에 자동 게시
-# (skip_wait=true 면 즉시 게시)
+# 발행 경로 두 가지:
+#  (A) 외부 cron이 09:30 KST에 input 없이 호출 → pending-publish.json 확인 후 발행
+#  (B) trigger.html "즉시 게시" / "테스트 게시" → skip_wait=true 로 호출 → pending 무시하고 바로 발행
 on:
   workflow_dispatch:
     inputs:
       target_date:
-        description: '대상 날짜 (YYYY-MM-DD, 비워두면 오늘 KST)'
+        description: '대상 날짜 (YYYY-MM-DD, 비워두면 오늘 KST). skip_wait=true 일 때만 사용.'
         required: false
         default: ''
       skip_wait:
-        description: '대기 없이 즉시 게시 (true/false)'
+        description: '대기·예약 무시하고 즉시 게시 (true/false)'
         required: false
         default: 'false'
       test_mode:
-        description: '테스트 모드 — 개인 아지트로 POST (true/false)'
+        description: '테스트 모드 — 개인 아지트로 POST (true/false). skip_wait=true 일 때만 사용.'
         required: false
         default: 'false'
+
+permissions:
+  contents: write
 
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -32,9 +36,64 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Validate digest data
+      - name: Resolve publish params
+        id: params
         env:
-          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+          SKIP_WAIT: ${{ github.event.inputs.skip_wait || 'false' }}
+          INPUT_TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+          INPUT_TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, datetime, pathlib
+
+          skip_wait = os.environ.get('SKIP_WAIT', '').lower() == 'true'
+          kst = datetime.timezone(datetime.timedelta(hours=9))
+          today = datetime.datetime.now(kst).date()
+          today_s = today.strftime('%Y-%m-%d')
+
+          if skip_wait:
+              # 즉시 게시 경로 — input 값 사용. pending 무시.
+              target_date = os.environ.get('INPUT_TARGET_DATE', '').strip() or today_s
+              test_mode = os.environ.get('INPUT_TEST_MODE', 'false').strip().lower()
+              skip = 'false'
+              source = 'workflow_dispatch(skip_wait)'
+          else:
+              # 예약 게시 경로 — pending-publish.json 읽어서 결정.
+              p = pathlib.Path('pending-publish.json')
+              if not p.exists():
+                  print("[INFO] pending-publish.json 없음 → 발행 skip (예약된 발행 없음)")
+                  skip, target_date, test_mode, source = 'true', '', 'false', 'no_pending'
+              else:
+                  try:
+                      data = json.loads(p.read_text(encoding='utf-8') or '{}')
+                  except json.JSONDecodeError:
+                      print("[WARN] pending-publish.json 파싱 실패 → skip")
+                      data = {}
+                  pending_date = (data.get('date') or '').strip()
+                  if not pending_date:
+                      print("[INFO] pending-publish.json 비어있음 → skip")
+                      skip, target_date, test_mode, source = 'true', '', 'false', 'empty_pending'
+                  elif pending_date != today_s:
+                      print(f"[WARN] pending date({pending_date}) ≠ 오늘 KST({today_s}) → skip")
+                      skip, target_date, test_mode, source = 'true', '', 'false', 'date_mismatch'
+                  else:
+                      target_date = pending_date
+                      test_mode = str(data.get('test_mode', False)).lower()
+                      skip = 'false'
+                      source = 'pending'
+                      print(f"[OK] pending 발행 예약 매칭 — date={target_date} test_mode={test_mode}")
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"skip={skip}\n")
+              f.write(f"target_date={target_date}\n")
+              f.write(f"test_mode={test_mode}\n")
+              f.write(f"source={source}\n")
+          PYEOF
+
+      - name: Validate digest data
+        if: steps.params.outputs.skip != 'true'
+        env:
+          TARGET_DATE: ${{ steps.params.outputs.target_date }}
         run: |
           python3 << 'PYEOF'
           import os, re, datetime, sys
@@ -70,33 +129,13 @@ jobs:
           print(f"[OK] 검증 통과: 기사 {len(titles)}개, intro {'있음' if intro_match else '없음'}")
           PYEOF
 
-      - name: Wait until 13:30 KST
-        if: github.event.inputs.skip_wait != 'true'
-        run: |
-          python << 'PYEOF'
-          import datetime, time, sys
-          kst = datetime.timezone(datetime.timedelta(hours=9))
-          now = datetime.datetime.now(kst)
-          target = now.replace(hour=13, minute=30, second=0, microsecond=0)
-          if now >= target:
-              print(f"이미 13:30 KST 지남 ({now.strftime('%H:%M')}) — 즉시 게시")
-              sys.exit(0)
-          wait_sec = (target - now).total_seconds()
-          # GitHub Actions 6시간 한도 안전 버퍼: 5h 45m 초과시 거부
-          if wait_sec > 5 * 3600 + 45 * 60:
-              print(f"::error::대기 시간 {wait_sec/60:.0f}분 — 6시간 한도 초과 우려. 8시 이후 다시 시도하거나 skip_wait=true 사용.")
-              sys.exit(1)
-          print(f"13:30 KST 까지 대기: {wait_sec/60:.1f}분")
-          time.sleep(wait_sec)
-          print(f"대기 완료. 게시 시작.")
-          PYEOF
-
       - name: Post digest to Agit
+        if: steps.params.outputs.skip != 'true'
         env:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
           AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
-          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
-          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
+          TARGET_DATE: ${{ steps.params.outputs.target_date }}
+          TEST_MODE: ${{ steps.params.outputs.test_mode }}
         run: |
           python3 << 'PYEOF'
           import os, re, json, datetime, urllib.request, urllib.error
@@ -183,6 +222,41 @@ jobs:
               raise
 
           PYEOF
+
+      - name: Clear pending-publish.json
+        if: success() && steps.params.outputs.skip != 'true'
+        env:
+          PUBLISHED_DATE: ${{ steps.params.outputs.target_date }}
+        run: |
+          # 방금 발행한 날짜와 pending.date가 일치할 때만 비운다.
+          # (즉시 게시했는데 미래 날짜 발행 예약이 있던 경우, 그 예약은 보존)
+          python3 << 'PYEOF'
+          import json, os, pathlib, sys
+          published = os.environ.get('PUBLISHED_DATE','').strip()
+          p = pathlib.Path('pending-publish.json')
+          if not p.exists():
+              print("pending-publish.json 없음 — 비울 것도 없음")
+              sys.exit(0)
+          try:
+              data = json.loads(p.read_text(encoding='utf-8') or '{}')
+          except json.JSONDecodeError:
+              data = {}
+          pending_date = (data.get('date') or '').strip()
+          if pending_date and pending_date != published:
+              print(f"pending.date({pending_date}) ≠ 발행({published}) — 보존")
+              sys.exit(0)
+          p.write_text(json.dumps({}, ensure_ascii=False) + "\n", encoding='utf-8')
+          PYEOF
+          if git diff --quiet pending-publish.json; then
+            echo "pending-publish.json 변경 없음"
+            exit 0
+          fi
+          git config user.name "trend-bot"
+          git config user.email "trend-bot@users.noreply.github.com"
+          git add pending-publish.json
+          git commit -m "chore(publish): pending-publish.json 비우기 (발행 완료)"
+          git pull --rebase
+          git push
 
       - name: Notify failure
         if: failure()
