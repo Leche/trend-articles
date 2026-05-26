@@ -2555,11 +2555,15 @@ async function _checkAgitPassword() {
 // ── 발행 예약 (pending-publish.json commit) ──
 const PENDING_PATH = 'pending-publish.json';
 
-function _tomorrowKST() {
+// 다음 09:30 KST 까지 남은 발사일을 반환.
+//  - 현재 KST 시각이 09:30 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
+//  - 09:30 이후 → 내일
+// 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 09:30 발사' 가 자연스러움.
+function _nextPublishDateKST() {
   const now = new Date();
-  // KST = UTC+9. UTC 기준 millisecond 더해서 KST 시각 산출.
   const kst = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
-  kst.setDate(kst.getDate() + 1);
+  const past0930 = kst.getHours() > 9 || (kst.getHours() === 9 && kst.getMinutes() >= 30);
+  if (past0930) kst.setDate(kst.getDate() + 1);
   return kst.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
@@ -2689,7 +2693,7 @@ function hideScheduleCancel() {
 async function schedulePublish(testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
-  const date = _tomorrowKST();
+  const date = _nextPublishDateKST();
   showStatus('agitStatus', 'loading', '발행 예약 등록 중...');
   try {
     await _putContent(
