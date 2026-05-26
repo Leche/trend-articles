@@ -1961,26 +1961,26 @@ async function replaceThumbnails() {
     const dateVal = getActiveCurationDate();
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
-    // root index 동기화 commit 은 emoji prefix 제거 — notify.yml 이 첫 글자로
-    // 라벨링하므로 두 번째 commit 에서는 알림이 발사되지 않는다.
-    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
 
-    async function applyToPath(path, commitMsg) {
-      const fd   = await ghGet(path);
-      let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+    // 날짜 폴더와 root index 두 파일을 한 commit 으로 묶어서 push.
+    async function modifyHtml(path) {
+      const fd = await ghGet(path);
+      let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, dataUrl } of converted) {
         html = replaceImageFrame(html, num, dataUrl);
       }
-      await ghPut(path, html, fd.sha, commitMsg);
+      return html;
     }
 
-    showStatus('replaceThumbStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`, msg);
-
+    showStatus('replaceThumbStatus', 'loading', 'HTML 파일 수정 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('replaceThumbStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html', rootMsg);
+      files.push({ path: 'index.html', content: await modifyHtml('index.html') });
     } catch(_) {}
+
+    showStatus('replaceThumbStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
 
     showStatus('replaceThumbStatus', 'success', `${nums}번 기사 썸네일 교체 완료! 1~2분 후 반영돼요.`);
 
@@ -2067,9 +2067,8 @@ async function reorderArticles() {
   try {
     const dateVal = getActiveCurationDate();
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
-    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
 
-    async function reorderHtml(path, commitMsg) {
+    async function reorderHtml(path) {
       const fd   = await ghGet(path);
       let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
@@ -2095,21 +2094,18 @@ async function reorderArticles() {
       const firstStart = matches[0].index;
       const lastMatch = matches[matches.length - 1];
       const lastEnd = lastMatch.index + lastMatch[0].length;
-      const newHtml =
-        html.substring(0, firstStart) +
-        reordered.join(' ') +
-        html.substring(lastEnd);
-
-      await ghPut(path, newHtml, fd.sha, commitMsg);
+      return html.substring(0, firstStart) + reordered.join(' ') + html.substring(lastEnd);
     }
 
-    showStatus('reorderStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await reorderHtml(`${dateVal}/index.html`, msg);
-
+    showStatus('reorderStatus', 'loading', 'HTML 재배치 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await reorderHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('reorderStatus', 'loading', 'index.html 업데이트 중...');
-      await reorderHtml('index.html', rootMsg);
+      files.push({ path: 'index.html', content: await reorderHtml('index.html') });
     } catch(_) {}
+
+    showStatus('reorderStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
 
     showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.');
     document.getElementById('reorderList').innerHTML = '';
@@ -2340,21 +2336,22 @@ async function fixLinks() {
   try {
     const dateVal = getActiveCurationDate();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
-    const rootMsg = `chore: 메인 페이지 동기화 (${dateVal})`;
-    async function applyToPath(path, commitMsg) {
+    async function modifyHtml(path) {
       const fd = await ghGet(path);
       let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, url } of tasks) {
         html = fixLinkInHtml(html, num, url);
       }
-      await ghPut(path, html, fd.sha, commitMsg);
+      return html;
     }
-    showStatus('linkFixStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`, msg);
+    showStatus('linkFixStatus', 'loading', 'HTML 파일 수정 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('linkFixStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html', rootMsg);
+      files.push({ path: 'index.html', content: await modifyHtml('index.html') });
     } catch(_) {}
+    showStatus('linkFixStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
@@ -2566,6 +2563,74 @@ function _tomorrowKST() {
 
 function _b64encUtf8(str) {
   return btoa(unescape(encodeURIComponent(str)));
+}
+
+// 여러 파일을 한 commit 으로 묶어서 main 에 push. GitHub Git Trees API 사용.
+// (contents API PUT 을 두 번 호출하면 commit 이 두 번 만들어져 GitHub Pages 가
+//  두 번 빌드되고 알림이 꼬이는 문제 회피.)
+async function ghMultiFileCommit({ message, files }) {
+  if (!files || files.length === 0) throw new Error('변경할 파일이 없어요');
+  const base = `https://api.github.com/repos/${settings.owner}/${settings.repo}`;
+  const headers = {
+    'Authorization': `Bearer ${settings.token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+  };
+
+  // 1. main HEAD → parent commit SHA
+  const refRes = await fetch(`${base}/git/refs/heads/main`, { headers });
+  if (!refRes.ok) throw new Error('main ref 조회 실패: ' + refRes.status);
+  const parentSha = (await refRes.json()).object.sha;
+
+  // 2. parent commit → tree SHA (base_tree 로 사용 — 나머지 파일은 자동 유지)
+  const commitRes = await fetch(`${base}/git/commits/${parentSha}`, { headers });
+  if (!commitRes.ok) throw new Error('parent commit 조회 실패: ' + commitRes.status);
+  const baseTreeSha = (await commitRes.json()).tree.sha;
+
+  // 3. 각 파일을 blob 으로 업로드
+  const blobs = [];
+  for (const f of files) {
+    const blobRes = await fetch(`${base}/git/blobs`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ content: _b64encUtf8(f.content), encoding: 'base64' }),
+    });
+    if (!blobRes.ok) throw new Error(`blob 생성 실패 (${f.path}): ${blobRes.status}`);
+    blobs.push({ path: f.path, sha: (await blobRes.json()).sha });
+  }
+
+  // 4. 새 tree (base_tree 위에 blob 들 얹기)
+  const treeRes = await fetch(`${base}/git/trees`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      base_tree: baseTreeSha,
+      tree: blobs.map(b => ({ path: b.path, mode: '100644', type: 'blob', sha: b.sha })),
+    }),
+  });
+  if (!treeRes.ok) throw new Error('tree 생성 실패: ' + treeRes.status);
+  const newTreeSha = (await treeRes.json()).sha;
+
+  // 5. 새 commit
+  const newCommitRes = await fetch(`${base}/git/commits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ message, tree: newTreeSha, parents: [parentSha] }),
+  });
+  if (!newCommitRes.ok) throw new Error('commit 생성 실패: ' + newCommitRes.status);
+  const newCommitSha = (await newCommitRes.json()).sha;
+
+  // 6. main ref 를 새 commit 으로 fast-forward
+  const updateRes = await fetch(`${base}/git/refs/heads/main`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ sha: newCommitSha }),
+  });
+  if (!updateRes.ok) {
+    const err = await updateRes.json().catch(() => ({}));
+    throw new Error('main ref 업데이트 실패: ' + (err.message || updateRes.status));
+  }
+  return newCommitSha;
 }
 
 async function _getContentSha(path) {
