@@ -1436,6 +1436,7 @@ async function loadDashboard() {
         .map(i => i.name).sort().reverse();
       todayExists = dateDirs.includes(today);
       lastDate    = dateDirs[0] || null;
+      latestCurationDate = lastDate;  // 액션들이 참조할 작업 대상 날짜
     }
     if (runsRes.ok) {
       const data = await runsRes.json();
@@ -1753,6 +1754,14 @@ function getTodayKST() {
   return kst.toISOString().split('T')[0];
 }
 
+// 22시 큐레이션 모델 — 큐레이션 결과물은 보통 내일 날짜 폴더로 떨어진다.
+// 그래서 "현재 작업 대상 큐레이션" 은 '오늘'이 아니라 repo 의 가장 최신 날짜 폴더.
+// loadDashboard 가 lastDate 를 잡아주면 그 값을 전역에 저장해두고 액션들이 참조한다.
+let latestCurationDate = null;
+function getActiveCurationDate() {
+  return latestCurationDate || getTodayKST();
+}
+
 // ── 파일 인풋 트리거 ──
 function triggerFileInput(wrapper) {
   wrapper.querySelector('input[type="file"]').click();
@@ -1949,7 +1958,7 @@ async function replaceThumbnails() {
       dataUrl: await fileToDataUrl(t.file)
     })));
 
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
@@ -1988,7 +1997,7 @@ async function loadReorderList() {
   if (!checkSettings()) return;
   showStatus('reorderStatus', 'loading', '기사 불러오는 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const fd = await ghGet(`${dateVal}/index.html`);
     const html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
@@ -2053,7 +2062,7 @@ async function reorderArticles() {
 
   showStatus('reorderStatus', 'loading', '순서 적용 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
 
     async function reorderHtml(path) {
@@ -2263,7 +2272,7 @@ async function runCommand() {
           ref: 'main',
           inputs: {
             prompt,
-            target_date: getTodayKST(),
+            target_date: getActiveCurationDate(),
           },
         }),
       }
@@ -2325,7 +2334,7 @@ async function fixLinks() {
   const nums = tasks.map(t => t.num).join(', ');
   showStatus('linkFixStatus', 'loading', 'HTML 파일 불러오는 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
     async function applyToPath(path) {
       const fd = await ghGet(path);
@@ -2689,7 +2698,7 @@ async function postToAgit(skipWait, testMode) {
 
 // ── 바로가기 ──
 function openLatest() {
-  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getTodayKST()}/`, '_blank');
+  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getActiveCurationDate()}/`, '_blank');
 }
 function openActions() {
   window.open(`https://github.com/${settings.owner || 'Leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');
