@@ -12,6 +12,8 @@ import sys
 import json
 import datetime
 import anthropic
+import requests
+from bs4 import BeautifulSoup
 
 # ─── 환경 변수 ───────────────────────────────────────────────
 COMMAND_PROMPT = os.environ.get("COMMAND_PROMPT", "").strip()
@@ -59,6 +61,11 @@ def interpret_command(prompt: str) -> dict:
    {"action": "free_edit", "file": "trigger.html", "instruction": "원본 지시 그대로"}
    - trigger.html 관련 요청은 항상 이 액션 사용
    - trigger-test.html은 자동 동기화되므로 별도 처리 불필요. trigger-test.html 언급이 있어도 trigger.html만 대상으로 JSON 1개만 출력
+
+5. 원본 기사와 비교해 다이제스트 교정 (제목·요약을 원본 기준으로 맞춤):
+   {"action": "sync_with_source", "article_num": 1, "instruction": "원본 지시 그대로"}
+   - "원본과 다르다", "원본 기사 제목 가져와줘", "원본 기준으로 맞춰줘", "원문과 안 맞아" 등 원본 대조·교정이 필요한 요청
+   - article_num: 대상 기사 번호 (1 이상 필수)
 
 이해할 수 없는 요청:
    {"action": "unknown", "message": "이해할 수 없는 이유 간단히"}
@@ -196,6 +203,76 @@ def reorder_in_html(html: str, from_num: int, to_num: int) -> str:
         renumbered.append(b)
 
     return prefix + "".join(renumbered) + suffix
+
+
+def get_article_source_url(article_section: str) -> str:
+    """article 섹션 안의 article-link href 추출"""
+    m = (re.search(r'class="article-link"[^>]*href="(https?://[^"]+)"', article_section)
+         or re.search(r'href="(https?://[^"]+)"[^>]*class="article-link"', article_section)
+         or re.search(r'href="(https?://[^"]+)"', article_section))
+    return m.group(1) if m else ""
+
+
+def fetch_source_article(url: str) -> dict:
+    """원본 기사 URL을 fetch해서 제목·본문 추출"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept-Language": "ko,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    r = requests.get(url, headers=headers, timeout=20)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "lxml")
+    for s in soup(["script", "style", "noscript"]):
+        s.decompose()
+    title = ""
+    og = soup.find("meta", attrs={"property": "og:title"}) or soup.find("meta", attrs={"name": "twitter:title"})
+    if og and og.get("content"):
+        title = og["content"].strip()
+    if not title:
+        h1 = soup.find("h1")
+        if h1:
+            title = h1.get_text(strip=True)
+    if not title and soup.title:
+        title = soup.title.get_text(strip=True)
+    body_tag = soup.find("article") or soup.find("main") or soup.find("body")
+    body_text = body_tag.get_text(separator="\n", strip=True) if body_tag else ""
+    if len(body_text) > 8000:
+        body_text = body_text[:8000] + "\n...[잘림]"
+    return {"title": title, "body": body_text, "url": url}
+
+
+def ai_sync_with_source(article_section: str, source: dict, instruction: str) -> list:
+    """원본 기사와 다이제스트 섹션을 받아 [{old, new}] 교정 쌍 반환"""
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system="""당신은 트렌드림 다이제스트 편집 도우미입니다.
+원본 기사와 현재 다이제스트의 해당 기사 섹션을 받아, 원본 기준으로 어긋난 부분을
+[{"old":"정확한 기존 텍스트","new":"새 텍스트"}] JSON 배열로만 출력하세요.
+
+규칙:
+- 제목(article-title), 1줄 요약(article-summary), 3줄 요약(bullet-item) 모두 원본 기준으로 정확하게 맞추세요
+- "old"는 다이제스트 HTML 안에 그대로 존재하는 텍스트 (태그 안의 텍스트만, 태그 자체는 포함하지 말 것)
+- "new"는 원본에 부합하는 새 텍스트
+- HTML 구조·태그·클래스는 절대 변경하지 마세요
+- 다이제스트 어투(존댓말 + "~요" 종결)는 유지하세요
+- 변경 필요 없으면 빈 배열 []
+- JSON 배열만 출력, 다른 설명 없이""",
+        messages=[{"role": "user", "content": (
+            f"지시: {instruction}\n\n"
+            f"[원본 기사 URL] {source['url']}\n"
+            f"[원본 기사 제목]\n{source['title']}\n\n"
+            f"[원본 기사 본문]\n{source['body']}\n\n"
+            f"[현재 다이제스트 섹션]\n{article_section}"
+        )}],
+    )
+    raw = response.content[0].text.strip()
+    m = re.search(r'\[[\s\S]*\]', raw)
+    if not m:
+        raise ValueError(f"sync 응답 파싱 실패: {raw}")
+    return json.loads(m.group())
 
 
 def get_article_section(html: str, num: int) -> tuple:
@@ -371,6 +448,35 @@ def main():
                 except Exception as e:
                     print(f"  ❌ {path} 수정 실패: {e}")
                     sys.exit(1)
+
+    elif action == "sync_with_source":
+        article_num = result.get("article_num", 0)
+        instruction = result.get("instruction", COMMAND_PROMPT)
+        if not article_num or article_num < 1:
+            print("⚠️  sync_with_source: article_num이 필요해요 (예: '1번 기사 원본과 맞춰줘').")
+            sys.exit(0)
+        print(f"\n🔄 원본 기준 교정: {article_num}번 기사")
+        for path in [date_path, root_path]:
+            try:
+                html = read_html(path)
+                stripped_section, _, _ = get_article_section(html, article_num)
+                src_url = get_article_source_url(stripped_section)
+                if not src_url:
+                    print(f"  ⚠️  {path}: {article_num}번 원본 URL 못 찾음 — 건너뜀")
+                    continue
+                print(f"  🌐 원본 fetch: {src_url}")
+                source = fetch_source_article(src_url)
+                print(f"  📄 원본 제목: {source['title'][:60]}")
+                print(f"  🤖 교정 변경 사항 식별 중...")
+                changes = ai_sync_with_source(stripped_section, source, instruction)
+                print(f"  📋 변경 항목 {len(changes)}개")
+                html = apply_changes(html, changes)
+                write_html(path, html)
+            except FileNotFoundError:
+                print(f"  ⚠️  {path} 없음 — 건너뜀")
+            except Exception as e:
+                print(f"  ❌ {path} 교정 실패: {e}")
+                sys.exit(1)
 
     else:
         msg = result.get("message", "이해할 수 없는 명령이에요.")
