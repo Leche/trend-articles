@@ -242,7 +242,8 @@ body.keyboard-active .ai-composer { bottom: 0; }
 /* Buttons */
 .btn {
   width: 100%;
-  padding: 14px 20px;
+  /* primary 외부 높이 자체를 키워 secondary 와 시각적으로 맞춤 (14→15px). */
+  padding: 15px 20px;
   border: none;
   border-radius: var(--radius-sm);
   font-family: inherit;
@@ -257,7 +258,8 @@ body.keyboard-active .ai-composer { bottom: 0; }
 .btn-secondary {
   background: var(--input-bg);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  /* border 를 inside 로 그려 외부 높이에 영향 주지 않도록 box-shadow inset 사용. */
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .btn-secondary:active { background: var(--secondary-active); transform: scale(0.985); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
@@ -328,13 +330,13 @@ input:focus, textarea:focus {
   background: var(--input-bg);
   box-shadow: none;
 }
-.input-group { margin-bottom: 14px; }
+.input-group { margin-bottom: 12px; }
 .input-row { display: flex; gap: 10px; }
 .input-row .input-group { flex: 1; margin-bottom: 0; }
 
 /* Status */
 .status {
-  margin-top: 14px;
+  margin-top: 12px;
   padding: 12px 14px;
   border-radius: var(--radius-xs);
   font-size: 13px;
@@ -839,7 +841,7 @@ input:focus, textarea:focus {
 .btn-cancel:active { opacity: 0.75; transform: scale(0.985); }
 
 /* Shortcut buttons */
-.shortcut-stack { display: flex; flex-direction: column; gap: 8px; }
+.shortcut-stack { display: flex; flex-direction: column; gap: 12px; }
 .shortcut-stack .btn-secondary {
   display: flex;
   align-items: center;
@@ -1077,8 +1079,8 @@ body.pwd-modal-open .tab-bar {
     <div class="card-title">Agit에 게시</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
     <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
-    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:8px;">예약 취소</button>
-    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">테스트 모드로 게시</button>
+    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:12px;">예약 취소</button>
+    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">테스트 모드로 게시</button>
     <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
     <div class="input-group">
       <label>게시 날짜 (비워두면 오늘)</label>
@@ -1089,7 +1091,7 @@ body.pwd-modal-open .tab-bar {
       </div>
     </div>
     <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
-    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:8px;">게시 취소</button>
+    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:12px;">게시 취소</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -1175,7 +1177,7 @@ body.pwd-modal-open .tab-bar {
     <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">기사를 불러온 뒤 끌어서 순서를 바꾸고 적용하세요</div>
     <div id="reorderList" style="margin-top:12px;"></div>
     <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()" style="display:none;">순서 적용</button>
-    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:8px;">현재 기사 불러오기</button>
+    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:12px;">현재 기사 불러오기</button>
     <div class="status" id="reorderStatus"></div>
   </div>
 
