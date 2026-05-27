@@ -25,6 +25,9 @@ ARTICLE_COUNT = int(os.environ.get("ARTICLE_COUNT", "8"))
 CUSTOM_DATE = os.environ.get("CUSTOM_DATE", "").strip()
 REPLACE_URLS = os.environ.get("REPLACE_URLS", "").strip()
 TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
+# 저녁 큐레이션 — 다음날 발행용 다이제스트를 만들 때 true.
+# CUSTOM_DATE 가 명시되면 그게 우선이고, FOR_TOMORROW 는 무시.
+FOR_TOMORROW = os.environ.get("FOR_TOMORROW", "").strip().lower() == "true"
 # CURATE_MODE: "legacy" (default, scrape SURFIT_CATEGORIES + PRIORITY_SITES)
 #              | "web_search" (internet-wide via Claude web_search tool — billed per use)
 CURATE_MODE = os.environ.get("CURATE_MODE", "legacy").strip().lower()
@@ -79,6 +82,8 @@ BLOCKED_DOMAINS = ["ditoday.com"]
 # ─── 날짜 계산 ───────────────────────────────────────────────
 if CUSTOM_DATE:
     TODAY = datetime.datetime.strptime(CUSTOM_DATE, "%Y-%m-%d").date()
+elif FOR_TOMORROW:
+    TODAY = datetime.datetime.now(KST).date() + datetime.timedelta(days=1)
 else:
     TODAY = datetime.datetime.now(KST).date()
 

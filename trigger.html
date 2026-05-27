@@ -242,7 +242,8 @@ body.keyboard-active .ai-composer { bottom: 0; }
 /* Buttons */
 .btn {
   width: 100%;
-  padding: 14px 20px;
+  /* primary 외부 높이 자체를 키워 secondary 와 시각적으로 맞춤 (14→15px). */
+  padding: 15px 20px;
   border: none;
   border-radius: var(--radius-sm);
   font-family: inherit;
@@ -257,7 +258,8 @@ body.keyboard-active .ai-composer { bottom: 0; }
 .btn-secondary {
   background: var(--input-bg);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  /* border 를 inside 로 그려 외부 높이에 영향 주지 않도록 box-shadow inset 사용. */
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .btn-secondary:active { background: var(--secondary-active); transform: scale(0.985); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
@@ -328,13 +330,13 @@ input:focus, textarea:focus {
   background: var(--input-bg);
   box-shadow: none;
 }
-.input-group { margin-bottom: 14px; }
+.input-group { margin-bottom: 12px; }
 .input-row { display: flex; gap: 10px; }
 .input-row .input-group { flex: 1; margin-bottom: 0; }
 
 /* Status */
 .status {
-  margin-top: 14px;
+  margin-top: 12px;
   padding: 12px 14px;
   border-radius: var(--radius-xs);
   font-size: 13px;
@@ -839,7 +841,7 @@ input:focus, textarea:focus {
 .btn-cancel:active { opacity: 0.75; transform: scale(0.985); }
 
 /* Shortcut buttons */
-.shortcut-stack { display: flex; flex-direction: column; gap: 8px; }
+.shortcut-stack { display: flex; flex-direction: column; gap: 12px; }
 .shortcut-stack .btn-secondary {
   display: flex;
   align-items: center;
@@ -1075,9 +1077,10 @@ body.pwd-modal-open .tab-bar {
   <!-- Agit 게시 -->
   <div class="card">
     <div class="card-title">Agit에 게시</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검토 끝난 다이제스트를 트렌드림 아지트 wall에 게시합니다.</p>
-    <button class="btn btn-primary" id="agitBtn" onclick="postToAgit(false, false)">Agit에 13:30 게시로 예약</button>
-    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:8px;">테스트 모드로 게시</button>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
+    <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
+    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:12px;">예약 취소</button>
+    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">테스트 모드로 게시</button>
     <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
     <div class="input-group">
       <label>게시 날짜 (비워두면 오늘)</label>
@@ -1088,7 +1091,7 @@ body.pwd-modal-open .tab-bar {
       </div>
     </div>
     <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
-    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:8px;">게시 취소</button>
+    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:12px;">게시 취소</button>
     <div class="status" id="agitStatus"></div>
   </div>
 
@@ -1174,7 +1177,7 @@ body.pwd-modal-open .tab-bar {
     <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">기사를 불러온 뒤 끌어서 순서를 바꾸고 적용하세요</div>
     <div id="reorderList" style="margin-top:12px;"></div>
     <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()" style="display:none;">순서 적용</button>
-    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:8px;">현재 기사 불러오기</button>
+    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:12px;">현재 기사 불러오기</button>
     <div class="status" id="reorderStatus"></div>
   </div>
 
@@ -1391,19 +1394,27 @@ function renderDashboard(state) {
     cur.innerHTML = '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
   }
 
-  // Agit 게시 상태
-  const past1330 = getCurrentKSTMinutes() >= 13 * 60 + 30;
+  // Agit 게시 상태 — 09:30 KST 발행 예약 모델 기준
+  const past0930 = getCurrentKSTMinutes() >= 9 * 60 + 30;
+  const pendingToday = state.pending && state.pending.date === today;
   if (state.agitStatus === 'posted' && state.agitTime) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
     agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
   } else if (weekend) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 게시 없음)</span>';
-  } else if (!past1330) {
-    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 13:30 예정</span>';
+  } else if (pendingToday && !past0930) {
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 09:30 예정</span>';
+  } else if (pendingToday && past0930) {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>발행 대기 중 (cron 호출 전)</span>';
+  } else if (!past0930) {
+    agit.innerHTML = '<span class="dash-dot gray"></span><span>예약 없음</span>';
   } else {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
   }
+  // 예약 취소 버튼 토글
+  if (pendingToday && !past0930) showScheduleCancel();
+  else hideScheduleCancel();
   footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, today)}`;
 }
 async function loadDashboard() {
@@ -1412,12 +1423,13 @@ async function loadDashboard() {
     return;
   }
   const today = getTodayKST();
-  let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null;
+  let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null, pending = null;
   try {
     const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
-    const [contentsRes, runsRes] = await Promise.all([
+    const [contentsRes, runsRes, pendingRes] = await Promise.all([
       fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers }),
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers })
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main`, { headers })
     ]);
     if (contentsRes.ok) {
       const items = await contentsRes.json();
@@ -1426,6 +1438,7 @@ async function loadDashboard() {
         .map(i => i.name).sort().reverse();
       todayExists = dateDirs.includes(today);
       lastDate    = dateDirs[0] || null;
+      latestCurationDate = lastDate;  // 액션들이 참조할 작업 대상 날짜
     }
     if (runsRes.ok) {
       const data = await runsRes.json();
@@ -1441,7 +1454,15 @@ async function loadDashboard() {
         agitTime   = new Date(successful.updated_at);
       }
     }
-    renderDashboard({ todayExists, lastDate, agitStatus, agitTime });
+    if (pendingRes.ok) {
+      try {
+        const data = await pendingRes.json();
+        const raw = atob((data.content || '').replace(/\n/g, ''));
+        const parsed = JSON.parse(decodeURIComponent(escape(raw)) || '{}');
+        if (parsed && parsed.date) pending = parsed;
+      } catch(_) { pending = null; }
+    }
+    renderDashboard({ todayExists, lastDate, agitStatus, agitTime, pending });
   } catch(e) {
     renderDashboard({ error: true });
   }
@@ -1735,6 +1756,14 @@ function getTodayKST() {
   return kst.toISOString().split('T')[0];
 }
 
+// 22시 큐레이션 모델 — 큐레이션 결과물은 보통 내일 날짜 폴더로 떨어진다.
+// 그래서 "현재 작업 대상 큐레이션" 은 '오늘'이 아니라 repo 의 가장 최신 날짜 폴더.
+// loadDashboard 가 lastDate 를 잡아주면 그 값을 전역에 저장해두고 액션들이 참조한다.
+let latestCurationDate = null;
+function getActiveCurationDate() {
+  return latestCurationDate || getTodayKST();
+}
+
 // ── 파일 인풋 트리거 ──
 function triggerFileInput(wrapper) {
   wrapper.querySelector('input[type="file"]').click();
@@ -1931,26 +1960,29 @@ async function replaceThumbnails() {
       dataUrl: await fileToDataUrl(t.file)
     })));
 
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
-    async function applyToPath(path) {
-      const fd   = await ghGet(path);
-      let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+    // 날짜 폴더와 root index 두 파일을 한 commit 으로 묶어서 push.
+    async function modifyHtml(path) {
+      const fd = await ghGet(path);
+      let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, dataUrl } of converted) {
         html = replaceImageFrame(html, num, dataUrl);
       }
-      await ghPut(path, html, fd.sha, msg);
+      return html;
     }
 
-    showStatus('replaceThumbStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`);
-
+    showStatus('replaceThumbStatus', 'loading', 'HTML 파일 수정 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('replaceThumbStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html');
+      files.push({ path: 'index.html', content: await modifyHtml('index.html') });
     } catch(_) {}
+
+    showStatus('replaceThumbStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
 
     showStatus('replaceThumbStatus', 'success', `${nums}번 기사 썸네일 교체 완료! 1~2분 후 반영돼요.`);
 
@@ -1970,7 +2002,7 @@ async function loadReorderList() {
   if (!checkSettings()) return;
   showStatus('reorderStatus', 'loading', '기사 불러오는 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const fd = await ghGet(`${dateVal}/index.html`);
     const html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
@@ -2035,7 +2067,7 @@ async function reorderArticles() {
 
   showStatus('reorderStatus', 'loading', '순서 적용 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
 
     async function reorderHtml(path) {
@@ -2064,21 +2096,18 @@ async function reorderArticles() {
       const firstStart = matches[0].index;
       const lastMatch = matches[matches.length - 1];
       const lastEnd = lastMatch.index + lastMatch[0].length;
-      const newHtml =
-        html.substring(0, firstStart) +
-        reordered.join(' ') +
-        html.substring(lastEnd);
-
-      await ghPut(path, newHtml, fd.sha, msg);
+      return html.substring(0, firstStart) + reordered.join(' ') + html.substring(lastEnd);
     }
 
-    showStatus('reorderStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await reorderHtml(`${dateVal}/index.html`);
-
+    showStatus('reorderStatus', 'loading', 'HTML 재배치 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await reorderHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('reorderStatus', 'loading', 'index.html 업데이트 중...');
-      await reorderHtml('index.html');
+      files.push({ path: 'index.html', content: await reorderHtml('index.html') });
     } catch(_) {}
+
+    showStatus('reorderStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
 
     showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.');
     document.getElementById('reorderList').innerHTML = '';
@@ -2148,6 +2177,7 @@ function checkSettings() {
 
 // ── 새 큐레이션 ──
 async function triggerWorkflow(inputs) {
+  // trigger.html에서 호출하는 큐레이션·교체는 항상 손으로 누른 것이므로 force=true로 가드 우회.
   const url = `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/curate.yml/dispatches`;
   return fetch(url, {
     method: 'POST',
@@ -2156,7 +2186,7 @@ async function triggerWorkflow(inputs) {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ref: 'main', inputs }),
+    body: JSON.stringify({ ref: 'main', inputs: { force_run: 'true', ...inputs } }),
   });
 }
 
@@ -2244,7 +2274,7 @@ async function runCommand() {
           ref: 'main',
           inputs: {
             prompt,
-            target_date: getTodayKST(),
+            target_date: getActiveCurationDate(),
           },
         }),
       }
@@ -2306,22 +2336,24 @@ async function fixLinks() {
   const nums = tasks.map(t => t.num).join(', ');
   showStatus('linkFixStatus', 'loading', 'HTML 파일 불러오는 중...');
   try {
-    const dateVal = getTodayKST();
+    const dateVal = getActiveCurationDate();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
-    async function applyToPath(path) {
+    async function modifyHtml(path) {
       const fd = await ghGet(path);
       let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
       for (const { num, url } of tasks) {
         html = fixLinkInHtml(html, num, url);
       }
-      await ghPut(path, html, fd.sha, msg);
+      return html;
     }
-    showStatus('linkFixStatus', 'loading', '날짜 폴더 파일 업데이트 중...');
-    await applyToPath(`${dateVal}/index.html`);
+    showStatus('linkFixStatus', 'loading', 'HTML 파일 수정 중...');
+    const files = [];
+    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`) });
     try {
-      showStatus('linkFixStatus', 'loading', 'index.html 업데이트 중...');
-      await applyToPath('index.html');
+      files.push({ path: 'index.html', content: await modifyHtml('index.html') });
     } catch(_) {}
+    showStatus('linkFixStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: msg, files });
     showStatus('linkFixStatus', 'success', `${nums}번 기사 링크 수정 완료! 1~2분 후 반영돼요.`);
   } catch(e) {
     showStatus('linkFixStatus', 'error', '오류: ' + e.message);
@@ -2520,6 +2552,178 @@ async function _checkAgitPassword() {
   }
 }
 
+// ── 발행 예약 (pending-publish.json commit) ──
+const PENDING_PATH = 'pending-publish.json';
+
+// 다음 09:30 KST 까지 남은 발사일을 반환.
+//  - 현재 KST 시각이 09:30 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
+//  - 09:30 이후 → 내일
+// 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 09:30 발사' 가 자연스러움.
+function _nextPublishDateKST() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
+  const past0930 = kst.getHours() > 9 || (kst.getHours() === 9 && kst.getMinutes() >= 30);
+  if (past0930) kst.setDate(kst.getDate() + 1);
+  return kst.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function _b64encUtf8(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+// 여러 파일을 한 commit 으로 묶어서 main 에 push. GitHub Git Trees API 사용.
+// (contents API PUT 을 두 번 호출하면 commit 이 두 번 만들어져 GitHub Pages 가
+//  두 번 빌드되고 알림이 꼬이는 문제 회피.)
+async function ghMultiFileCommit({ message, files }) {
+  if (!files || files.length === 0) throw new Error('변경할 파일이 없어요');
+  const base = `https://api.github.com/repos/${settings.owner}/${settings.repo}`;
+  const headers = {
+    'Authorization': `Bearer ${settings.token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+  };
+
+  // 1. main HEAD → parent commit SHA
+  const refRes = await fetch(`${base}/git/refs/heads/main`, { headers });
+  if (!refRes.ok) throw new Error('main ref 조회 실패: ' + refRes.status);
+  const parentSha = (await refRes.json()).object.sha;
+
+  // 2. parent commit → tree SHA (base_tree 로 사용 — 나머지 파일은 자동 유지)
+  const commitRes = await fetch(`${base}/git/commits/${parentSha}`, { headers });
+  if (!commitRes.ok) throw new Error('parent commit 조회 실패: ' + commitRes.status);
+  const baseTreeSha = (await commitRes.json()).tree.sha;
+
+  // 3. 각 파일을 blob 으로 업로드
+  const blobs = [];
+  for (const f of files) {
+    const blobRes = await fetch(`${base}/git/blobs`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ content: _b64encUtf8(f.content), encoding: 'base64' }),
+    });
+    if (!blobRes.ok) throw new Error(`blob 생성 실패 (${f.path}): ${blobRes.status}`);
+    blobs.push({ path: f.path, sha: (await blobRes.json()).sha });
+  }
+
+  // 4. 새 tree (base_tree 위에 blob 들 얹기)
+  const treeRes = await fetch(`${base}/git/trees`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      base_tree: baseTreeSha,
+      tree: blobs.map(b => ({ path: b.path, mode: '100644', type: 'blob', sha: b.sha })),
+    }),
+  });
+  if (!treeRes.ok) throw new Error('tree 생성 실패: ' + treeRes.status);
+  const newTreeSha = (await treeRes.json()).sha;
+
+  // 5. 새 commit
+  const newCommitRes = await fetch(`${base}/git/commits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ message, tree: newTreeSha, parents: [parentSha] }),
+  });
+  if (!newCommitRes.ok) throw new Error('commit 생성 실패: ' + newCommitRes.status);
+  const newCommitSha = (await newCommitRes.json()).sha;
+
+  // 6. main ref 를 새 commit 으로 fast-forward
+  const updateRes = await fetch(`${base}/git/refs/heads/main`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ sha: newCommitSha }),
+  });
+  if (!updateRes.ok) {
+    const err = await updateRes.json().catch(() => ({}));
+    throw new Error('main ref 업데이트 실패: ' + (err.message || updateRes.status));
+  }
+  return newCommitSha;
+}
+
+async function _getContentSha(path) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}?ref=main`,
+      { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('contents GET 실패: ' + res.status);
+    const data = await res.json();
+    return data.sha;
+  } catch(e) {
+    throw new Error('파일 sha 확인 실패: ' + e.message);
+  }
+}
+
+async function _putContent(path, contentObj, message) {
+  const sha = await _getContentSha(path);
+  const body = {
+    message,
+    content: _b64encUtf8(JSON.stringify(contentObj, null, 2) + '\n'),
+    branch: 'main',
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(
+    `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${settings.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || ('contents PUT 실패: ' + res.status));
+  }
+  return res.json();
+}
+
+function showScheduleCancel() {
+  const btn = document.getElementById('scheduleCancelBtn');
+  if (btn) btn.style.display = 'block';
+}
+function hideScheduleCancel() {
+  const btn = document.getElementById('scheduleCancelBtn');
+  if (btn) btn.style.display = 'none';
+}
+
+async function schedulePublish(testMode) {
+  if (!checkSettings()) return;
+  if (!await _checkAgitPassword()) return;
+  const date = _nextPublishDateKST();
+  showStatus('agitStatus', 'loading', '발행 예약 등록 중...');
+  try {
+    await _putContent(
+      PENDING_PATH,
+      { date, test_mode: !!testMode, scheduled_at: new Date().toISOString() },
+      `chore(publish): ${date} 09:30 발행 예약`,
+    );
+    showStatus('agitStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
+    showScheduleCancel();
+    setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
+  } catch(e) {
+    showStatus('agitStatus', 'error', '예약 실패: ' + e.message);
+  }
+}
+
+async function cancelScheduledPublish() {
+  if (!checkSettings()) return;
+  if (!await _checkAgitPassword()) return;
+  showStatus('agitStatus', 'loading', '예약 취소 중...');
+  try {
+    await _putContent(PENDING_PATH, {}, 'chore(publish): 발행 예약 취소');
+    showStatus('agitStatus', 'success', '발행 예약 취소 완료.');
+    hideScheduleCancel();
+    setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
+  } catch(e) {
+    showStatus('agitStatus', 'error', '취소 실패: ' + e.message);
+  }
+}
+
+// 즉시 게시 / 테스트 게시 전용. 예약 발행은 schedulePublish() 사용.
 async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
@@ -2570,7 +2774,7 @@ async function postToAgit(skipWait, testMode) {
 
 // ── 바로가기 ──
 function openLatest() {
-  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getTodayKST()}/`, '_blank');
+  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getActiveCurationDate()}/`, '_blank');
 }
 function openActions() {
   window.open(`https://github.com/${settings.owner || 'Leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');

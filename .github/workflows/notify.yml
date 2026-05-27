@@ -1,108 +1,177 @@
 name: Notify Digest
 
-# Pages 배포 성공 시 → 작업 완료 알림 + 다이제스트 템플릿을 KakaoWork로 전송
+# 알림 정책:
+#  - 콘텐츠 결과물 변경(큐레이션·교체·썸네일·순서·링크·AI·발행)이 main 에 commit·push
+#    되면 GitHub Pages 가 빌드를 돌린다. 그 빌드가 끝난 시점(=실제로 페이지가 새 내용을
+#    서빙하기 시작한 시점)에 성공 알림 발사. commit 메시지 첫 글자(이모지)로 어떤 액션
+#    이었는지 라벨 분류하고, 다이제스트 페이지 링크로 안내한다.
+#  - 콘텐츠 워크플로우(큐레이션·AI·Agit)가 실패하면 push 가 일어나지 않아 위 경로로 못
+#    잡히므로, 워크플로우 실패 자체로 별도 알림 (Actions 로그 링크).
 on:
   workflow_run:
-    workflows: ["pages-build-deployment"]
+    workflows:
+      - pages-build-deployment
+      - 트렌드림 기사 큐레이션
+      - 트렌드림 AI 명령 실행
+      - Agit 게시
     types:
       - completed
 
 jobs:
-  notify:
+  # Pages 빌드 성공 → 콘텐츠 알림 (commit 메시지 첫 글자 이모지로 라벨)
+  # workflow_run.name 은 GitHub 표시 명에 따라 'pages-build-deployment' 또는
+  # 'pages build and deployment' 둘 중 하나로 떨어질 수 있어 contains 로 잡는다.
+  notify-on-deploy:
+    if: |
+      contains(github.event.workflow_run.name, 'pages') &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Send KakaoWork notifications
+      - name: Send KakaoWork notification
         env:
           KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 << 'PYEOF'
-          import os, re, json, datetime, subprocess, urllib.request, urllib.error
+          import os, re, json, subprocess, urllib.request, urllib.error
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
               print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
               raise SystemExit(1)
 
-          # 1) 최근 커밋 메시지로 액션 라벨 분류
-          commit_msg = subprocess.check_output(
-              ['git', 'log', '-1', '--pretty=%s']
-          ).decode('utf-8').strip()
+          try:
+              commit_msg = subprocess.check_output(
+                  ['git', 'log', '-1', '--pretty=%s']
+              ).decode('utf-8').strip()
+          except Exception:
+              commit_msg = ''
 
-          if commit_msg.startswith('🤖'):
-              prompt = commit_msg.replace('🤖', '', 1).strip()
-              action_label = f'AI 명령 실행 완료 — {prompt}' if prompt else 'AI 명령 실행 완료'
-          elif '🔀' in commit_msg or '순서 조정' in commit_msg:
-              action_label = '기사 순서 조정 완료'
-          elif '🖼️' in commit_msg or '썸네일' in commit_msg:
-              action_label = '썸네일 교체 완료'
-          elif '🔗' in commit_msg or '링크 수정' in commit_msg:
-              action_label = '링크 수정 완료'
-          elif '큐레이션' in commit_msg:
-              action_label = '기사 큐레이션 완료'
-          else:
-              action_label = '업데이트 완료'
+          # commit 첫 글자(이모지)로 라벨 결정. 매칭되지 않으면 알림 skip.
+          # 📨 Agit 발행 알림은 agit-post.yml 안에서 직접 카웍 webhook 으로
+          # CTA 버튼 포함해 발사하므로 여기 라벨에서 제외 (중복 방지).
+          emoji_labels = [
+              ('✨', '기사 큐레이션'),
+              ('🔄', '기사 교체'),
+              ('🖼️', '썸네일 교체'),
+              ('🔀', '기사 순서 조정'),
+              ('🔗', '링크 수정'),
+              ('🤖', 'AI 명령 실행'),
+          ]
+          label = None
+          for emoji, action_name in emoji_labels:
+              if commit_msg.startswith(emoji):
+                  label = action_name
+                  break
 
-          # 2) 대상 날짜 결정 (커밋 메시지의 YYMMDD/YYYY-MM-DD → 없으면 오늘 KST)
-          d = None
-          ymd = re.search(r'(20\d{2})-(\d{2})-(\d{2})', commit_msg)
-          yymmdd = re.search(r'(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)', commit_msg)
-          if ymd:
-              d = datetime.date(int(ymd.group(1)), int(ymd.group(2)), int(ymd.group(3)))
-          elif yymmdd:
-              d = datetime.date(2000 + int(yymmdd.group(1)), int(yymmdd.group(2)), int(yymmdd.group(3)))
-          if d is None:
-              d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
-
-          date_full = d.strftime('%Y-%m-%d')
-          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
-          date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekdays_ko[d.weekday()]}"
-          link = f'https://leche.github.io/trend-articles/{date_full}/'
-
-          def post(text):
-              data = json.dumps({"text": text}).encode("utf-8")
-              req = urllib.request.Request(
-                  webhook, data=data,
-                  headers={"Content-Type": "application/json"},
-                  method="POST",
-              )
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as resp:
-                      print(f"[OK] status={resp.status}")
-              except urllib.error.HTTPError as e:
-                  print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
-                  raise
-
-          # 3) 완료 알림
-          post(f"✅ {action_label}")
-
-          # 4) 다이제스트 템플릿 알림 (해당 날짜 폴더 우선, 없으면 root index.html)
-          html_path = f'{date_full}/index.html'
-          if not os.path.exists(html_path):
-              html_path = 'index.html'
-
-          if not os.path.exists(html_path):
-              print(f"[WARN] HTML 파일 없음: {html_path} — 다이제스트 알림 생략")
+          if not label:
+              print(f"[INFO] commit '{commit_msg[:60]}' 에 알림 대상 이모지 없음 — skip")
               raise SystemExit(0)
 
-          with open(html_path, 'r', encoding='utf-8') as f:
-              html = f.read()
-          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
-          if not titles:
-              print("[WARN] 기사 제목 추출 실패 — 다이제스트 알림 생략")
-              raise SystemExit(0)
-
-          quote_block = "\n>\n".join(f"> *{i}. {t}*" for i, t in enumerate(titles, 1))
-          digest_msg = (
-              f"# ⚡️\n"
-              f"# [{date_label} 트렌드림 다이제스트]({link})\n"
-              f"{quote_block}\n"
-              f"cc. @@moretab @@pfs.design @@trenddaily"
+          # 가장 최신 YYYY-MM-DD 폴더 = 작업 대상 다이제스트 페이지
+          repo = os.environ.get('GITHUB_REPOSITORY', 'Leche/trend-articles')
+          owner, repo_name = repo.split('/', 1)
+          folders = sorted(
+              [d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d)],
+              reverse=True
           )
-          post(digest_msg)
+          latest = folders[0] if folders else ''
+          link = f'https://{owner.lower()}.github.io/{repo_name}/{latest}/' if latest else ''
+
+          # Block Kit: header + 설명 + CTA 버튼 (다이제스트 페이지로 이동)
+          title = f"✅ {label} 완료"
+          desc = '방금 만든 다이제스트를 확인해 보세요.'
+          payload = {
+              "text": f"{title}\n👉 {link}",  # blocks 미지원 시 text fallback
+              "blocks": [
+                  {"type": "header", "text": title, "style": "blue"},
+                  {"type": "text", "text": desc},
+                  {
+                      "type": "button",
+                      "text": "다이제스트 보기 →",
+                      "style": "default",
+                      "action_type": "open_system_browser",
+                      "value": link,
+                  },
+              ],
+          }
+          data = json.dumps(payload).encode("utf-8")
+          req = urllib.request.Request(
+              webhook, data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"[OK] status={resp.status}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
+          PYEOF
+
+  # 콘텐츠 워크플로우 실패 → 실패 알림 (Actions 로그 링크로 디버깅 유도)
+  notify-on-content-failure:
+    if: |
+      !contains(github.event.workflow_run.name, 'pages') &&
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send KakaoWork notification (failure)
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, urllib.error
+
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
+              raise SystemExit(1)
+
+          name = os.environ.get('WORKFLOW_NAME', '')
+          run_url = os.environ.get('WORKFLOW_URL', '')
+
+          labels = {
+              '트렌드림 기사 큐레이션': '기사 큐레이션',
+              '트렌드림 AI 명령 실행': 'AI 명령 실행',
+              'Agit 게시': 'Agit 발행',
+          }
+          label = labels.get(name, name)
+
+          # Block Kit: header + 설명 + CTA 버튼 (Actions 로그로 이동)
+          title = f"❌ {label} 실패"
+          desc = '워크플로우 로그를 확인해 주세요.'
+          payload = {
+              "text": f"{title}\n👉 {run_url}",  # blocks 미지원 시 text fallback
+              "blocks": [
+                  {"type": "header", "text": title, "style": "red"},
+                  {"type": "text", "text": desc},
+                  {
+                      "type": "button",
+                      "text": "로그 보기 →",
+                      "style": "default",
+                      "action_type": "open_system_browser",
+                      "value": run_url,
+                  },
+              ],
+          }
+          data = json.dumps(payload).encode("utf-8")
+          req = urllib.request.Request(
+              webhook, data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"[OK] status={resp.status}")
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
           PYEOF
