@@ -51,6 +51,10 @@ jobs:
           today = datetime.datetime.now(kst).date()
           today_s = today.strftime('%Y-%m-%d')
 
+          # 후속 스텝(skip 알림 / stale 자동 정리)에서 참조하기 위한 기본값
+          pending_date = ''
+          is_stale = False
+
           if skip_wait:
               # 즉시 게시 경로 — input 값 사용. pending 무시.
               target_date = os.environ.get('INPUT_TARGET_DATE', '').strip() or today_s
@@ -74,7 +78,9 @@ jobs:
                       print("[INFO] pending-publish.json 비어있음 → skip")
                       skip, target_date, test_mode, source = 'true', '', 'false', 'empty_pending'
                   elif pending_date != today_s:
-                      print(f"[WARN] pending date({pending_date}) ≠ 오늘 KST({today_s}) → skip")
+                      # 문자열 사전 비교(YYYY-MM-DD)로 stale(과거) 여부 판정
+                      is_stale = pending_date < today_s
+                      print(f"[WARN] pending date({pending_date}) ≠ 오늘 KST({today_s}) → skip (stale={is_stale})")
                       skip, target_date, test_mode, source = 'true', '', 'false', 'date_mismatch'
                   else:
                       target_date = pending_date
@@ -88,7 +94,39 @@ jobs:
               f.write(f"target_date={target_date}\n")
               f.write(f"test_mode={test_mode}\n")
               f.write(f"source={source}\n")
+              f.write(f"today_s={today_s}\n")
+              f.write(f"pending_date={pending_date}\n")
+              f.write(f"is_stale={'true' if is_stale else 'false'}\n")
           PYEOF
+
+      - name: Notify skip (date_mismatch)
+        if: steps.params.outputs.source == 'date_mismatch'
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg pending "${{ steps.params.outputs.pending_date }}" \
+              --arg today "${{ steps.params.outputs.today_s }}" \
+              --arg stale "${{ steps.params.outputs.is_stale }}" \
+              '{text: ("⚠️ Agit 자동 발행 SKIP — date_mismatch\n예약 날짜: " + $pending + "\n오늘 KST: " + $today + "\nstale(과거 예약): " + $stale + "\n\n과거 예약이면 자동 정리됩니다. 미래 예약이면 해당 날짜 09:30에 다시 시도합니다.")}')"
+
+      - name: Auto-clear stale pending
+        if: steps.params.outputs.source == 'date_mismatch' && steps.params.outputs.is_stale == 'true'
+        env:
+          PENDING_DATE: ${{ steps.params.outputs.pending_date }}
+          TODAY_KST: ${{ steps.params.outputs.today_s }}
+        run: |
+          echo '{}' > pending-publish.json
+          if [ -z "$(git status --porcelain pending-publish.json 2>/dev/null)" ]; then
+            echo "pending-publish.json 변경 없음 (이미 비어있음)"
+            exit 0
+          fi
+          git config user.name "trend-bot"
+          git config user.email "trend-bot@users.noreply.github.com"
+          git add pending-publish.json
+          git commit -m "chore(publish): stale pending-publish.json 자동 정리 (date=${PENDING_DATE}, today=${TODAY_KST})"
+          git pull --rebase
+          git push
 
       - name: Validate digest data
         if: steps.params.outputs.skip != 'true'
@@ -314,4 +352,14 @@ jobs:
           git commit -m "chore(publish): pending-publish.json 비우기 (${PUBLISHED_DATE} 발행 후)"
           git pull --rebase
           git push
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg target "${{ steps.params.outputs.target_date }}" \
+              --arg source "${{ steps.params.outputs.source }}" \
+              '{text: ("❌ Agit 자동 발행 워크플로우 실패\n대상 날짜: " + $target + "\nsource: " + $source + "\n\nGitHub Actions 로그를 확인해주세요.")}')"
 
