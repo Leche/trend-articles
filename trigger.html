@@ -1448,10 +1448,28 @@ async function loadDashboard() {
         const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
         return kst.toISOString().split('T')[0] === today;
       });
-      const successful = todayRuns.find(r => r.conclusion === 'success');
-      if (successful) {
-        agitStatus = 'posted';
-        agitTime   = new Date(successful.updated_at);
+      // agit-post 워크플로우는 pending 미스매치로 발행을 skip 해도 conclusion 이
+      // success 로 끝난다. 그래서 단순 success 만 보면 "발행됐다" 라고 오인.
+      // 실제 'Post digest to Agit' step 이 success 로 실행됐을 때만 발행 완료로 잡음.
+      for (const run of todayRuns.filter(r => r.conclusion === 'success')) {
+        try {
+          const jobsRes = await fetch(run.jobs_url, { headers });
+          if (!jobsRes.ok) continue;
+          const jobsData = await jobsRes.json();
+          let actuallyPosted = false;
+          for (const job of jobsData.jobs || []) {
+            const postStep = (job.steps || []).find(s => s.name === 'Post digest to Agit');
+            if (postStep && postStep.conclusion === 'success') {
+              actuallyPosted = true;
+              break;
+            }
+          }
+          if (actuallyPosted) {
+            agitStatus = 'posted';
+            agitTime   = new Date(run.updated_at);
+            break;
+          }
+        } catch(_) {}
       }
     }
     if (pendingRes.ok) {
