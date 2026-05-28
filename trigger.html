@@ -1080,6 +1080,7 @@ body.pwd-modal-open .tab-bar {
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
     <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
     <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:12px;">예약 취소</button>
+    <button class="btn btn-secondary" id="postponeBtn" onclick="postponeToNextBusinessDay()" style="margin-top:12px;">다음 영업일로 미루기</button>
     <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">테스트 모드로 게시</button>
     <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
     <div class="input-group">
@@ -1492,6 +1493,7 @@ const WORKFLOW_LABEL = {
   'agit-post.yml': 'Agit 게시',
   'command.yml':   'AI 프롬프트',
   'notify.yml':    '알림 전송',
+  'repurpose.yml': '다음 영업일로 미루기',
 };
 function getWorkflowLabel(run) {
   const file = (run.path || '').split('/').pop();
@@ -2741,6 +2743,45 @@ async function cancelScheduledPublish() {
     setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
   } catch(e) {
     showStatus('agitStatus', 'error', '취소 실패: ' + e.message);
+  }
+}
+
+// 놀금·공휴일 등으로 오늘 발행 건너뛰고 다음 영업일로 다이제스트 재배치.
+// 서버사이드(repurpose.yml)에서 폴더 rename + title 교체 + pending 재설정을 한 commit 으로 처리.
+async function postponeToNextBusinessDay() {
+  if (!checkSettings()) return;
+  const sourceDate = getActiveCurationDate();
+  const ok = confirm(
+    `오늘 큐레이션(${sourceDate}) 을 다음 영업일로 미룹니다.\n\n` +
+    `· 폴더명·HTML title 라벨·발행 예약을 모두 새 날짜로 재배치합니다.\n` +
+    `· 다음 영업일은 주말·공휴일·놀금(마지막 주 금요일) 을 자동 skip 합니다.\n\n` +
+    `진행할까요?`
+  );
+  if (!ok) return;
+  showStatus('agitStatus', 'loading', '재배치 워크플로우 실행 중...');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/repurpose.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: {} }),
+      }
+    );
+    if (res.status === 204) {
+      showStatus('agitStatus', 'success', '재배치 시작! 1~2분 후 카카오워크로 결과가 와요.');
+      setTimeout(loadDashboard, 5000);
+      setTimeout(loadActivityLog, 3000);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
+    }
+  } catch(e) {
+    showStatus('agitStatus', 'error', '네트워크 오류: ' + e.message);
   }
 }
 
