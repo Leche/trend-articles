@@ -1448,10 +1448,28 @@ async function loadDashboard() {
         const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
         return kst.toISOString().split('T')[0] === today;
       });
-      const successful = todayRuns.find(r => r.conclusion === 'success');
-      if (successful) {
-        agitStatus = 'posted';
-        agitTime   = new Date(successful.updated_at);
+      // agit-post 워크플로우는 pending 미스매치로 발행을 skip 해도 conclusion 이
+      // success 로 끝난다. 그래서 단순 success 만 보면 "발행됐다" 라고 오인.
+      // 실제 'Post digest to Agit' step 이 success 로 실행됐을 때만 발행 완료로 잡음.
+      for (const run of todayRuns.filter(r => r.conclusion === 'success')) {
+        try {
+          const jobsRes = await fetch(run.jobs_url, { headers });
+          if (!jobsRes.ok) continue;
+          const jobsData = await jobsRes.json();
+          let actuallyPosted = false;
+          for (const job of jobsData.jobs || []) {
+            const postStep = (job.steps || []).find(s => s.name === 'Post digest to Agit');
+            if (postStep && postStep.conclusion === 'success') {
+              actuallyPosted = true;
+              break;
+            }
+          }
+          if (actuallyPosted) {
+            agitStatus = 'posted';
+            agitTime   = new Date(run.updated_at);
+            break;
+          }
+        } catch(_) {}
       }
     }
     if (pendingRes.ok) {
@@ -2559,11 +2577,14 @@ const PENDING_PATH = 'pending-publish.json';
 //  - 현재 KST 시각이 09:30 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
 //  - 09:30 이후 → 내일
 // 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 09:30 발사' 가 자연스러움.
+// 시스템 timezone 과 무관하게 동작하도록 UTC + 9h 한 뒤 getUTC* 로 KST 값 추출.
+// (이전 (9*60 - getTimezoneOffset()) 식은 브라우저가 KST 일 때 이중 보정으로 +18h 가 되어
+//  자정 직후 누르면 다음날(잘못)로 박히던 버그가 있었음.)
 function _nextPublishDateKST() {
   const now = new Date();
-  const kst = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
-  const past0930 = kst.getHours() > 9 || (kst.getHours() === 9 && kst.getMinutes() >= 30);
-  if (past0930) kst.setDate(kst.getDate() + 1);
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const past0930 = kst.getUTCHours() > 9 || (kst.getUTCHours() === 9 && kst.getUTCMinutes() >= 30);
+  if (past0930) kst.setUTCDate(kst.getUTCDate() + 1);
   return kst.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
