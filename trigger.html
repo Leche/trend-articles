@@ -2559,11 +2559,14 @@ const PENDING_PATH = 'pending-publish.json';
 //  - 현재 KST 시각이 09:30 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
 //  - 09:30 이후 → 내일
 // 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 09:30 발사' 가 자연스러움.
+// 시스템 timezone 과 무관하게 동작하도록 UTC + 9h 한 뒤 getUTC* 로 KST 값 추출.
+// (이전 (9*60 - getTimezoneOffset()) 식은 브라우저가 KST 일 때 이중 보정으로 +18h 가 되어
+//  자정 직후 누르면 다음날(잘못)로 박히던 버그가 있었음.)
 function _nextPublishDateKST() {
   const now = new Date();
-  const kst = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
-  const past0930 = kst.getHours() > 9 || (kst.getHours() === 9 && kst.getMinutes() >= 30);
-  if (past0930) kst.setDate(kst.getDate() + 1);
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const past0930 = kst.getUTCHours() > 9 || (kst.getUTCHours() === 9 && kst.getUTCMinutes() >= 30);
+  if (past0930) kst.setUTCDate(kst.getUTCDate() + 1);
   return kst.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
