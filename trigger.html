@@ -1889,6 +1889,21 @@ async function ghGet(path) {
   return fd;
 }
 
+// 큰 HTML(예: 6 MB+ 다이제스트)을 안정적으로 가져오기 위한 raw 다운로드.
+// ghGet 의 base64 JSON 응답 + 동기 atob/TextDecoder 디코드는 iOS Safari 에서 메모리·CPU
+// 부담이 커서 fetch 가 "Load failed" 로 죽기 쉬움. raw media type 으로 받으면 응답이
+// 원본 텍스트 그대로라 base64 디코드 단계가 없어진다. 작은 파일에도 안전.
+async function ghGetRaw(path) {
+  const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}`, {
+    headers: {
+      'Authorization': `Bearer ${settings.token}`,
+      'Accept': 'application/vnd.github.raw'
+    }
+  });
+  if (!res.ok) throw new Error(`파일 읽기 실패 (${res.status}): ${path}`);
+  return await res.text();
+}
+
 // UTF-8 문자열을 base64로 비동기 인코딩 — 큰 HTML에 대해 btoa(unescape(encodeURIComponent))
 // 패턴은 iOS Safari에서 메모리 폭증·메인 스레드 블록으로 fetch가 "Load failed"로 죽음.
 // FileReader는 네이티브 구현이라 큰 입력에도 안정적.
@@ -1986,8 +2001,7 @@ async function replaceThumbnails() {
 
     // 날짜 폴더와 root index 두 파일을 한 commit 으로 묶어서 push.
     async function modifyHtml(path) {
-      const fd = await ghGet(path);
-      let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+      let html = await ghGetRaw(path);
       for (const { num, dataUrl } of converted) {
         html = replaceImageFrame(html, num, dataUrl);
       }
@@ -2023,8 +2037,7 @@ async function loadReorderList() {
   showStatus('reorderStatus', 'loading', '기사 불러오는 중...');
   try {
     const dateVal = getActiveCurationDate();
-    const fd = await ghGet(`${dateVal}/index.html`);
-    const html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+    const html = await ghGetRaw(`${dateVal}/index.html`);
 
     const articleRegex = /<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?<\/article>/g;
     const blocks = html.match(articleRegex) || [];
@@ -2091,8 +2104,7 @@ async function reorderArticles() {
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
 
     async function reorderHtml(path) {
-      const fd   = await ghGet(path);
-      let html   = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+      let html = await ghGetRaw(path);
 
       // article 블록 추출 — inject_gnb.py가 id="article-N"을 박아넣을 수 있어 정규식으로 매칭
       const articleRegex = /<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?<\/article>/g;
@@ -2359,8 +2371,7 @@ async function fixLinks() {
     const dateVal = getActiveCurationDate();
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
     async function modifyHtml(path) {
-      const fd = await ghGet(path);
-      let html = new TextDecoder().decode(Uint8Array.from(atob(fd.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+      let html = await ghGetRaw(path);
       for (const { num, url } of tasks) {
         html = fixLinkInHtml(html, num, url);
       }
