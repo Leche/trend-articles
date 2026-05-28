@@ -1,0 +1,184 @@
+name: 다이제스트 다음 영업일로 미루기
+
+# 놀금·공휴일 등으로 오늘 발행을 건너뛰고 만들어둔 다이제스트를 다음 영업일로
+# 재활용할 때 사용. 트리거 페이지의 "다음 영업일로 미루기" 버튼이 호출.
+on:
+  workflow_dispatch:
+    inputs:
+      source_date:
+        description: '소스 날짜 (YYYY-MM-DD, 비워두면 최신 폴더 자동 감지)'
+        required: false
+        default: ''
+      target_date:
+        description: '타겟 날짜 (YYYY-MM-DD, 비워두면 소스 기준 다음 영업일 자동 계산)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  repurpose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install holidays
+
+      - name: Resolve and execute repurpose
+        id: run
+        env:
+          SOURCE_DATE: ${{ github.event.inputs.source_date || '' }}
+          TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, json, datetime
+          import holidays
+
+          # ── 소스 날짜 해결 ─────────────────────────────────
+          src = os.environ.get('SOURCE_DATE','').strip()
+          if not src:
+              dirs = sorted([d for d in os.listdir('.')
+                             if re.match(r'^\d{4}-\d{2}-\d{2}$', d) and os.path.isdir(d)])
+              if not dirs:
+                  raise SystemExit("[ERROR] 큐레이션 폴더가 하나도 없음")
+              src = dirs[-1]
+          source_date = datetime.datetime.strptime(src, '%Y-%m-%d').date()
+          print(f"[INFO] source_date = {source_date}")
+
+          # ── 타겟 날짜 해결 — 주말 + KR 공휴일 + 놀금(마지막 주 금) skip ──
+          tgt = os.environ.get('TARGET_DATE','').strip()
+          if not tgt:
+              kr_h = holidays.KR(years=[source_date.year, source_date.year + 1])
+              d = source_date + datetime.timedelta(days=1)
+              while True:
+                  if d.weekday() >= 5:  # 주말
+                      d += datetime.timedelta(days=1)
+                      continue
+                  if d in kr_h:  # 한국 공휴일
+                      d += datetime.timedelta(days=1)
+                      continue
+                  # 놀금: 그 달의 마지막 금요일 (다음주 같은 요일이 다음 달이면 마지막 금요일)
+                  if d.weekday() == 4 and (d + datetime.timedelta(days=7)).month != d.month:
+                      d += datetime.timedelta(days=1)
+                      continue
+                  break
+              target_date = d
+          else:
+              target_date = datetime.datetime.strptime(tgt, '%Y-%m-%d').date()
+          print(f"[INFO] target_date = {target_date}")
+
+          src_dir = source_date.strftime('%Y-%m-%d')
+          tgt_dir = target_date.strftime('%Y-%m-%d')
+
+          if not os.path.isdir(src_dir):
+              raise SystemExit(f"[ERROR] 소스 폴더 없음: {src_dir}")
+          if os.path.isdir(tgt_dir):
+              raise SystemExit(f"[ERROR] 타겟 폴더 이미 존재: {tgt_dir} — 덮어쓰기 방지")
+
+          # ── 폴더 안 파일 이동 ─────────────────────────────
+          src_html = f"{src_dir}/index.html"
+          tgt_html = f"{tgt_dir}/index.html"
+          os.makedirs(tgt_dir, exist_ok=True)
+          os.rename(src_html, tgt_html)
+          os.rmdir(src_dir)
+          print(f"[OK] {src_dir}/ → {tgt_dir}/ 이동")
+
+          # ── title 라벨 교체 ──────────────────────────────
+          weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
+          src_label = f"{source_date.year}. {source_date.month}. {source_date.day} {weekdays_ko[source_date.weekday()]}"
+          tgt_label = f"{target_date.year}. {target_date.month}. {target_date.day} {weekdays_ko[target_date.weekday()]}"
+          src_title = f"<title>{src_label} Trend Article Digest</title>"
+          tgt_title = f"<title>{tgt_label} Trend Article Digest</title>"
+
+          with open(tgt_html, encoding='utf-8') as f:
+              html = f.read()
+          if src_title in html:
+              html = html.replace(src_title, tgt_title)
+              with open(tgt_html, 'w', encoding='utf-8') as f:
+                  f.write(html)
+              print(f"[OK] {tgt_html} title: {src_label} → {tgt_label}")
+          else:
+              print(f"[WARN] {tgt_html} 안에 예상 title 형식 없음 — title 건너뜀")
+
+          # ── 루트 index.html 미러 동기화 (소스 title 가지고 있을 때만) ──
+          root = 'index.html'
+          if os.path.exists(root):
+              with open(root, encoding='utf-8') as f:
+                  root_html = f.read()
+              if src_title in root_html:
+                  root_html = root_html.replace(src_title, tgt_title)
+                  with open(root, 'w', encoding='utf-8') as f:
+                      f.write(root_html)
+                  print(f"[OK] root index.html title 업데이트")
+              else:
+                  print(f"[INFO] root index.html 은 다른 날짜 미러 중 — 건드리지 않음")
+
+          # ── pending-publish.json 박기 ─────────────────────
+          now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+          pending = {
+              "date": tgt_dir,
+              "test_mode": False,
+              "scheduled_at": now_iso,
+          }
+          with open('pending-publish.json', 'w', encoding='utf-8') as f:
+              json.dump(pending, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          print(f"[OK] pending-publish.json: date={tgt_dir}")
+
+          # ── 후속 스텝용 outputs ────────────────────────────
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"source_date={src_dir}\n")
+              f.write(f"target_date={tgt_dir}\n")
+              f.write(f"source_label={src_label}\n")
+              f.write(f"target_label={tgt_label}\n")
+          PYEOF
+
+      - name: Commit and push
+        env:
+          SOURCE_DATE: ${{ steps.run.outputs.source_date }}
+          TARGET_DATE: ${{ steps.run.outputs.target_date }}
+        run: |
+          git config user.name "trend-bot"
+          git config user.email "trend-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 종료"
+            exit 0
+          fi
+          git commit -m "chore(digest): ${SOURCE_DATE} 다이제스트를 ${TARGET_DATE} 로 미루기"
+          git pull --rebase
+          git push
+
+      - name: Trigger Pages
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pages/builds
+
+      - name: Notify success
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg src "${{ steps.run.outputs.source_label }}" \
+              --arg tgt "${{ steps.run.outputs.target_label }}" \
+              --arg date "${{ steps.run.outputs.target_date }}" \
+              '{text: ("📦 다이제스트 재배치 완료\n" + $src + " → " + $tgt + "\n\n" + $date + " 09:30 KST 에 자동 발사돼요.")}')"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"❌ 다이제스트 재배치 실패\n로그를 확인해주세요.\"}"
