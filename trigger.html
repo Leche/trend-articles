@@ -1964,7 +1964,13 @@ function replaceImageFrame(content, articleNum, dataUrl) {
     if (nextOpen !== -1 && nextOpen < nextClose) { depth++; pos = nextOpen + 4; }
     else { depth--; pos = nextClose + 6; }
   }
-  const newFrame = `<div class="image-frame"><img class="article-image" src="${dataUrl}" alt="썸네일"></div>`;
+  // mp4 등 비디오는 <img> 가 아니라 <video> 태그로 박아야 데스크탑 브라우저에서 렌더됨.
+  // (<img src="data:video/mp4;..."> 는 모바일 일부에서만 첫 프레임 폴백되고 데스크탑은 빈 화면)
+  const isVideo = /^data:video\//.test(dataUrl);
+  const media = isVideo
+    ? `<video class="article-image" src="${dataUrl}" autoplay loop muted playsinline></video>`
+    : `<img class="article-image" src="${dataUrl}" alt="썸네일">`;
+  const newFrame = `<div class="image-frame">${media}</div>`;
   return content.substring(0, frameStart) + newFrame + content.substring(pos);
 }
 
