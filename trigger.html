@@ -1090,18 +1090,10 @@ body.pwd-modal-open .tab-bar {
   <div class="card">
     <div class="card-title">수동 게시</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">테스트나 비상 발행이 필요할 때만 사용해요.</p>
-    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)">테스트 모드로 게시</button>
-    <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
-    <div class="input-group">
-      <label>게시 날짜 (비워두면 오늘)</label>
-      <div class="date-wrapper">
-        <input type="date" id="agitDate" onchange="toggleAgitDatePlaceholder(this)">
-        <span class="date-placeholder" id="agitDatePlaceholder">연도. 월. 일.</span>
-        <span class="date-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h13" stroke="currentColor" stroke-width="1.2"/><path d="M5 1.5v2M11 1.5v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-      </div>
-    </div>
+    <!-- 즉시 게시 ↔ 게시 취소: 같은 자리에 모드 토글 -->
     <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
-    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:12px;">게시 취소</button>
+    <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;">게시 취소</button>
+    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">테스트 모드로 게시</button>
     <div class="status" id="manualPostStatus"></div>
   </div>
 
@@ -1423,7 +1415,7 @@ function renderDashboard(state) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
   }
   // 예약 취소 버튼 토글
-  if (pendingToday && !past0930) showScheduleCancel();
+  if (pendingToday && !past0930) showScheduleCancel(state.pending.date);
   else hideScheduleCancel();
   footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, today)}`;
 }
@@ -1854,10 +1846,6 @@ function resetInputs() {
   // 링크 수정 — 첫 행만 남기고 초기화
   const linkFixList = document.getElementById('linkFixList');
   linkFixList.innerHTML = `<div class="replace-item"><input class="num" type="number" placeholder="#" min="1" max="12"><input class="url-input" type="text" placeholder="https://..." autocorrect="off" autocapitalize="off" spellcheck="false"></div>`;
-
-  // Agit 게시 — 날짜 초기화
-  const agitDate = document.getElementById('agitDate');
-  if (agitDate) { agitDate.value = ''; toggleAgitDatePlaceholder(agitDate); }
 
   // 상태 메시지 모두 숨기기 (인라인 display 도 제거해 빈 박스 공간 제거)
   document.querySelectorAll('.status').forEach(s => { s.className = 'status'; s.textContent = ''; s.style.display = ''; });
@@ -2421,13 +2409,18 @@ function toggleAgitDatePlaceholder(input) {
 let pendingAgitRunId = null;
 let agitCancelTimer = null;
 
+// 즉시 게시 ↔ 게시 취소: 같은 자리에 모드 토글 (60초 노출 후 자동 복귀).
 function showAgitCancel() {
-  const btn = document.getElementById('agitCancelBtn');
-  if (btn) btn.style.display = 'block';
+  const cancel = document.getElementById('agitCancelBtn');
+  const now    = document.getElementById('agitNowBtn');
+  if (cancel) cancel.style.display = 'block';
+  if (now)    now.style.display    = 'none';
 }
 function hideAgitCancel() {
-  const btn = document.getElementById('agitCancelBtn');
-  if (btn) btn.style.display = 'none';
+  const cancel = document.getElementById('agitCancelBtn');
+  const now    = document.getElementById('agitNowBtn');
+  if (cancel) cancel.style.display = 'none';
+  if (now)    now.style.display    = 'block';
   pendingAgitRunId = null;
   if (agitCancelTimer) { clearTimeout(agitCancelTimer); agitCancelTimer = null; }
   if (agitPollTimer) { clearInterval(agitPollTimer); agitPollTimer = null; }
@@ -2732,11 +2725,20 @@ async function _putContent(path, contentObj, message) {
 
 // 예약 상태 토글: 발행 예약 ↔ 예약 취소가 같은 자리에서 모드 전환.
 // (다음 영업일로 미루기는 큐레이션 폴더 재배치 액션이라 예약 유무와 무관하게 항상 노출.)
-function showScheduleCancel() {
+// 취소 버튼은 어느 날짜의 예약을 취소하는지 명확히 보여주기 위해 라벨에 날짜·시각을 박는다.
+function showScheduleCancel(date) {
   const cancel = document.getElementById('scheduleCancelBtn');
   const sched  = document.getElementById('agitBtn');
-  if (cancel) cancel.style.display = 'block';
-  if (sched)  sched.style.display  = 'none';
+  if (cancel) {
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [, m, d] = date.split('-');
+      cancel.textContent = `${m}/${d} 09:30 발행 예정 취소`;
+    } else {
+      cancel.textContent = '예약 취소';
+    }
+    cancel.style.display = 'block';
+  }
+  if (sched) sched.style.display = 'none';
 }
 function hideScheduleCancel() {
   const cancel = document.getElementById('scheduleCancelBtn');
@@ -2757,7 +2759,7 @@ async function schedulePublish(testMode) {
       `chore(publish): ${date} 09:30 발행 예약`,
     );
     showStatus('scheduleStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
-    showScheduleCancel();
+    showScheduleCancel(date);
     setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
   } catch(e) {
     showStatus('scheduleStatus', 'error', '예약 실패: ' + e.message);
@@ -2821,7 +2823,8 @@ async function postponeToNextBusinessDay() {
 async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
-  const targetDate = document.getElementById('agitDate').value || '';
+  // 즉시·테스트 게시 모두 '검수 끝낸 가장 최신 다이제스트' 를 발사 대상으로 잡음.
+  const targetDate = getActiveCurationDate();
   const skipWaitStr = skipWait ? 'true' : 'false';
   const testModeStr = testMode ? 'true' : 'false';
   let successMsg;
