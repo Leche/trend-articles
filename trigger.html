@@ -1078,9 +1078,11 @@ body.pwd-modal-open .tab-bar {
   <div class="card">
     <div class="card-title">이번 회차 발행</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
+    <!-- 예약 없음 상태에서만 노출 -->
     <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
-    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:12px;">예약 취소</button>
-    <button class="btn btn-secondary" id="postponeBtn" onclick="postponeToNextBusinessDay()" style="margin-top:12px;">다음 영업일로 미루기</button>
+    <!-- 예약 있음 상태에서만 노출 — 같은 자리에 모드 토글 -->
+    <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;">예약 취소</button>
+    <button class="btn btn-secondary" id="postponeBtn" onclick="postponeToNextBusinessDay()" style="display:none;margin-top:12px;">다음 영업일로 미루기</button>
     <div class="status" id="scheduleStatus"></div>
   </div>
 
@@ -2728,13 +2730,22 @@ async function _putContent(path, contentObj, message) {
   return res.json();
 }
 
+// 예약 상태 토글: 발행 예약 버튼과 (예약 취소 + 다음 영업일로 미루기)가 같은 자리에서 모드 전환.
 function showScheduleCancel() {
-  const btn = document.getElementById('scheduleCancelBtn');
-  if (btn) btn.style.display = 'block';
+  const cancel = document.getElementById('scheduleCancelBtn');
+  const sched  = document.getElementById('agitBtn');
+  const postp  = document.getElementById('postponeBtn');
+  if (cancel) cancel.style.display = 'block';
+  if (postp)  postp.style.display  = 'block';
+  if (sched)  sched.style.display  = 'none';
 }
 function hideScheduleCancel() {
-  const btn = document.getElementById('scheduleCancelBtn');
-  if (btn) btn.style.display = 'none';
+  const cancel = document.getElementById('scheduleCancelBtn');
+  const sched  = document.getElementById('agitBtn');
+  const postp  = document.getElementById('postponeBtn');
+  if (cancel) cancel.style.display = 'none';
+  if (postp)  postp.style.display  = 'none';
+  if (sched)  sched.style.display  = 'block';
 }
 
 async function schedulePublish(testMode) {
