@@ -1074,14 +1074,21 @@ body.pwd-modal-open .tab-bar {
     </div>
   </div>
 
-  <!-- Agit 게시 -->
+  <!-- 이번 회차 발행 — 일상 메인 액션 -->
   <div class="card">
-    <div class="card-title">Agit에 게시</div>
+    <div class="card-title">이번 회차 발행</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
     <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
     <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;margin-top:12px;">예약 취소</button>
     <button class="btn btn-secondary" id="postponeBtn" onclick="postponeToNextBusinessDay()" style="margin-top:12px;">다음 영업일로 미루기</button>
-    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">테스트 모드로 게시</button>
+    <div class="status" id="scheduleStatus"></div>
+  </div>
+
+  <!-- 수동 게시 — 테스트·예외 케이스 -->
+  <div class="card">
+    <div class="card-title">수동 게시</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">테스트나 비상 발행이 필요할 때만 사용해요.</p>
+    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)">테스트 모드로 게시</button>
     <hr style="border:none;height:1px;background:var(--border);margin:22px 0;">
     <div class="input-group">
       <label>게시 날짜 (비워두면 오늘)</label>
@@ -1093,7 +1100,7 @@ body.pwd-modal-open .tab-bar {
     </div>
     <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
     <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;margin-top:12px;">게시 취소</button>
-    <div class="status" id="agitStatus"></div>
+    <div class="status" id="manualPostStatus"></div>
   </div>
 
   <!-- 새 큐레이션 -->
@@ -2457,7 +2464,7 @@ function startAgitCompletionPoll() {
         clearInterval(agitPollTimer); agitPollTimer = null;
         if (run.conclusion === 'failure') {
           hideAgitCancel();
-          showStatus('agitStatus', 'error', '게시 실패. GitHub Actions 로그를 확인해주세요.');
+          showStatus('manualPostStatus', 'error', '게시 실패. GitHub Actions 로그를 확인해주세요.');
         } else if (run.conclusion === 'cancelled') {
           hideAgitCancel();
         }
@@ -2471,28 +2478,28 @@ async function cancelAgitPost() {
   if (!pendingAgitRunId) {
     await captureLatestAgitRun(Date.now() - 30000);
     if (!pendingAgitRunId) {
-      showStatus('agitStatus', 'error', '취소할 게시를 찾을 수 없어요.');
+      showStatus('manualPostStatus', 'error', '취소할 게시를 찾을 수 없어요.');
       return;
     }
   }
   // 클릭 즉시 버튼 숨김 (API 응답 기다리지 않음)
   const runId = pendingAgitRunId;
   hideAgitCancel();
-  showStatus('agitStatus', 'loading', '게시 취소 중...');
+  showStatus('manualPostStatus', 'loading', '게시 취소 중...');
   try {
     const res = await fetch(
       `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/runs/${runId}/cancel`,
       { method: 'POST', headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
     );
     if (res.ok || res.status === 202) {
-      showStatus('agitStatus', 'success', '게시가 취소됐어요.');
+      showStatus('manualPostStatus', 'success', '게시가 취소됐어요.');
       setTimeout(() => { loadDashboard(); loadActivityLog(); }, 4000);
     } else {
       const data = await res.json().catch(() => ({}));
-      showStatus('agitStatus', 'error', '취소 실패: ' + (data.message || res.statusText) + ' (이미 게시됐을 수 있어요)');
+      showStatus('manualPostStatus', 'error', '취소 실패: ' + (data.message || res.statusText) + ' (이미 게시됐을 수 있어요)');
     }
   } catch(e) {
-    showStatus('agitStatus', 'error', '취소 오류: ' + e.message);
+    showStatus('manualPostStatus', 'error', '취소 오류: ' + e.message);
   }
 }
 
@@ -2734,32 +2741,32 @@ async function schedulePublish(testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
   const date = _nextPublishDateKST();
-  showStatus('agitStatus', 'loading', '발행 예약 등록 중...');
+  showStatus('scheduleStatus', 'loading', '발행 예약 등록 중...');
   try {
     await _putContent(
       PENDING_PATH,
       { date, test_mode: !!testMode, scheduled_at: new Date().toISOString() },
       `chore(publish): ${date} 09:30 발행 예약`,
     );
-    showStatus('agitStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
+    showStatus('scheduleStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
     showScheduleCancel();
     setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
   } catch(e) {
-    showStatus('agitStatus', 'error', '예약 실패: ' + e.message);
+    showStatus('scheduleStatus', 'error', '예약 실패: ' + e.message);
   }
 }
 
 async function cancelScheduledPublish() {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
-  showStatus('agitStatus', 'loading', '예약 취소 중...');
+  showStatus('scheduleStatus', 'loading', '예약 취소 중...');
   try {
     await _putContent(PENDING_PATH, {}, 'chore(publish): 발행 예약 취소');
-    showStatus('agitStatus', 'success', '발행 예약 취소 완료.');
+    showStatus('scheduleStatus', 'success', '발행 예약 취소 완료.');
     hideScheduleCancel();
     setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
   } catch(e) {
-    showStatus('agitStatus', 'error', '취소 실패: ' + e.message);
+    showStatus('scheduleStatus', 'error', '취소 실패: ' + e.message);
   }
 }
 
@@ -2775,7 +2782,7 @@ async function postponeToNextBusinessDay() {
     `진행할까요?`
   );
   if (!ok) return;
-  showStatus('agitStatus', 'loading', '재배치 워크플로우 실행 중...');
+  showStatus('scheduleStatus', 'loading', '재배치 워크플로우 실행 중...');
   try {
     const res = await fetch(
       `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/repurpose.yml/dispatches`,
@@ -2790,15 +2797,15 @@ async function postponeToNextBusinessDay() {
       }
     );
     if (res.status === 204) {
-      showStatus('agitStatus', 'success', '재배치 시작! 1~2분 후 카카오워크로 결과가 와요.');
+      showStatus('scheduleStatus', 'success', '재배치 시작! 1~2분 후 카카오워크로 결과가 와요.');
       setTimeout(loadDashboard, 5000);
       setTimeout(loadActivityLog, 3000);
     } else {
       const data = await res.json().catch(() => ({}));
-      showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
+      showStatus('scheduleStatus', 'error', '오류: ' + (data.message || res.statusText));
     }
   } catch(e) {
-    showStatus('agitStatus', 'error', '네트워크 오류: ' + e.message);
+    showStatus('scheduleStatus', 'error', '네트워크 오류: ' + e.message);
   }
 }
 
@@ -2817,7 +2824,7 @@ async function postToAgit(skipWait, testMode) {
   } else {
     successMsg = 'Agit 게시 예약 완료! 오후 1시 30분(KST)에 자동 게시됩니다.';
   }
-  showStatus('agitStatus', 'loading', '워크플로우 실행 요청 중...');
+  showStatus('manualPostStatus', 'loading', '워크플로우 실행 요청 중...');
   hideAgitCancel(); // 이전 dispatch의 cancel 버튼 정리
   const dispatchedAt = Date.now();
   try {
@@ -2834,7 +2841,7 @@ async function postToAgit(skipWait, testMode) {
       }
     );
     if (res.status === 204) {
-      showStatus('agitStatus', 'success', successMsg);
+      showStatus('manualPostStatus', 'success', successMsg);
       setTimeout(loadDashboard, 8000);
       setTimeout(loadActivityLog, 3000);
       // 취소 버튼 노출 — 60초 (또는 워크플로우 완료 시 자동 숨김)
@@ -2844,10 +2851,10 @@ async function postToAgit(skipWait, testMode) {
       agitCancelTimer = setTimeout(hideAgitCancel, 60000);
     } else {
       const data = await res.json().catch(() => ({}));
-      showStatus('agitStatus', 'error', '오류: ' + (data.message || res.statusText));
+      showStatus('manualPostStatus', 'error', '오류: ' + (data.message || res.statusText));
     }
   } catch(e) {
-    showStatus('agitStatus', 'error', '네트워크 오류: ' + e.message);
+    showStatus('manualPostStatus', 'error', '네트워크 오류: ' + e.message);
   }
 }
 
