@@ -1178,10 +1178,10 @@ body.pwd-modal-open .tab-bar {
   <!-- 기사 순서 조정 -->
   <div class="card">
     <div class="card-title">기사 순서 조정</div>
-    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">기사를 불러온 뒤 끌어서 순서를 바꾸고 적용하세요</div>
+    <div id="reorderHint" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">기사를 불러온 뒤 끌어서 순서를 바꾸고 적용하세요</div>
     <div id="reorderList" style="margin-top:12px;"></div>
     <button class="btn btn-primary" id="reorderBtn" onclick="reorderArticles()" style="display:none;margin-top:12px;">순서 적용</button>
-    <button class="btn btn-secondary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:12px;">현재 기사 불러오기</button>
+    <button class="btn btn-primary" id="reorderLoadBtn" onclick="loadReorderList()" style="margin-top:12px;">현재 기사 불러오기</button>
     <div class="status" id="reorderStatus"></div>
   </div>
 
@@ -2084,6 +2084,8 @@ async function loadReorderList() {
     });
 
     document.getElementById('reorderBtn').style.display = '';
+    document.getElementById('reorderLoadBtn').style.display = 'none';
+    document.getElementById('reorderHint').style.display = 'none';
     showStatus('reorderStatus', 'success', `${blocks.length}개 기사를 불러왔어요. 끌어서 순서를 바꿔보세요.`);
   } catch (e) {
     showStatus('reorderStatus', 'error', '오류: ' + e.message);
@@ -2151,6 +2153,8 @@ async function reorderArticles() {
     showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.');
     document.getElementById('reorderList').innerHTML = '';
     document.getElementById('reorderBtn').style.display = 'none';
+    document.getElementById('reorderLoadBtn').style.display = '';
+    document.getElementById('reorderHint').style.display = '';
   } catch(e) {
     showStatus('reorderStatus', 'error', '오류: ' + e.message);
   }
