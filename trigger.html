@@ -1430,10 +1430,12 @@ async function loadDashboard() {
   let todayExists = false, lastDate = null, agitStatus = 'pending', agitTime = null, pending = null;
   try {
     const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
+    // GitHub API/브라우저 HTTP 캐시(Cache-Control max-age) 때문에 예약 커밋 직후 옛 값(예약 없음)을
+    // 읽어 "예약 취소" 버튼이 "발행 예약"으로 되돌아가던 문제 → no-store + 캐시버스트로 항상 최신 읽기.
     const [contentsRes, runsRes, pendingRes] = await Promise.all([
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers }),
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers }),
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main`, { headers })
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers, cache: 'no-store' }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers, cache: 'no-store' }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main&_=${Date.now()}`, { headers, cache: 'no-store' })
     ]);
     if (contentsRes.ok) {
       const items = await contentsRes.json();
@@ -2686,8 +2688,8 @@ async function ghMultiFileCommit({ message, files }) {
 async function _getContentSha(path) {
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}?ref=main`,
-      { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${path}?ref=main&_=${Date.now()}`,
+      { headers: { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: 'no-store' }
     );
     if (res.status === 404) return null;
     if (!res.ok) throw new Error('contents GET 실패: ' + res.status);
