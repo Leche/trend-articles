@@ -1784,9 +1784,25 @@ function getTodayKST() {
 // 22시 큐레이션 모델 — 큐레이션 결과물은 보통 내일 날짜 폴더로 떨어진다.
 // 그래서 "현재 작업 대상 큐레이션" 은 '오늘'이 아니라 repo 의 가장 최신 날짜 폴더.
 // loadDashboard 가 lastDate 를 잡아주면 그 값을 전역에 저장해두고 액션들이 참조한다.
+//
+// ⚠️ getActiveCurationDate()는 절대 fallback으로 today 를 반환하지 않는다.
+// 과거 fallback(getTodayKST) 때문에, 대시보드 로드 전 빠르게 누른 액션이
+// 이미 발행된 today 폴더를 덮어 쓰는 사고가 있었다 (085f508 복구).
+// loadDashboard 가 latestCurationDate 를 잡지 못했거나, 잡힌 값이 today 또는
+// 그 이전(=이미 발행됐거나 발행 중) 이면 null 을 돌려 액션이 막히게 한다.
 let latestCurationDate = null;
 function getActiveCurationDate() {
-  return latestCurationDate || getTodayKST();
+  if (!latestCurationDate) return null;
+  if (latestCurationDate <= getTodayKST()) return null;  // today 이하 = 이미 발행됨, 건드리지 말 것
+  return latestCurationDate;
+}
+function checkActiveCurationDate(statusId) {
+  const d = getActiveCurationDate();
+  if (d) return d;
+  showStatus(statusId, 'error', latestCurationDate
+    ? `최신 큐레이션이 ${latestCurationDate}로, 오늘(${getTodayKST()}) 또는 그 이전이라 액션이 막혔어요. 새 큐레이션 생성 후 다시 시도하세요.`
+    : '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.');
+  return null;
 }
 
 // ── 파일 인풋 트리거 ──
@@ -1993,6 +2009,9 @@ async function replaceThumbnails() {
     return;
   }
 
+  const dateValGuard = checkActiveCurationDate('replaceThumbStatus');
+  if (!dateValGuard) return;
+
   showStatus('replaceThumbStatus', 'loading', '이미지 변환 중...');
 
   try {
@@ -2002,7 +2021,7 @@ async function replaceThumbnails() {
       dataUrl: await fileToDataUrl(t.file)
     })));
 
-    const dateVal = getActiveCurationDate();
+    const dateVal = dateValGuard;
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
@@ -2041,9 +2060,11 @@ async function replaceThumbnails() {
 // ── 기사 순서 조정 — 현재 기사를 드래그 카드로 불러오기 ──
 async function loadReorderList() {
   if (!checkSettings()) return;
+  const dateVal0 = checkActiveCurationDate('reorderStatus');
+  if (!dateVal0) return;
   showStatus('reorderStatus', 'loading', '기사 불러오는 중...');
   try {
-    const dateVal = getActiveCurationDate();
+    const dateVal = dateVal0;
     const html = await ghGetRaw(`${dateVal}/index.html`);
 
     const articleRegex = /<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?<\/article>/g;
@@ -2107,9 +2128,11 @@ async function reorderArticles() {
     return;
   }
 
+  const dateVal0 = checkActiveCurationDate('reorderStatus');
+  if (!dateVal0) return;
   showStatus('reorderStatus', 'loading', '순서 적용 중...');
   try {
-    const dateVal = getActiveCurationDate();
+    const dateVal = dateVal0;
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
 
     async function reorderHtml(path) {
@@ -2280,9 +2303,11 @@ async function runReplace() {
     showStatus('replaceStatus', 'error', '교체할 기사 번호와 URL을 입력해주세요.');
     return;
   }
+  const dateVal = checkActiveCurationDate('replaceStatus');
+  if (!dateVal) return;
   showStatus('replaceStatus', 'loading', '기사 교체 워크플로우 실행 중...');
   try {
-    const res = await triggerWorkflow({ article_count: '8', custom_date: getActiveCurationDate(), replace_urls: parts.join(','), force_run: 'true' });
+    const res = await triggerWorkflow({ article_count: '8', custom_date: dateVal, replace_urls: parts.join(','), force_run: 'true' });
     if (res.status === 204) {
       showStatus('replaceStatus', 'success', `기사 교체 시작! (${parts.length}개 교체) 카카오워크로 완료 알림이 올 거예요.`);
     } else {
@@ -2302,6 +2327,8 @@ async function runCommand() {
     return;
   }
   if (!checkSettings()) return;
+  const targetDate = checkActiveCurationDate('commandStatus');
+  if (!targetDate) return;
   showStatus('commandStatus', 'loading', '명령 전달 중...');
   try {
     const res = await fetch(
@@ -2317,7 +2344,7 @@ async function runCommand() {
           ref: 'main',
           inputs: {
             prompt,
-            target_date: getActiveCurationDate(),
+            target_date: targetDate,
           },
         }),
       }
@@ -2377,9 +2404,11 @@ async function fixLinks() {
     return;
   }
   const nums = tasks.map(t => t.num).join(', ');
+  const dateVal0 = checkActiveCurationDate('linkFixStatus');
+  if (!dateVal0) return;
   showStatus('linkFixStatus', 'loading', 'HTML 파일 불러오는 중...');
   try {
-    const dateVal = getActiveCurationDate();
+    const dateVal = dateVal0;
     const msg = `🔗 링크 수정: ${nums}번 기사 (${dateVal})`;
     async function modifyHtml(path) {
       let html = await ghGetRaw(path);
@@ -2792,7 +2821,8 @@ async function cancelScheduledPublish() {
 // 서버사이드(repurpose.yml)에서 폴더 rename + title 교체 + pending 재설정을 한 commit 으로 처리.
 async function postponeToNextBusinessDay() {
   if (!checkSettings()) return;
-  const sourceDate = getActiveCurationDate();
+  const sourceDate = checkActiveCurationDate('scheduleStatus');
+  if (!sourceDate) return;
   const ok = confirm(
     `오늘 큐레이션(${sourceDate}) 을 다음 영업일로 미룹니다.\n\n` +
     `· 폴더명·HTML title 라벨·발행 예약을 모두 새 날짜로 재배치합니다.\n` +
@@ -2832,7 +2862,8 @@ async function postToAgit(skipWait, testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
   // 즉시·테스트 게시 모두 '검수 끝낸 가장 최신 다이제스트' 를 발사 대상으로 잡음.
-  const targetDate = getActiveCurationDate();
+  const targetDate = checkActiveCurationDate('manualPostStatus');
+  if (!targetDate) return;
   const skipWaitStr = skipWait ? 'true' : 'false';
   const testModeStr = testMode ? 'true' : 'false';
   let successMsg;
@@ -2879,7 +2910,14 @@ async function postToAgit(skipWait, testMode) {
 
 // ── 바로가기 ──
 function openLatest() {
-  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${getActiveCurationDate()}/`, '_blank');
+  const d = getActiveCurationDate();
+  if (!d) {
+    alert(latestCurationDate
+      ? `최신 큐레이션이 ${latestCurationDate}로, 오늘(${getTodayKST()}) 또는 그 이전이라 막혔어요.`
+      : '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.');
+    return;
+  }
+  window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${d}/`, '_blank');
 }
 function openActions() {
   window.open(`https://github.com/${settings.owner || 'Leche'}/${settings.repo || 'trend-articles'}/actions`, '_blank');
