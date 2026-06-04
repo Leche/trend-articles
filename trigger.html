@@ -1486,6 +1486,8 @@ async function loadDashboard() {
         if (parsed && parsed.date) pending = parsed;
       } catch(_) { pending = null; }
     }
+    // 가드(checkActiveCurationDate)가 today 폴더의 발행 여부를 알기 위한 전역 캐시
+    todayAgitStatus = agitStatus;
     renderDashboard({ todayExists, lastDate, agitStatus, agitTime, pending });
   } catch(e) {
     renderDashboard({ error: true });
@@ -1785,23 +1787,44 @@ function getTodayKST() {
 // 그래서 "현재 작업 대상 큐레이션" 은 '오늘'이 아니라 repo 의 가장 최신 날짜 폴더.
 // loadDashboard 가 lastDate 를 잡아주면 그 값을 전역에 저장해두고 액션들이 참조한다.
 //
-// ⚠️ getActiveCurationDate()는 절대 fallback으로 today 를 반환하지 않는다.
+// ⚠️ getActiveCurationDate() 는 fallback 으로 today 를 반환하지 않는다.
 // 과거 fallback(getTodayKST) 때문에, 대시보드 로드 전 빠르게 누른 액션이
 // 이미 발행된 today 폴더를 덮어 쓰는 사고가 있었다 (085f508 복구).
-// loadDashboard 가 latestCurationDate 를 잡지 못했거나, 잡힌 값이 today 또는
-// 그 이전(=이미 발행됐거나 발행 중) 이면 null 을 돌려 액션이 막히게 한다.
+//
+// 발행 여부 기반 가드 (자정 넘긴 검수 시나리오 대응):
+// · latestCurationDate > today  → 내일 다이제스트, 통과
+// · latestCurationDate === today → todayAgitStatus 가 'posted' 면 막고, 아니면 통과
+//   (자정 넘겨 검수 중인 today 다이제스트는 아직 발행 전이라 작업 가능)
+// · latestCurationDate < today  → 어제 이전, 발행 끝, 무조건 막음
+// · latestCurationDate 미정     → 대시보드 로딩 전, 막음
 let latestCurationDate = null;
+let todayAgitStatus = null;  // loadDashboard 완료 시 'pending' | 'posted' 로 채워짐
 function getActiveCurationDate() {
   if (!latestCurationDate) return null;
-  if (latestCurationDate <= getTodayKST()) return null;  // today 이하 = 이미 발행됨, 건드리지 말 것
+  const today = getTodayKST();
+  if (latestCurationDate < today) return null;        // 어제 이전 = 발행 끝
+  if (latestCurationDate === today) {
+    // today 폴더 = 자정 넘겨 검수 중이거나, 이미 발행됐거나.
+    // 대시보드 미로딩(null) 이거나 이미 발행됨('posted') 이면 막고,
+    // 'pending' 이면 검수 중이므로 통과.
+    if (todayAgitStatus !== 'pending') return null;
+  }
   return latestCurationDate;
 }
 function checkActiveCurationDate(statusId) {
   const d = getActiveCurationDate();
   if (d) return d;
-  showStatus(statusId, 'error', latestCurationDate
-    ? `최신 큐레이션이 ${latestCurationDate}로, 오늘(${getTodayKST()}) 또는 그 이전이라 액션이 막혔어요. 새 큐레이션 생성 후 다시 시도하세요.`
-    : '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.');
+  let msg;
+  if (!latestCurationDate) {
+    msg = '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.';
+  } else if (latestCurationDate < getTodayKST()) {
+    msg = `최신 큐레이션이 ${latestCurationDate}로 어제 이전이라 막혔어요. 새 큐레이션 생성 후 다시 시도하세요.`;
+  } else if (todayAgitStatus === 'posted') {
+    msg = `오늘(${latestCurationDate}) 다이제스트는 이미 아지트에 발행돼서 막혔어요.`;
+  } else {
+    msg = '대시보드 로딩이 끝나지 않았어요. 잠시 후 다시 시도하세요.';
+  }
+  showStatus(statusId, 'error', msg);
   return null;
 }
 
@@ -2912,9 +2935,12 @@ async function postToAgit(skipWait, testMode) {
 function openLatest() {
   const d = getActiveCurationDate();
   if (!d) {
-    alert(latestCurationDate
-      ? `최신 큐레이션이 ${latestCurationDate}로, 오늘(${getTodayKST()}) 또는 그 이전이라 막혔어요.`
-      : '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.');
+    let msg;
+    if (!latestCurationDate) msg = '대시보드 로딩 전이거나 큐레이션 폴더가 없어요. 잠시 후 다시 시도하세요.';
+    else if (latestCurationDate < getTodayKST()) msg = `최신 큐레이션이 ${latestCurationDate}로 어제 이전이라 막혔어요.`;
+    else if (todayAgitStatus === 'posted') msg = `오늘(${latestCurationDate}) 다이제스트는 이미 아지트에 발행돼서 막혔어요.`;
+    else msg = '대시보드 로딩이 끝나지 않았어요. 잠시 후 다시 시도하세요.';
+    alert(msg);
     return;
   }
   window.open(`https://${settings.owner || 'Leche'}.github.io/${settings.repo || 'trend-articles'}/${d}/`, '_blank');
