@@ -6,8 +6,16 @@
 <title>트렌드림 컨트롤러 컨트롤</title>
 
 <!-- PWA: 홈 화면 추가 시 앱 아이콘·시작 모드 정의 -->
-<!-- GitHub Pages 가 도메인 루트(leche.github.io)가 아닌 /trend-articles/ 하위에 배포돼서, 모든 PWA 자원은 상대 경로로 박는다 -->
-<link rel="manifest" href="manifest.json">
+<!--
+  ⚠️ manifest.json 의도적으로 link 안 함.
+  manifest 가 있으면 iOS 는 이 페이지를 "정식 PWA" 로 격상해서
+  (1) start_url 을 강제로 사용 → 북마크의 #token=... hash 가 drop
+  (2) 사파리와 격리된 storage 컨테이너 생성 → localStorage 도 못 공유
+  사용자 워크플로(사파리에 토큰 hash 박힌 북마크 → 홈 화면 추가) 가
+  이 두 동작 때문에 깨졌었음. apple-touch-icon + apple-mobile-web-app-capable
+  만으로 iOS 는 standalone + 커스텀 아이콘 PWA 룩을 그대로 제공하고,
+  bookmarked URL 그대로 launch 해서 hash 도 살아남는다.
+-->
 <meta name="theme-color" content="#F5F5F5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
 <meta name="application-name" content="트리거">
