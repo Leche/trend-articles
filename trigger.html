@@ -2247,15 +2247,35 @@ function showStatus(id, type, msg) {
 }
 
 // ── 설정 ──
+// 토큰 영속화 — PWA(홈 화면에 추가) 는 manifest 의 start_url 로 들어오느라
+// hash(#token=...) 가 떨어져 토큰이 빈 채 시작된다. URL hash 와 별개로
+// localStorage 에 함께 저장해 PWA·북마크·QR 어떤 진입경로든 토큰이 살게 한다.
+const SETTINGS_KEY = 'trendream:settings';
+
 function loadSettings() {
   const params = parseHash();
+  let token, owner, repo;
   if (params && params.token) {
-    settings.token = params.token;
-    settings.owner = params.owner || 'Leche';
-    settings.repo  = params.repo  || 'trend-articles';
-    document.getElementById('tokenInput').value = settings.token;
-    document.getElementById('ownerInput').value = settings.owner;
-    document.getElementById('repoInput').value  = settings.repo;
+    // hash 가 있으면 우선(=새 토큰 공유 받은 케이스). 들어오면 localStorage 도 갱신.
+    token = params.token;
+    owner = params.owner || 'Leche';
+    repo  = params.repo  || 'trend-articles';
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ token, owner, repo })); } catch(_) {}
+  } else {
+    try {
+      const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+      if (stored && stored.token) {
+        token = stored.token; owner = stored.owner; repo = stored.repo;
+      }
+    } catch(_) {}
+  }
+  if (token) {
+    settings.token = token;
+    settings.owner = owner;
+    settings.repo  = repo;
+    document.getElementById('tokenInput').value = token;
+    document.getElementById('ownerInput').value = owner;
+    document.getElementById('repoInput').value  = repo;
     showConnected();
   }
 }
@@ -2272,6 +2292,7 @@ function saveSettings() {
   settings = { token, owner, repo };
   window.location.hash =
     `token=${encodeURIComponent(token)}&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(_) {}
   showConnected();
 }
 
