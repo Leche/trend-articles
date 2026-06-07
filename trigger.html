@@ -1427,7 +1427,14 @@ function renderDashboard(state) {
 
   // Agit 게시 상태 — 09:30 KST 발행 예약 모델 기준
   const past0930 = getCurrentKSTMinutes() >= 9 * 60 + 30;
-  const pendingToday = state.pending && state.pending.date === today;
+  // 09:30 이후에 예약하면 _nextPublishDateKST()가 '내일'을 박으므로, 예약 날짜는
+  // today 일 수도 미래(내일)일 수도 있다. UI가 today 예약만 인식하면 09:30 이후
+  // 예약 시 대시보드 리프레시에서 취소 버튼이 사라지는 버그가 생긴다 → 미래 예약도 인식.
+  const pendingDate   = state.pending && state.pending.date;       // 'YYYY-MM-DD' | null
+  const pendingToday  = pendingDate === today;
+  const pendingFuture = pendingDate && pendingDate > today;        // 내일 등 아직 안 지난 예약
+  // 아직 발사 전인 유효 예약 = (오늘자 & 09:30 전) 또는 (미래자). 취소 버튼 노출 기준.
+  const pendingActive = (pendingToday && !past0930) || pendingFuture;
   if (state.agitStatus === 'posted' && state.agitTime) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
@@ -1438,13 +1445,16 @@ function renderDashboard(state) {
     agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 09:30 예정</span>';
   } else if (pendingToday && past0930) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>발행 대기 중 (cron 호출 전)</span>';
+  } else if (pendingFuture) {
+    const [, fm, fd] = pendingDate.split('-');
+    agit.innerHTML = `<span class="dash-dot yellow"></span><span>${fm}/${fd} 09:30 예정</span>`;
   } else if (!past0930) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>예약 없음</span>';
   } else {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
   }
   // 예약 취소 버튼 토글
-  if (pendingToday && !past0930) showScheduleCancel(state.pending.date);
+  if (pendingActive) showScheduleCancel(pendingDate);
   else hideScheduleCancel();
   footer.textContent = `마지막 발행: ${formatLastDate(state.lastDate, today)}`;
 }
