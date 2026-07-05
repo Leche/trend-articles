@@ -8,3 +8,6 @@ __pycache__/
 # Editor
 .vscode/
 .idea/
+
+# Playwright MCP 산출물
+.playwright-mcp/
