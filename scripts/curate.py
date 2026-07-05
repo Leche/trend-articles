@@ -1204,8 +1204,10 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
   }}
   .article-item{{ padding:28px 0 32px; }}
   /* 데스크탑에서 인트로가 카드 전체 폭으로 늘어나 한 줄이 지나치게 길어지는 것 방지.
-     기사 그리드는 그대로 두고 인트로 텍스트 행 길이만 읽기 좋은 폭으로 제한. */
-  .digest-intro{{ max-width:900px; }}
+     텍스트(.digest-summary)에만 폭을 제한해 행 길이를 읽기 좋게 줄인다.
+     컨테이너(.digest-intro)와 하단 디바이더(border-bottom)는 전체 폭을 유지해
+     아래 기사 행과 정렬되게 한다. */
+  .digest-summary{{ max-width:900px; }}
 }}
 @media (min-width: 1200px) {{
   .image-frame {{ width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 8px; background: var(--img-bg); }}
