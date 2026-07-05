@@ -208,6 +208,39 @@ def _has_real_content(html_text, min_text_len=200):
         return False
 
 
+# 봇 UA를 로그인/인증 페이지로 튕기는 사이트를 감지하는 힌트.
+# (브런치: kauth.kakao.com OAuth로 302, requests가 따라가면 본문 0바이트)
+_AUTH_REDIRECT_HINTS = ("kauth.kakao.com", "/auth/", "/login", "oauth", "/signin", "accounts.google.com")
+
+
+def _looks_like_auth_wall(resp):
+    """requests 응답이 로그인/인증 페이지로 리다이렉트됐는지 판단."""
+    try:
+        final_url = (resp.url or "").lower()
+    except Exception:
+        return False
+    return any(h in final_url for h in _AUTH_REDIRECT_HINTS)
+
+
+# 검색 크롤러(Googlebot)에게는 본문을 열어주는 사이트가 많다 (브런치·일부 뉴스).
+# 일반 브라우저 UA로 인증 벽에 막힐 때의 우선 fallback.
+GOOGLEBOT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+}
+
+
+def _fetch_googlebot(url, timeout=15):
+    """Googlebot UA로 페이지 가져오기 (봇 차단하되 검색 크롤러엔 여는 사이트 fallback)"""
+    try:
+        r = requests.get(url, headers=GOOGLEBOT_HEADERS, timeout=timeout)
+        if r.status_code == 200 and _has_real_content(r.text) and not _looks_like_auth_wall(r):
+            print(f"  ✅ Googlebot UA로 콘텐츠 확보 성공")
+            return r.text
+    except Exception as e:
+        print(f"  ⚠️  Googlebot UA 접근 실패: {e}")
+    return None
+
+
 def _fetch_google_cache(url, timeout=15):
     """Google 캐시에서 페이지 가져오기 (직접 접근 불가 사이트 fallback)"""
     cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
@@ -222,20 +255,36 @@ def _fetch_google_cache(url, timeout=15):
 
 
 def fetch_page(url, timeout=15):
-    """URL에서 HTML 가져오기 (실제 콘텐츠 부족 시 Playwright → Google 캐시 폴백)"""
+    """URL에서 HTML 가져오기.
+
+    폴백 순서: requests → (인증벽/콘텐츠부족 시) Googlebot UA → Playwright → Google 캐시.
+    브런치처럼 봇 UA를 로그인 페이지로 302 리다이렉트하는 사이트는 requests·Playwright
+    양쪽 다 튕기므로, 검색 크롤러엔 본문을 여는 Googlebot UA를 우선 시도한다.
+    """
     html = None
+    auth_wall = False
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
         r.raise_for_status()
         html = r.text
-        if _has_real_content(html):
+        auth_wall = _looks_like_auth_wall(r)
+        if auth_wall:
+            print(f"  ⚠️  {url} 인증 페이지로 리다이렉트됨 ({r.url}) — Googlebot UA로 재시도")
+        elif _has_real_content(html):
             return html
-        print(f"  ⚠️  {url} HTML은 받았으나 텍스트 콘텐츠 부족, Playwright로 재시도")
+        else:
+            print(f"  ⚠️  {url} HTML은 받았으나 텍스트 콘텐츠 부족, 재시도")
     except Exception as e:
         print(f"  ⚠️  {url} requests 접근 실패: {e}")
 
-    # Playwright 폴백
-    if _pw_available():
+    # Googlebot UA 폴백 (인증벽/콘텐츠부족 모두 유효 — 캐시보다 신뢰도 높아 먼저 시도)
+    print(f"  🔄 Googlebot UA로 재시도: {url}")
+    gb_html = _fetch_googlebot(url, timeout)
+    if gb_html:
+        return gb_html
+
+    # Playwright 폴백 (인증벽이면 어차피 튕기므로 건너뜀)
+    if not auth_wall and _pw_available():
         print(f"  🔄 Playwright로 재시도: {url}")
         pw_html = fetch_page_playwright(url)
         if pw_html and _has_real_content(pw_html):
@@ -247,13 +296,12 @@ def fetch_page(url, timeout=15):
     if cache_html:
         return cache_html
 
-    # 모두 실패 시 원본이라도 반환
-    if _pw_available():
+    # 모두 실패 시 원본이라도 반환 (인증벽 HTML은 쓸모없으므로 제외)
+    if not auth_wall and _pw_available():
         pw_html = fetch_page_playwright(url)
         return pw_html or html
-    else:
-        print(f"  ❌ Playwright 미설치, 페이지 접근 불가: {url}")
-        return html
+    print(f"  ❌ 페이지 접근 불가: {url}")
+    return None if auth_wall else html
 
 
 def extract_og_image(html_text, base_url=""):
@@ -1010,54 +1058,38 @@ def generate_intro(articles):
             recent_block += f"  {i}. {intro}\n"
         recent_block += "\n"
 
-    prompt = f"""당신은 트렌드림이라는 매일 큐레이션되는 아티클 다이제스트의 큐레이터입니다.
-아래는 오늘 큐레이션된 기사 목록과 각 기사의 요약입니다.
+    prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
+독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
 
-{article_text}{recent_block}독자가 첫 줄부터 흥미를 갖고 첫 기사로 넘어갈 수 있는, 100~140자 인트로 한 단락을 써주세요.
+{article_text}{recent_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
+단순히 오늘 뭐가 실렸는지 나열하는 게 아니라, **당신이 {len(articles)}개를 다 읽고 직접 사고한 결과**를 담아야 합니다.
 
-좋은 인트로의 다양한 형태 — 오늘 기사에 가장 어울리는 형식을 골라 쓰세요:
+핵심 관점 — "왜 지금 중요한가(so-what)":
+- 오늘 기사들 사이에서 지금 업계가 어디로 움직이는지, 왜 이 주제들이 지금 동시에 부상했는지를 짚어주세요
+- 표면 요약이 아니라 **한 겹 아래의 의미** — 이 변화가 프로덕트를 만드는 사람에게 어떤 신호인지
+- 억지로 8개를 하나로 꿰지 마세요. 관통하는 맥이 있으면 짚고, 없으면 가장 중요한 2~3개 축으로 묶어 "지금 주목할 지점"을 제시
 
-[A. 선언형] 짧은 단정으로 시작해 오늘의 무게중심을 짚는 형식
-  예: "오늘은 AI가 코드가 아니라 '돈'을 다루기 시작한 날이에요. 결제·송금·자산관리까지, 모델 안에 통째로 들어왔어요."
+형식:
+- 180~260자, 2~3문장, 친근한 "~요" 톤
+- 구체 사례 2~3개를 실제 기사에서 인용하되, 각 사례에 **"그래서 지금 왜 의미 있는지" 맥락**을 붙일 것
+- 각 사례는 **단독 문장으로도 의미가 통해야 함** — 인물·기관·행위·맥락(왜/어떤 의미)이 한 문장 안에 같이 들어가야 함
+  · 나쁜 예: "젠슨 황은 베이징에서 타이베이까지 열흘 만에 완주했어요" — 누가 왜 무엇을 했는지 빠짐
+  · 좋은 예: "엔비디아 젠슨 황이 미·중·대만을 잇는 열흘 일정을 소화한 건, AI 반도체 공급망의 정치적 무게가 그만큼 커졌다는 신호예요"
 
-[B. 질문·호기심형] 독자가 답이 궁금해지게 만드는 형식
-  예: "왜 모두가 같은 날 같은 답을 내놓을까요? 오픈AI도, 구글도, 메타도 약속이나 한 듯 에이전트 카드를 꺼냈어요."
+절대 쓰지 말 것 (진부한 메타 서사 / AI티 나는 표현):
+- "경계를 허물다 / 지워가다 / 다시 그리다", "기술의 파고", "흐름이 옮겨가다", "조용히, 그러나 빠르게"
+- "산업 전반을 재편", 막연한 "큰 흐름 / 관통하는 흐름"
+- "오늘은 ~을 보여주는 기사들을 모았어요", "한눈에 볼 수 있는 기사들을 모았어요" 식 큐레이션 멘트형 마무리
+- 기사 번호 언급, 과장 표현("놀라운", "혁명적인"), "오늘 트렌드림이 큐레이션한 N개의 기사예요" 식 제네릭
 
-[C. 디테일·숫자형] 구체적 수치·사실로 호기심을 끄는 형식
-  예: "월 5,000달러 1인 사업가, 36년 만의 간판 교체, 8조 원짜리 컨소시엄 — 오늘은 '규모'가 이야기의 주인공이에요."
-
-[D. 대비·긴장형] 상반된 두 흐름을 마주 놓는 형식
-  예: "한쪽에선 AI가 군사 무기에 들어가고, 다른 쪽에선 누군가 인간 존엄을 호소해요. 같은 날, 정반대 방향의 두 장면이 한 화면에 잡혔어요."
-
-[E. 단문 연속형] 호흡을 끊어 강조하는 형식
-  예: "페라리 전기차. 슈퍼앱 선언. 군사용 AI. 익숙한 카테고리에 새 이름표가 붙는 하루입니다."
-
-조건:
-- 100~140자, 친근한 "~요" 톤
-- 구체 사례 2~3개를 짧게 인용
-- 위 5개 형식 중 **오늘 기사에 가장 어울리는 하나**를 골라 자연스럽게 변형. 매번 같은 형식(A) 반복은 절대 금지
-- "최근 7일 인트로"와 **다른 구조·다른 어휘**를 쓰세요
-- 각 구체 사례는 **단독 문장으로도 의미가 통해야 합니다** — 인물·기관·행위·맥락(왜/어떤 의미)이 한 문장 안에 같이 들어가야 함. 압축하느라 핵심 주체나 맥락을 빼면 독자는 무슨 이야기인지 못 따라가요.
-  · 나쁜 예: "젠슨 황은 베이징에서 타이베이까지 열흘 만에 완주했어요" — 누가 왜 무엇을 완주했는지 빠짐
-  · 좋은 예: "엔비디아 젠슨 황은 베이징–타이베이를 잇는 열흘 일정으로 미·중·대만 사이의 균형을 보여줬어요"
-
-절대 쓰지 말 것 (진부한 메타 서사 표현):
-- "경계를 허물다 / 지워가다 / 다시 그리다"
-- "기술의 파고", "흐름이 옮겨가다", "조용히, 그러나 빠르게"
-- "산업 전반을 재편", "한눈에 볼 수 있는 기사들을 모았어요"
-- 막연한 "큰 흐름", "관통하는 흐름"
-- "오늘은 ~을 보여주는 기사들을 모았어요" 식 큐레이션 멘트형 마무리
-
-피해야 할 패턴:
-- 기사 번호 언급
-- 광고·과장 표현 ("놀라운", "혁명적인" 등)
-- "오늘 트렌드림이 큐레이션한 N개의 기사예요" 식 제네릭
+톤 다양성:
+- "최근 7일 인트로"와 **다른 구조·다른 어휘·다른 시작 문장**을 쓰세요. 매번 같은 틀(예: "오늘은 ~") 반복 금지
 
 응답: 인트로 텍스트만 (다른 설명, 따옴표 등 없이)"""
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=300,
+            max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
         return response.content[0].text.strip()
@@ -1426,6 +1458,14 @@ def main():
             new_art = summarize_single_article(new_url)
             if not new_art:
                 print(f"  ❌ 요약 실패, 기존 기사 유지")
+                continue
+
+            # 저품질 결과로 멀쩡한 기존 기사를 덮어쓰지 않도록 가드.
+            # 본문 접근 불가(URL 추론)·요약 품질 미달이면 교체 취소하고 기존 유지.
+            if new_art.get("_needs_manual_patch") or new_art.get("_inferred_from_url"):
+                reason = "본문 접근 불가(URL 추론)" if new_art.get("_inferred_from_url") else "요약 품질 미달"
+                print(f"  ⚠️  {reason} — 기존 기사 유지 (교체 취소)")
+                print(f"      → 이 URL은 본문 스크랩이 안 됩니다. 다른 URL을 쓰거나 수동 입력 필요.")
                 continue
 
             # 썸네일 다운로드
