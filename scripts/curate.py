@@ -1092,7 +1092,6 @@ def generate_intro(articles):
     """오늘 기사들을 보고 1~2문장 인트로 생성 (Claude)"""
     client = anthropic.Anthropic(max_retries=8)
     article_text = ""
-    replaced_titles = []  # 큐레이터가 방금 직접 교체해 넣은 기사 (인트로에 우선 반영)
     for i, art in enumerate(articles, 1):
         article_text += f"{i}. [{art.get('title_ko','')}]\n"
         article_text += f"   한 줄: {art.get('one_line','')}\n"
@@ -1100,8 +1099,6 @@ def generate_intro(articles):
             if art.get(k):
                 article_text += f"   - {art[k]}\n"
         article_text += "\n"
-        if art.get("_just_replaced"):
-            replaced_titles.append(art.get("title_ko", ""))
 
     # Anti-reference: 최근 인트로들을 같이 보여줘 패턴 회피 유도
     recent_intros = _read_recent_intros(TODAY, n=7)
@@ -1112,26 +1109,17 @@ def generate_intro(articles):
             recent_block += f"  {i}. {intro}\n"
         recent_block += "\n"
 
-    # 교체 기사 우선 반영: 큐레이터가 직접 고른 기사이므로 인트로에 반드시 녹인다.
-    replaced_block = ""
-    if replaced_titles:
-        titles_str = ", ".join(f'"{t}"' for t in replaced_titles if t)
-        replaced_block = (
-            f"\n[중요] 다음 기사는 큐레이터가 방금 직접 골라 넣은 것입니다: {titles_str}\n"
-            f"이 기사는 오늘 다이제스트에서 특히 의미 있게 다루려는 것이니, "
-            f"인트로에 **반드시 구체적으로 언급**하고 다른 기사와 자연스럽게 엮어주세요.\n"
-        )
-
     prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
 독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
 
-{article_text}{recent_block}{replaced_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
+{article_text}{recent_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
 단순히 오늘 뭐가 실렸는지 나열하는 게 아니라, **당신이 {len(articles)}개를 다 읽고 직접 사고한 결과**를 담아야 합니다.
 
 핵심 관점 — "왜 지금 중요한가(so-what)":
 - 오늘 기사들 사이에서 지금 업계가 어디로 움직이는지, 왜 이 주제들이 지금 동시에 부상했는지를 짚어주세요
 - 표면 요약이 아니라 **한 겹 아래의 의미** — 이 변화가 프로덕트를 만드는 사람에게 어떤 신호인지
 - 억지로 8개를 하나로 꿰지 마세요. 관통하는 맥이 있으면 짚고, 없으면 가장 중요한 2~3개 축으로 묶어 "지금 주목할 지점"을 제시
+- **오늘의 큰 축에 맞지 않는 기사는 인트로에서 과감히 빼세요.** 8개를 다 넣으려다 산만해지는 것보다, 핵심 축에 드는 2~4개만 밀도 있게 다루는 게 훨씬 좋아요. 나머지는 독자가 기사 목록에서 직접 발견하면 됩니다
 
 형식:
 - 180~260자, 2~3문장, 친근한 "~요" 톤
@@ -1555,7 +1543,6 @@ def main():
 
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
-            new_art["_just_replaced"] = True  # 인트로에 우선 반영하기 위한 임시 플래그
             existing[idx] = new_art
             print(f"  ✅ 교체 완료: {new_art.get('title_ko', '(제목 없음)')}")
 
