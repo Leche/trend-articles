@@ -149,9 +149,60 @@ def load_past_articles():
     return past
 
 
+# ─── 교체로 버려진 기사 (영구 제외) ──────────────────────────
+# 리체가 검수 중 교체한 기사 = 취향에 안 맞았다는 뜻 → 향후 큐레이션에서 제외.
+# 교체하면 해당 기사가 HTML에서 사라져 load_past_articles()가 못 잡으므로,
+# 별도 JSON에 URL·제목을 누적 기록하고 과거 기사 목록에 합쳐 중복 제외 로직을 재사용한다.
+REJECTED_PATH = "rejected-articles.json"
+
+
+def load_rejected_articles():
+    """rejected-articles.json 로드 (없으면 빈 리스트)."""
+    if not os.path.exists(REJECTED_PATH):
+        return []
+    try:
+        with open(REJECTED_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"⚠️  rejected-articles.json 로드 실패: {e}")
+        return []
+
+
+def append_rejected_articles(items):
+    """버려진 기사 [{url, title}]를 rejected-articles.json에 append (URL 기준 중복 방지)."""
+    if not items:
+        return
+    existing = load_rejected_articles()
+    seen_urls = {r.get("url", "").strip() for r in existing if r.get("url")}
+    added = 0
+    for it in items:
+        url = (it.get("url") or "").strip()
+        title = (it.get("title") or "").strip()
+        if not url and not title:
+            continue
+        if url and url in seen_urls:
+            continue
+        existing.append({"url": url, "title": title, "rejected_at": TODAY.strftime("%Y-%m-%d")})
+        if url:
+            seen_urls.add(url)
+        added += 1
+    if added:
+        with open(REJECTED_PATH, "w", encoding="utf-8") as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        print(f"🗑  버려진 기사 {added}건 기록 (총 {len(existing)}건, {REJECTED_PATH})")
+
+
 PAST_ARTICLES = load_past_articles()
 past_titles = [a["title"] for a in PAST_ARTICLES if "title" in a]
 past_links = [a["link"] for a in PAST_ARTICLES if "link" in a]
+
+# 교체로 버려진 기사도 과거 기사 목록에 합쳐 재추천 방지 (URL·제목 둘 다)
+REJECTED_ARTICLES = load_rejected_articles()
+past_titles += [r["title"] for r in REJECTED_ARTICLES if r.get("title")]
+past_links += [r["url"] for r in REJECTED_ARTICLES if r.get("url")]
+if REJECTED_ARTICLES:
+    print(f"🗑  버려진 기사 {len(REJECTED_ARTICLES)}건 제외 목록에 반영")
 print(f"🔍 과거 기사 {len(past_titles)}개 제목, {len(past_links)}개 링크 로드 완료")
 
 
@@ -1041,6 +1092,7 @@ def generate_intro(articles):
     """오늘 기사들을 보고 1~2문장 인트로 생성 (Claude)"""
     client = anthropic.Anthropic(max_retries=8)
     article_text = ""
+    replaced_titles = []  # 큐레이터가 방금 직접 교체해 넣은 기사 (인트로에 우선 반영)
     for i, art in enumerate(articles, 1):
         article_text += f"{i}. [{art.get('title_ko','')}]\n"
         article_text += f"   한 줄: {art.get('one_line','')}\n"
@@ -1048,6 +1100,8 @@ def generate_intro(articles):
             if art.get(k):
                 article_text += f"   - {art[k]}\n"
         article_text += "\n"
+        if art.get("_just_replaced"):
+            replaced_titles.append(art.get("title_ko", ""))
 
     # Anti-reference: 최근 인트로들을 같이 보여줘 패턴 회피 유도
     recent_intros = _read_recent_intros(TODAY, n=7)
@@ -1058,10 +1112,20 @@ def generate_intro(articles):
             recent_block += f"  {i}. {intro}\n"
         recent_block += "\n"
 
+    # 교체 기사 우선 반영: 큐레이터가 직접 고른 기사이므로 인트로에 반드시 녹인다.
+    replaced_block = ""
+    if replaced_titles:
+        titles_str = ", ".join(f'"{t}"' for t in replaced_titles if t)
+        replaced_block = (
+            f"\n[중요] 다음 기사는 큐레이터가 방금 직접 골라 넣은 것입니다: {titles_str}\n"
+            f"이 기사는 오늘 다이제스트에서 특히 의미 있게 다루려는 것이니, "
+            f"인트로에 **반드시 구체적으로 언급**하고 다른 기사와 자연스럽게 엮어주세요.\n"
+        )
+
     prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
 독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
 
-{article_text}{recent_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
+{article_text}{recent_block}{replaced_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
 단순히 오늘 뭐가 실렸는지 나열하는 게 아니라, **당신이 {len(articles)}개를 다 읽고 직접 사고한 결과**를 담아야 합니다.
 
 핵심 관점 — "왜 지금 중요한가(so-what)":
@@ -1452,6 +1516,7 @@ def main():
     if REPLACEMENTS:
         print("\n🔄 기사 교체 모드 실행")
         existing = load_existing_articles()
+        rejected_this_run = []  # 이번 교체로 밀려난 기존 기사 (버려진 기사로 기록)
 
         for num, new_url in REPLACEMENTS.items():
             idx = num - 1  # 0-based
@@ -1481,10 +1546,21 @@ def main():
                 if og_img:
                     thumb_b64 = download_image_as_base64(og_img, referer=new_url)
 
+            # 교체로 밀려나는 기존 기사를 '버려진 기사'로 기록 (향후 재추천 방지).
+            # 같은 URL로 재교체하는 경우(자기 교체)는 제외.
+            old_art = existing[idx]
+            old_url = (old_art.get("url") or "").strip()
+            if old_url and old_url != new_url.strip():
+                rejected_this_run.append({"url": old_url, "title": (old_art.get("title_ko") or "").strip()})
+
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
+            new_art["_just_replaced"] = True  # 인트로에 우선 반영하기 위한 임시 플래그
             existing[idx] = new_art
             print(f"  ✅ 교체 완료: {new_art.get('title_ko', '(제목 없음)')}")
+
+        # 버려진 기사 일괄 기록
+        append_rejected_articles(rejected_this_run)
 
         # 번호 재정렬
         for i, art in enumerate(existing, 1):
