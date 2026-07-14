@@ -237,7 +237,7 @@ jobs:
           parts.extend(["", quote_block])
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
-              parts.append(f"cc. @@moretab @@pfs.design @@trenddaily")
+              parts.append(f"cc. @@moretab @@onboarding.design @@trenddaily")
           message = "\n".join(parts)
 
           data = json.dumps({"text": message, "expire_type": "P5Y"}).encode("utf-8")
