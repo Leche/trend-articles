@@ -107,6 +107,7 @@ jobs:
         run: playwright install chromium --with-deps
 
       - name: Run curation script
+        id: curate
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ARTICLE_COUNT: ${{ github.event.inputs.article_count || '8' }}
@@ -125,6 +126,8 @@ jobs:
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           FOR_TOMORROW: ${{ github.event.inputs.for_tomorrow || 'false' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
+          REPLACE_FAILED: ${{ steps.curate.outputs.replace_failed || 'false' }}
+          REPLACE_FAILED_SUMMARY: ${{ steps.curate.outputs.replace_failed_summary || '' }}
         run: |
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
@@ -140,8 +143,13 @@ jobs:
           print(d.strftime('%y%m%d'))
           ")
           # 액션별 commit message — notify.yml 이 첫 글자(이모지)로 라벨 분류한다.
+          # 교체 중 일부라도 실패했으면 커밋 메시지에 남겨서 "성공" 알림에 실패가 묻히지 않게 함.
           if [ -n "${REPLACE_URLS}" ]; then
-            COMMIT_MSG="🔄 ${DATE_LABEL} 기사 교체"
+            if [ "${REPLACE_FAILED}" = "true" ]; then
+              COMMIT_MSG="🔄 ${DATE_LABEL} 기사 교체 (일부 실패: ${REPLACE_FAILED_SUMMARY})"
+            else
+              COMMIT_MSG="🔄 ${DATE_LABEL} 기사 교체"
+            fi
           else
             COMMIT_MSG="✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
           fi
@@ -159,4 +167,15 @@ jobs:
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pages/builds
+
+      # 성공한 교체·큐레이션은 이미 커밋·배포됐으므로 job 자체는 실패로 만들지 않음
+      # (워크플로우 실패로 표시하면 notify.yml의 실패 알림 경로와 중복 발사됨).
+      # 대신 커밋 메시지에 남긴 "(일부 실패: ...)"를 notify.yml의 배포 성공 알림이
+      # 감지해 ⚠️ 로 라벨링하므로, 실패 사실은 Actions 로그를 보지 않아도 카카오워크로 전달됨.
+      # Actions 히스토리에서 한눈에 훑어보고 싶을 때를 위한 로그성 표시.
+      - name: Log replacement failures
+        if: steps.curate.outputs.replace_failed == 'true'
+        env:
+          REPLACE_FAILED_SUMMARY: ${{ steps.curate.outputs.replace_failed_summary }}
+        run: echo "::warning::기사 교체 일부 실패 — ${REPLACE_FAILED_SUMMARY}"
 

@@ -1382,17 +1382,7 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 기사 URL: {url}
 {content_section}
 
-아래 JSON 형식으로 답변하세요. JSON만 출력:
-```json
-{{
-  "url": "{url}",
-  "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
-  "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
-  "summary_1": "첫 번째 요약 (약 100자, 해요체)",
-  "summary_2": "두 번째 요약 (약 100자, 해요체)",
-  "summary_3": "세 번째 요약 (약 100자, 해요체)"
-}}
-```
+submit_summary 도구로 결과를 제출하세요.
 
 ## 한 줄 요약 규칙
 - 20자 내외, 명사형 + 마침표
@@ -1403,38 +1393,46 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 - "이 글은", "이 기사는" 등 메타 문장 금지
 - 핵심 내용부터 바로 시작"""
 
-    # 최대 3회 시도 (JSON 파싱 실패 또는 빈 값 나오면 재시도)
+    # 원문 제목·내용에 큰따옴표 등 특수문자가 있으면 모델이 직접 JSON 텍스트를 만들 때
+    # 이스케이프를 놓쳐 파싱이 깨지는 사고가 있었음(예: byline.network 인용 제목).
+    # tool_choice로 구조화 출력을 강제하면 API가 파라미터를 dict로 직접 넘겨주므로
+    # 텍스트 파싱 자체가 없어져 이 문제가 원천적으로 발생하지 않음.
+    SUMMARY_TOOL = {
+        "name": "submit_summary",
+        "description": "기사 요약 결과를 제출합니다.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"},
+                "title_ko": {"type": "string", "description": "한국어 제목 (원문 의미 최대한 살려 번역)"},
+                "one_line": {"type": "string", "description": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남"},
+                "summary_1": {"type": "string", "description": "첫 번째 요약 (약 100자, 해요체)"},
+                "summary_2": {"type": "string", "description": "두 번째 요약 (약 100자, 해요체)"},
+                "summary_3": {"type": "string", "description": "세 번째 요약 (약 100자, 해요체)"},
+            },
+            "required": ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"],
+        },
+    }
+
+    # 최대 3회 시도 (도구 미호출 또는 빈 값 나오면 재시도)
     for attempt in range(3):
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
+            tools=[SUMMARY_TOOL],
+            tool_choice={"type": "tool", "name": "submit_summary"},
             messages=[{"role": "user", "content": prompt}],
         )
-        text = response.content[0].text
-
-        # 코드펜스(```json … ```) 우선, 없으면 최외곽 중괄호 매칭
-        fence_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', text)
-        if fence_match:
-            json_str = fence_match.group(1)
-        else:
-            brace_match = re.search(r'\{[\s\S]*\}', text)
-            json_str = brace_match.group(0) if brace_match else None
-
-        if not json_str:
-            print(f"  ⚠️  JSON 블록을 찾을 수 없음 (시도 {attempt + 1}/3)")
+        tool_use = next(
+            (b for b in response.content if getattr(b, "type", None) == "tool_use"),
+            None,
+        )
+        if not tool_use:
+            print(f"  ⚠️  도구 호출 없음 (시도 {attempt + 1}/3, stop_reason={response.stop_reason})")
             continue
 
-        try:
-            result = json.loads(json_str)
-        except json.JSONDecodeError as e:
-            print(f"  ⚠️  JSON 파싱 실패 (시도 {attempt + 1}/3): {e}")
-            # LLM 출력에서 흔한 문제 보정 후 재시도: 제어문자 제거
-            cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_str)
-            try:
-                result = json.loads(cleaned)
-                print(f"  ✅ 제어문자 제거 후 파싱 성공")
-            except json.JSONDecodeError:
-                continue
+        result = dict(tool_use.input)
+        result["url"] = result.get("url") or url
 
         # 필수 키 보정
         required_keys = ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"]
@@ -1505,17 +1503,20 @@ def main():
         print("\n🔄 기사 교체 모드 실행")
         existing = load_existing_articles()
         rejected_this_run = []  # 이번 교체로 밀려난 기존 기사 (버려진 기사로 기록)
+        failed_replacements = []  # 실패한 교체 요청 (번호 + 이유) — 조용히 넘기지 않고 알림까지 흘려보냄
 
         for num, new_url in REPLACEMENTS.items():
             idx = num - 1  # 0-based
             if idx < 0 or idx >= len(existing):
                 print(f"⚠️  기사 {num}번은 범위 밖 (총 {len(existing)}개)")
+                failed_replacements.append((num, "번호가 범위 밖"))
                 continue
 
             print(f"\n🔄 기사 {num}번 교체: {new_url}")
             new_art = summarize_single_article(new_url)
             if not new_art:
                 print(f"  ❌ 요약 실패, 기존 기사 유지")
+                failed_replacements.append((num, "요약 실패(도구 미호출 반복)"))
                 continue
 
             # 저품질 결과로 멀쩡한 기존 기사를 덮어쓰지 않도록 가드.
@@ -1524,6 +1525,7 @@ def main():
                 reason = "본문 접근 불가(URL 추론)" if new_art.get("_inferred_from_url") else "요약 품질 미달"
                 print(f"  ⚠️  {reason} — 기존 기사 유지 (교체 취소)")
                 print(f"      → 이 URL은 본문 스크랩이 안 됩니다. 다른 URL을 쓰거나 수동 입력 필요.")
+                failed_replacements.append((num, reason))
                 continue
 
             # 썸네일 다운로드
@@ -1554,6 +1556,16 @@ def main():
             art["article_num"] = i
 
         enriched = existing
+
+        # 교체 실패 내역을 GITHUB_OUTPUT으로 흘려보냄 — 워크플로우 커밋 메시지·카웍 알림에서
+        # "성공"으로만 뜨고 실패가 조용히 묻히는 사고를 막기 위함.
+        github_output = os.environ.get("GITHUB_OUTPUT")
+        if github_output and failed_replacements:
+            summary = "; ".join(f"{n}번({reason})" for n, reason in failed_replacements)
+            print(f"\n⚠️  교체 실패: {summary}")
+            with open(github_output, "a", encoding="utf-8") as f:
+                f.write(f"replace_failed=true\n")
+                f.write(f"replace_failed_summary={summary}\n")
     else:
         # ── 일반 모드 ──
         if CURATE_MODE == "legacy":
