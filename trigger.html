@@ -1118,9 +1118,9 @@ body.pwd-modal-open .tab-bar {
     <div class="card-title">수동 게시</div>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">테스트나 비상 발행이 필요할 때만 사용해요.</p>
     <!-- 즉시 게시 ↔ 게시 취소: 같은 자리에 모드 토글 -->
-    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(true, false)">즉시 Agit에 게시</button>
+    <button class="btn btn-primary" id="agitNowBtn" onclick="postToAgit(false)">즉시 Agit에 게시</button>
     <button class="btn-cancel" id="agitCancelBtn" onclick="cancelAgitPost()" style="display:none;">게시 취소</button>
-    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true, true)" style="margin-top:12px;">🧪 테스트 모드로 게시</button>
+    <button class="btn btn-secondary" id="agitTestBtn" onclick="postToAgit(true)" style="margin-top:12px;">🧪 테스트 모드로 게시</button>
     <div class="status" id="manualPostStatus"></div>
   </div>
 
@@ -2938,23 +2938,17 @@ async function postponeToNextBusinessDay() {
   }
 }
 
-// 즉시 게시 / 테스트 게시 전용. 예약 발행은 schedulePublish() 사용.
-async function postToAgit(skipWait, testMode) {
+// 즉시 게시 / 테스트 게시 전용 (항상 skip_wait=true 로 발사). 예약 발행은 schedulePublish() 사용.
+async function postToAgit(testMode) {
   if (!checkSettings()) return;
   if (!await _checkAgitPassword()) return;
   // 즉시·테스트 게시 모두 '검수 끝낸 가장 최신 다이제스트' 를 발사 대상으로 잡음.
   const targetDate = checkActiveCurationDate('manualPostStatus');
   if (!targetDate) return;
-  const skipWaitStr = skipWait ? 'true' : 'false';
   const testModeStr = testMode ? 'true' : 'false';
-  let successMsg;
-  if (testMode) {
-    successMsg = '🧪 테스트 모드 — 개인 아지트로 즉시 게시 시작!';
-  } else if (skipWait) {
-    successMsg = 'Agit 즉시 게시 시작! 잠시 후 wall에 올라가요.';
-  } else {
-    successMsg = 'Agit 게시 예약 완료! 오후 1시 30분(KST)에 자동 게시됩니다.';
-  }
+  const successMsg = testMode
+    ? '🧪 테스트 모드 — 개인 아지트로 즉시 게시 시작!'
+    : 'Agit 즉시 게시 시작! 잠시 후 wall에 올라가요.';
   showStatus('manualPostStatus', 'loading', '워크플로우 실행 요청 중...');
   hideAgitCancel(); // 이전 dispatch의 cancel 버튼 정리
   const dispatchedAt = Date.now();
@@ -2968,7 +2962,7 @@ async function postToAgit(skipWait, testMode) {
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ref: 'main', inputs: { target_date: targetDate, skip_wait: skipWaitStr, test_mode: testModeStr } }),
+        body: JSON.stringify({ ref: 'main', inputs: { target_date: targetDate, skip_wait: 'true', test_mode: testModeStr } }),
       }
     );
     if (res.status === 204) {
