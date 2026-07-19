@@ -245,8 +245,9 @@ jobs:
 
           # v3 포맷 조립:
           #   # *N. 제목*
+          #   so-what 한 줄 (평문, 제목 바로 밑)
+          #   (빈 줄)
           #   ![thumb](pages/thumb-N.ext)
-          #   > so-what 한 줄
           #   > *[🔗 기사 원문 링크](원문url)*
           parts = [
               "# ⚡️",
@@ -261,11 +262,12 @@ jobs:
               so_what = (a.get('so_what') or '').strip()
               art_link = (a.get('link') or '').strip()
               thumb = a.get('thumb')
-              parts += ["", f"# *{num}. {title}*", ""]
+              parts += ["", f"# *{num}. {title}*"]
+              if so_what:
+                  parts.append(so_what)
+              parts.append("")
               if thumb and os.path.exists(f"{date_full}/{thumb}"):
                   parts.append(f"![thumb]({pages_base}/{thumb})")
-              if so_what:
-                  parts.append(f"> {so_what}")
               if art_link:
                   parts.append(f"> *[🔗 기사 원문 링크]({art_link})*")
 
