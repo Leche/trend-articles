@@ -134,14 +134,15 @@ jobs:
           TARGET_DATE: ${{ steps.params.outputs.target_date }}
         run: |
           python3 << 'PYEOF'
-          import os, re, datetime, sys
+          import os, re, json, datetime, sys
 
           target = os.environ.get('TARGET_DATE', '').strip()
           if target:
               d = datetime.datetime.strptime(target, '%Y-%m-%d').date()
           else:
               d = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date()
-          html_path = f"{d.strftime('%Y-%m-%d')}/index.html"
+          date_full = d.strftime('%Y-%m-%d')
+          html_path = f"{date_full}/index.html"
 
           if not os.path.exists(html_path):
               print(f"[ERROR] HTML 파일 없음: {html_path}")
@@ -150,21 +151,35 @@ jobs:
           with open(html_path, 'r', encoding='utf-8') as f:
               html = f.read()
 
-          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
-          if not titles:
-              print("[ERROR] 기사 제목 추출 실패")
-              sys.exit(1)
-
-          intro_section_exists = re.search(r'<section[^>]*data-static-intro', html)
-          intro_match = re.search(
-              r'<section[^>]*data-static-intro[^>]*>.*?<p class="digest-summary">([^<]+)</p>.*?</section>',
+          # 아지트 본문(v3)은 agit-digest-data JSON 블록만 소스로 씀.
+          m = re.search(
+              r'<script id="agit-digest-data" type="application/json">(.*?)</script>',
               html, re.DOTALL
           )
-          if intro_section_exists and not intro_match:
-              print("[ERROR] intro section은 있는데 digest-summary 추출 실패 — 정규식·구조 점검 필요")
+          if not m:
+              print("[ERROR] agit-digest-data JSON 블록 없음 — curate.py 최신 버전으로 생성됐는지 확인")
+              sys.exit(1)
+          try:
+              data = json.loads(m.group(1))
+          except json.JSONDecodeError as e:
+              print(f"[ERROR] agit-digest-data JSON 파싱 실패: {e}")
               sys.exit(1)
 
-          print(f"[OK] 검증 통과: 기사 {len(titles)}개, intro {'있음' if intro_match else '없음'}")
+          arts = data.get('articles') or []
+          if not arts:
+              print("[ERROR] articles 비어있음")
+              sys.exit(1)
+
+          # 썸네일 파일 존재 확인 (누락은 경고만 — 해당 기사만 이미지 생략)
+          missing = []
+          for a in arts:
+              thumb = a.get('thumb')
+              if thumb and not os.path.exists(f"{date_full}/{thumb}"):
+                  missing.append(thumb)
+          if missing:
+              print(f"[WARN] 썸네일 파일 누락 {len(missing)}개: {missing} (해당 기사는 이미지 없이 발행)")
+
+          print(f"[OK] 검증 통과: 기사 {len(arts)}개, intro {'있음' if (data.get('intro') or '').strip() else '없음'}")
           PYEOF
 
       - name: Post digest to Agit
@@ -202,6 +217,7 @@ jobs:
           weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
           date_label = f"{d.year}. {d.month:02d}. {d.day:02d} {weekdays_ko[d.weekday()]}"
           link = f'https://leche.github.io/trend-articles/{date_full}/'
+          pages_base = f'https://leche.github.io/trend-articles/{date_full}'
 
           html_path = f'{date_full}/index.html'
           if not os.path.exists(html_path):
@@ -210,34 +226,54 @@ jobs:
 
           with open(html_path, 'r', encoding='utf-8') as f:
               html = f.read()
-          titles = [t.strip() for t in re.findall(r'class="article-title"[^>]*>([^<]+)', html)]
-          if not titles:
-              print("[ERROR] 기사 제목 추출 실패")
-              raise SystemExit(1)
 
-          # 인트로 요약 추출 — 반드시 정적 intro section 안의 것만 매칭.
-          # (런타임 JS 코드에 같은 셀렉터 리터럴이 들어있어 단순 매칭 시 더미 텍스트 잡힘)
-          intro_match = re.search(
-              r'<section[^>]*data-static-intro[^>]*>.*?<p class="digest-summary">([^<]+)</p>.*?</section>',
+          # 아지트 본문(v3)의 유일한 소스 = agit-digest-data JSON 블록.
+          # (curate.py가 생성 시 심음. 제목·so-what 훅·해석된 원문 링크·썸네일 파일명 포함)
+          m = re.search(
+              r'<script id="agit-digest-data" type="application/json">(.*?)</script>',
               html, re.DOTALL
           )
-          intro_text = intro_match.group(1).strip() if intro_match else ""
+          if not m:
+              print("[ERROR] agit-digest-data JSON 블록 없음")
+              raise SystemExit(1)
+          digest = json.loads(m.group(1))
+          intro_text = (digest.get('intro') or '').strip()
+          arts = digest.get('articles') or []
+          if not arts:
+              print("[ERROR] articles 비어있음")
+              raise SystemExit(1)
 
-          # 각 기사 제목을 다이제스트 페이지의 앵커 링크로 연결
-          quote_block = "\n>\n".join(
-              f"> *{i}. [{t}]({link}#article-{i})*" for i, t in enumerate(titles, 1)
-          )
-
+          # v3 포맷 조립:
+          #   # *N. 제목*
+          #   ![thumb](pages/thumb-N.ext)
+          #   > so-what 한 줄
+          #   > *[🔗 기사 원문 링크](원문url)*
           parts = [
-              f"# ⚡️",
+              "# ⚡️",
               f"# [{date_label} 트렌드림 다이제스트]({link})",
           ]
           if intro_text:
-              parts.extend(["", intro_text])
-          parts.extend(["", quote_block])
+              parts += ["", intro_text]
+
+          for a in arts:
+              num = a.get('num')
+              title = (a.get('title') or '').strip()
+              so_what = (a.get('so_what') or '').strip()
+              art_link = (a.get('link') or '').strip()
+              thumb = a.get('thumb')
+              parts += ["", f"# *{num}. {title}*", ""]
+              if thumb and os.path.exists(f"{date_full}/{thumb}"):
+                  parts.append(f"![thumb]({pages_base}/{thumb})")
+              if so_what:
+                  parts.append(f"> {so_what}")
+              if art_link:
+                  parts.append(f"> *[🔗 기사 원문 링크]({art_link})*")
+
+          parts += ["", f"> *[다이제스트 풀버전 보기]({link})*"]
+
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
-              parts.append(f"cc. @@moretab @@onboarding.design @@trenddaily")
+              parts += ["", "cc. @@moretab @@onboarding.design @@trenddaily"]
           message = "\n".join(parts)
 
           data = json.dumps({"text": message, "expire_type": "P5Y"}).encode("utf-8")

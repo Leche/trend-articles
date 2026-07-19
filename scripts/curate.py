@@ -1044,6 +1044,7 @@ def enrich_articles(articles, target_count=None):
             **art,
             "thumbnail_b64": thumb_b64,
             "article_num": num,
+            "final_url": final_url,
         })
 
     print(f"\n📊 썸네일 결과:")
@@ -1151,6 +1152,102 @@ def generate_intro(articles):
         return f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요."
 
 
+def generate_so_what(articles):
+    """각 기사별 1~2문장 압축 so-what 훅 생성 (아지트 본문 인라인용).
+    아지트 피드에서 제목 아래 한 줄로 읽히는 게 목적 — one_line(너무 짧음)이나
+    summary_1(너무 김) 대신, '왜 지금 의미 있는지'를 55~90자로 압축.
+    실패·개수 불일치 시 기사별로 one_line→summary_1 순 폴백."""
+    n = len(articles)
+
+    fallback = []
+    for art in articles:
+        fb = (art.get("one_line") or "").strip()
+        if len(fb) < 12:  # 명사형 한 줄이 너무 짧으면 첫 불릿으로
+            fb = (art.get("summary_1") or fb).strip()
+        fallback.append(fb)
+
+    article_text = ""
+    for i, art in enumerate(articles, 1):
+        article_text += f"{i}. 제목: {art.get('title_ko','')}\n"
+        article_text += f"   한 줄: {art.get('one_line','')}\n"
+        for k in ("summary_1", "summary_2", "summary_3"):
+            if art.get(k):
+                article_text += f"   - {art[k]}\n"
+        article_text += "\n"
+
+    prompt = f"""아래는 트렌드림 다이제스트의 오늘 기사 {n}개예요. 독자는 프로덕트 디자이너·기획자·메이커입니다.
+각 기사마다 아지트 피드에서 제목 바로 아래 한 줄로 보여줄 "so-what 훅"을 써주세요.
+
+{article_text}규칙:
+- 각 기사당 1~2문장, 55~90자. 친근한 "~요" 톤(해요체).
+- 사실 나열이 아니라 "그래서 지금 왜 의미 있는지" 관점을 담되, 과장·클리셰("혁명적", "판을 바꾸다" 등) 금지.
+- 첫 문장은 핵심 사실을 짧게, 이어서 그 의미·신호를 붙이는 구조 권장.
+- 제목을 그대로 반복하지 말 것. 제목이 이미 위에 보이므로 훅은 '의미'에 집중.
+
+응답 형식: JSON 배열만 출력. 정확히 {n}개의 문자열. 다른 설명·따옴표·코드펜스 없이.
+예: ["문장1", "문장2"]"""
+    try:
+        client = anthropic.Anthropic(max_retries=8)
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = response.content[0].text.strip()
+        # 혹시 코드펜스로 감싸 나오면 제거
+        text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.DOTALL).strip()
+        arr = json.loads(text)
+        if isinstance(arr, list) and len(arr) == n:
+            out = []
+            for i, s in enumerate(arr):
+                s = (str(s) if s is not None else "").strip()
+                out.append(s if s else fallback[i])
+            return out
+        got = len(arr) if isinstance(arr, list) else "?"
+        print(f"[WARN] so-what 개수 불일치 ({got} vs {n}) → 폴백")
+    except Exception as e:
+        print(f"[WARN] so-what generation failed: {e}")
+    return fallback
+
+
+def _thumb_ext(b64):
+    """base64 data URL에서 이미지 확장자 추출 (jpeg→jpg). 이미지가 아니면 None."""
+    m = re.match(r"data:image/([a-zA-Z0-9.+-]+);base64,", b64 or "")
+    if not m:
+        return None
+    sub = m.group(1).lower()
+    return {"jpeg": "jpg", "svg+xml": "svg"}.get(sub, sub)
+
+
+def write_thumbnails(articles, out_dir):
+    """base64 썸네일을 out_dir/thumb-{num}.{ext} 파일로 저장 (아지트 본문 인라인용).
+    base64는 아지트 본문에 못 넣으므로, GitHub Pages가 서빙할 실제 이미지 파일이 필요.
+    비디오·무썸네일 기사는 건너뜀 (아지트 본문에서 이미지 라인 생략)."""
+    written = []
+    for art in articles:
+        b64 = art.get("thumbnail_b64")
+        if not b64 or b64.startswith("data:video/"):
+            continue
+        ext = _thumb_ext(b64)
+        if not ext:
+            continue
+        m = re.match(r"data:[^;]+;base64,(.*)$", b64, re.DOTALL)
+        if not m:
+            continue
+        try:
+            data = base64.b64decode(m.group(1))
+        except Exception as e:
+            print(f"[WARN] 썸네일 디코드 실패 (기사 {art.get('article_num')}): {e}")
+            continue
+        fn = os.path.join(out_dir, f"thumb-{art['article_num']}.{ext}")
+        with open(fn, "wb") as f:
+            f.write(data)
+        written.append(fn)
+    if written:
+        print(f"🖼️  썸네일 파일 {len(written)}개 저장: {out_dir}/thumb-*")
+    return written
+
+
 def generate_html(articles):
     """확정된 템플릿으로 HTML 생성"""
 
@@ -1162,6 +1259,36 @@ def generate_html(articles):
         f'<div class="digest-meta"><span>{len(articles)}개 기사</span><span>·</span><span>약 {reading_mins}분 읽기</span></div>'
         f'<p class="digest-summary">{intro_text}</p>'
         f'</section>'
+    )
+
+    # 아지트 발행용 데이터 블록 — agit-post.yml이 이 JSON만 읽어 본문(v3 포맷)을 조립.
+    # base64는 아지트 본문에 못 넣으므로 썸네일은 파일명만 담고, 실제 파일은
+    # write_thumbnails()가 날짜 폴더에 저장(GitHub Pages가 서빙).
+    so_whats = generate_so_what(articles)
+    agit_articles = []
+    for idx, art in enumerate(articles):
+        num = art["article_num"]
+        url = art.get("url", "")
+        link = art.get("final_url") or (
+            resolve_final_url(url) if "surfit.io/link/" in url else url
+        )
+        b64 = art.get("thumbnail_b64")
+        thumb = None
+        if b64 and not b64.startswith("data:video/"):
+            ext = _thumb_ext(b64)
+            if ext:
+                thumb = f"thumb-{num}.{ext}"
+        agit_articles.append({
+            "num": num,
+            "title": art.get("title_ko", ""),
+            "so_what": so_whats[idx] if idx < len(so_whats) else (art.get("one_line") or ""),
+            "link": link,
+            "thumb": thumb,
+        })
+    agit_data_script = (
+        '<script id="agit-digest-data" type="application/json">'
+        + json.dumps({"intro": intro_text, "articles": agit_articles}, ensure_ascii=False)
+        + '</script>'
     )
 
     # 기사 카드 HTML 생성
@@ -1290,6 +1417,7 @@ body {{ font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans
 @media (min-width: 1200px) {{ .agit-cta {{ padding: 40px 0 36px; }} }}
 </style></head><body><div class="page"><div class="card"><header class="header"><h1>{DATE_DISPLAY}</h1><div class="header-meta">Trend Article Digest</div></header><main class="article-wrap article-list">
 {intro_html}
+{agit_data_script}
 {cards_html}
 </main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트로 돌아가기</a></div></div></div></body></html>"""
 
@@ -1609,6 +1737,7 @@ def main():
         with open(archive_path, "w", encoding="utf-8") as f:
             f.write(html_content)
         print(f"🧪 [TEST MODE] 저장 완료: {archive_path} (root index.html 변경 없음)")
+        write_thumbnails(enriched, archive_dir)
     else:
         archive_dir = TODAY.strftime("%Y-%m-%d")
         os.makedirs(archive_dir, exist_ok=True)
@@ -1616,6 +1745,7 @@ def main():
         with open(archive_path, "w", encoding="utf-8") as f:
             f.write(html_content)
         print(f"💾 아카이브 저장: {archive_path}")
+        write_thumbnails(enriched, archive_dir)
 
     # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]
