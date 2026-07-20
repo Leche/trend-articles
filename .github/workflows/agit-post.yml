@@ -244,6 +244,7 @@ jobs:
               raise SystemExit(1)
 
           # v3 포맷 조립:
+          #   (인트로: 인용문)
           #   # *N. 제목*
           #   so-what 한 줄 (평문, 제목 바로 밑)
           #   (빈 줄)
@@ -254,7 +255,7 @@ jobs:
               f"# [{date_label} 트렌드림 다이제스트]({link})",
           ]
           if intro_text:
-              parts += ["", intro_text]
+              parts += ["", f"> {intro_text}"]
 
           for a in arts:
               num = a.get('num')
