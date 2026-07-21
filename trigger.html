@@ -2051,6 +2051,52 @@ function replaceImageFrame(content, articleNum, dataUrl) {
   return content.substring(0, frameStart) + newFrame + content.substring(pos);
 }
 
+// ── agit-digest-data JSON 블록 조작 ──
+// 아지트 발행(agit-post.yml)은 이 블록만 소스로 읽는다. 페이지 카드(base64 임베드)와
+// 별개라, 썸네일·순서 편집이 아지트에 반영되려면 이 블록도 함께 갱신해야 한다.
+// 블록이 없는 파일(root landing 등)은 손대지 않고 원본 그대로 반환.
+const AGIT_DATA_RE = /(<script id="agit-digest-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
+
+function patchAgitData(html, mutate) {
+  const m = html.match(AGIT_DATA_RE);
+  if (!m) return html;                       // 블록 없음 → 무변경
+  let data;
+  try { data = JSON.parse(m[2]); } catch(_) { return html; }
+  const next = mutate(data);
+  if (!next) return html;                     // mutate 가 null 이면 취소(무변경)
+  return html.slice(0, m.index) + m[1] + JSON.stringify(next) + m[3]
+       + html.slice(m.index + m[0].length);
+}
+
+// 순서 배열(order[newIdx]=origIdx)대로 articles 재배치 + num 재부여.
+// thumb 파일명은 그대로 둔다 — 실제 파일은 그 자리에 남아 있고 콘텐츠와 함께 이동.
+function reorderAgitData(html, order) {
+  return patchAgitData(html, data => {
+    const arts = data.articles || [];
+    if (arts.length !== order.length) return null;   // 길이 불일치 시 안전하게 스킵
+    data.articles = order.map((origIdx, newIdx) => ({ ...arts[origIdx], num: newIdx + 1 }));
+    return data;
+  });
+}
+
+// 특정 기사(num)의 thumb 파일명 갱신 (video 등 이미지 아님 → null).
+function setAgitThumb(html, num, filename) {
+  return patchAgitData(html, data => {
+    const a = (data.articles || []).find(x => x.num === num);
+    if (!a) return null;
+    a.thumb = filename;
+    return data;
+  });
+}
+
+// data URL → 아지트 썸네일 파일 확장자 (curate.py _thumb_ext 와 동일 규칙).
+function _imgExtFromDataUrl(dataUrl) {
+  const m = /^data:image\/([a-z0-9.+-]+)/i.exec(dataUrl || '');
+  if (!m) return null;
+  const sub = m[1].toLowerCase();
+  return ({ 'jpeg': 'jpg', 'svg+xml': 'svg' })[sub] || sub;
+}
+
 // ── 썸네일 교체 (다수 기사 대응) ──
 async function replaceThumbnails() {
   if (!checkSettings()) return;
@@ -2075,31 +2121,48 @@ async function replaceThumbnails() {
   showStatus('replaceThumbStatus', 'loading', '이미지 변환 중...');
 
   try {
-    // 모든 파일 먼저 dataUrl 변환
-    const converted = await Promise.all(tasks.map(async t => ({
-      num:    t.num,
-      dataUrl: await fileToDataUrl(t.file)
-    })));
+    // 모든 파일 먼저 dataUrl 변환 + 아지트 썸네일 파일명/raw base64 준비
+    const converted = await Promise.all(tasks.map(async t => {
+      const dataUrl = await fileToDataUrl(t.file);
+      const isVideo = /^data:video\//.test(dataUrl);
+      const ext     = isVideo ? null : _imgExtFromDataUrl(dataUrl);
+      return {
+        num: t.num,
+        dataUrl,
+        isVideo,
+        rawB64:    dataUrl.slice(dataUrl.indexOf(',') + 1),   // blob 커밋용 raw base64
+        thumbName: (!isVideo && ext) ? `thumb-${t.num}.${ext}` : null,  // video·불명 → null
+      };
+    }));
 
     const dateVal = dateValGuard;
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
-    // 날짜 폴더와 root index 두 파일을 한 commit 으로 묶어서 push.
-    async function modifyHtml(path) {
+    // 페이지 카드(base64 임베드)를 바꾸고, daily 페이지에선 아지트 블록의 thumb 파일명도 갱신.
+    // (root index 의 블록은 최신 날짜 복사본이라 건드리지 않음 — 과거 날짜 편집 시 오염 방지)
+    async function modifyHtml(path, isDaily) {
       let html = await ghGetRaw(path);
-      for (const { num, dataUrl } of converted) {
-        html = replaceImageFrame(html, num, dataUrl);
+      for (const c of converted) {
+        html = replaceImageFrame(html, c.num, c.dataUrl);
+        if (isDaily) html = setAgitThumb(html, c.num, c.thumbName);
       }
       return html;
     }
 
     showStatus('replaceThumbStatus', 'loading', 'HTML 파일 수정 중...');
     const files = [];
-    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`) });
+    files.push({ path: `${dateVal}/index.html`, content: await modifyHtml(`${dateVal}/index.html`, true) });
     try {
-      files.push({ path: 'index.html', content: await modifyHtml('index.html') });
+      files.push({ path: 'index.html', content: await modifyHtml('index.html', false) });
     } catch(_) {}
+
+    // 아지트가 실제로 읽는 썸네일 파일 자체를 커밋 (페이지의 base64 임베드는 아지트에서 안 보임)
+    for (const c of converted) {
+      if (c.thumbName) {
+        files.push({ path: `${dateVal}/${c.thumbName}`, content: c.rawB64, encoding: 'base64' });
+      }
+    }
 
     showStatus('replaceThumbStatus', 'loading', 'commit 진행 중...');
     await ghMultiFileCommit({ message: msg, files });
@@ -2195,7 +2258,7 @@ async function reorderArticles() {
     const dateVal = dateVal0;
     const msg = `🔀 기사 순서 조정 (${dateVal})`;
 
-    async function reorderHtml(path) {
+    async function reorderHtml(path, isDaily) {
       let html = await ghGetRaw(path);
 
       // article 블록 추출 — inject_gnb.py가 id="article-N"을 박아넣을 수 있어 정규식으로 매칭
@@ -2220,14 +2283,18 @@ async function reorderArticles() {
       const firstStart = matches[0].index;
       const lastMatch = matches[matches.length - 1];
       const lastEnd = lastMatch.index + lastMatch[0].length;
-      return html.substring(0, firstStart) + reordered.join(' ') + html.substring(lastEnd);
+      html = html.substring(0, firstStart) + reordered.join(' ') + html.substring(lastEnd);
+
+      // daily 페이지에선 아지트 블록도 같은 순서로 재배치 (아지트 발행 소스)
+      if (isDaily) html = reorderAgitData(html, order);
+      return html;
     }
 
     showStatus('reorderStatus', 'loading', 'HTML 재배치 중...');
     const files = [];
-    files.push({ path: `${dateVal}/index.html`, content: await reorderHtml(`${dateVal}/index.html`) });
+    files.push({ path: `${dateVal}/index.html`, content: await reorderHtml(`${dateVal}/index.html`, true) });
     try {
-      files.push({ path: 'index.html', content: await reorderHtml('index.html') });
+      files.push({ path: 'index.html', content: await reorderHtml('index.html', false) });
     } catch(_) {}
 
     showStatus('reorderStatus', 'loading', 'commit 진행 중...');
@@ -2754,12 +2821,15 @@ async function ghMultiFileCommit({ message, files }) {
   const baseTreeSha = (await commitRes.json()).tree.sha;
 
   // 3. 각 파일을 blob 으로 업로드
+  //    - 텍스트(HTML·JSON): f.content 는 문자열 → UTF-8 base64 인코딩
+  //    - 바이너리(썸네일 이미지): f.encoding==='base64' → f.content 가 이미 raw base64
   const blobs = [];
   for (const f of files) {
+    const content = f.encoding === 'base64' ? f.content : _b64encUtf8(f.content);
     const blobRes = await fetch(`${base}/git/blobs`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ content: _b64encUtf8(f.content), encoding: 'base64' }),
+      body: JSON.stringify({ content, encoding: 'base64' }),
     });
     if (!blobRes.ok) throw new Error(`blob 생성 실패 (${f.path}): ${blobRes.status}`);
     blobs.push({ path: f.path, sha: (await blobRes.json()).sha });
