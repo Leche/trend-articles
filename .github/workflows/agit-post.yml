@@ -170,16 +170,47 @@ jobs:
               print("[ERROR] articles 비어있음")
               sys.exit(1)
 
-          # 썸네일 파일 존재 확인 (누락은 경고만 — 해당 기사만 이미지 생략)
-          missing = []
-          for a in arts:
-              thumb = a.get('thumb')
-              if thumb and not os.path.exists(f"{date_full}/{thumb}"):
-                  missing.append(thumb)
-          if missing:
-              print(f"[WARN] 썸네일 파일 누락 {len(missing)}개: {missing} (해당 기사는 이미지 없이 발행)")
+          # ── 정합성 게이트 ──────────────────────────────────────
+          # 웹훅(리체봇) 발행은 한 번 나가면 수정 불가 → 어긋난/깨진 채 나가는 것을
+          # 발행 직전에 차단한다. 하나라도 불일치면 exit 1 → Post 스텝 skip →
+          # "Notify failure" 스텝이 카웍 경고 발사.
+          import html as _html
+          card_blocks = re.findall(
+              r'<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?</article>',
+              html
+          )
+          def _card_title(b):
+              tm = re.search(r'article-title[^>]*>([^<]+)', b)
+              return _html.unescape(tm.group(1)).strip() if tm else ''
+          card_titles = [_card_title(b) for b in card_blocks]
+          block_titles = [(a.get('title') or '').strip() for a in arts]
 
-          print(f"[OK] 검증 통과: 기사 {len(arts)}개, intro {'있음' if (data.get('intro') or '').strip() else '없음'}")
+          # (1) 카드 수 == 블록 기사 수
+          if len(card_titles) != len(block_titles):
+              print(f"[ERROR] 카드 수({len(card_titles)}) ≠ 아지트 블록 기사 수({len(block_titles)}) — 발행 중단")
+              sys.exit(1)
+
+          # (2) 카드 순서 == 블록 순서 (제목 앞 20자 기준 — 엔티티·공백 미세차 흡수)
+          def _norm(s): return re.sub(r'\s+', ' ', s)[:20]
+          bad = [i + 1 for i, (c, b) in enumerate(zip(card_titles, block_titles)) if _norm(c) != _norm(b)]
+          if bad:
+              print(f"[ERROR] 카드↔아지트 블록 순서 불일치 위치 {bad} — 발행 중단(어긋난 순서 방지)")
+              for i, (c, b) in enumerate(zip(card_titles, block_titles), 1):
+                  mark = 'X' if _norm(c) != _norm(b) else 'o'
+                  print(f"  {mark} {i}. 카드='{c[:30]}' / 블록='{b[:30]}'")
+              sys.exit(1)
+
+          # (3) 지정된 썸네일 파일 실존 (thumb 지정됐는데 파일 없으면 이미지 깨짐 → 중단)
+          #     thumb=None(무썸네일·비디오)은 정상이므로 대상 아님.
+          missing = [a['thumb'] for a in arts
+                     if a.get('thumb') and not os.path.exists(f"{date_full}/{a['thumb']}")]
+          if missing:
+              print(f"[ERROR] 지정된 썸네일 파일 누락 {missing} — 발행 중단(이미지 깨짐 방지)")
+              sys.exit(1)
+
+          print(f"[OK] 정합성 게이트 통과: 기사 {len(arts)}개(카드=블록 순서 일치), "
+                f"썸네일 {sum(1 for a in arts if a.get('thumb'))}개 파일 확인, "
+                f"intro {'있음' if (data.get('intro') or '').strip() else '없음'}")
           PYEOF
 
       - name: Post digest to Agit
