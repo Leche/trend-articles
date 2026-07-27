@@ -168,17 +168,25 @@ jobs:
 
       - name: Notify success
         run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "$(jq -n \
-              --arg src "${{ steps.run.outputs.source_label }}" \
-              --arg tgt "${{ steps.run.outputs.target_label }}" \
-              --arg date "${{ steps.run.outputs.target_date }}" \
-              '{text: ("📦 다이제스트 재배치 완료\n" + $src + " → " + $tgt + "\n\n" + $date + " 09:30 KST 에 자동 발사돼요.")}')"
+          payload=$(jq -n \
+            --arg src "${{ steps.run.outputs.source_label }}" \
+            --arg tgt "${{ steps.run.outputs.target_label }}" \
+            --arg date "${{ steps.run.outputs.target_date }}" \
+            '{text: ("📦 다이제스트 재배치 완료\n" + $src + " → " + $tgt + "\n\n" + $date + " 09:30 KST 에 자동 발사돼요.")}')
+          resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" -d "$payload")
+          # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
+          echo "[RESULT] body=$resp"
+          [ "$(jq -r '.code // empty' <<< "$resp")" = "ok" ] || {
+            echo "[ERROR] 카웍이 메시지를 거부했습니다 — 봇/웹훅 URL 상태 확인 필요"; exit 1; }
 
       - name: Notify failure
         if: failure()
         run: |
-          curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"text\": \"❌ 다이제스트 재배치 실패\n로그를 확인해주세요.\"}"
+          payload=$(jq -n '{text: "❌ 다이제스트 재배치 실패\n로그를 확인해주세요."}')
+          resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" -d "$payload")
+          # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
+          echo "[RESULT] body=$resp"
+          [ "$(jq -r '.code // empty' <<< "$resp")" = "ok" ] || {
+            echo "[ERROR] 실패 알림이 카웍에 거부됐습니다 — 봇/웹훅 URL 상태 확인 필요"; exit 1; }
