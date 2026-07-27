@@ -214,11 +214,11 @@ jobs:
           PYEOF
 
       - name: Post digest to Agit
+        id: post
         if: steps.params.outputs.skip != 'true'
         env:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
           AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
-          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
           TARGET_DATE: ${{ steps.params.outputs.target_date }}
           TEST_MODE: ${{ steps.params.outputs.test_mode }}
         run: |
@@ -330,64 +330,19 @@ jobs:
               print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
               raise
 
-          # ── 카카오워크 발행 완료 알림 (CTA 버튼 포함) ────────────────
-          kw_webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
-          if kw_webhook:
-              # Agit 응답에서 thread URL 추출 시도 (응답 필드명 불확실 → 가능한 키 순회)
-              thread_url = (
-                  result.get('url')
-                  or result.get('permalink')
-                  or result.get('link')
-                  or result.get('post_url')
-                  or ''
-              )
-              # 못 찾으면 다이제스트 페이지로 fallback
-              if not thread_url:
-                  thread_url = link
-
-              test_prefix = '🧪 ' if test_mode else ''
-              title = f'{test_prefix}Agit 발행 완료'
-              desc = (
-                  f'{date_label} 다이제스트가 '
-                  f'{"개인 아지트(테스트)" if test_mode else "트렌드림 아지트"}에 올라갔어요.'
-              )
-
-              payload = {
-                  "text": f"✅ {title}\n👉 {thread_url}",  # blocks 미지원 시 text fallback
-                  "blocks": [
-                      {"type": "header", "text": title, "style": "blue"},
-                      {"type": "text", "text": desc},
-                      {
-                          "type": "button",
-                          "text": "스레드 보기 →",
-                          "style": "default",
-                          "action_type": "open_system_browser",
-                          "value": thread_url,
-                      },
-                  ],
-              }
-              notify_req = urllib.request.Request(
-                  kw_webhook,
-                  data=json.dumps(payload).encode('utf-8'),
-                  headers={"Content-Type": "application/json"},
-                  method="POST",
-              )
-              # 알림 실패해도 발행 자체는 성공 → 워크플로우는 통과시킨다.
-              # 다만 카웍은 거부 시에도 HTTP 200 + {"success": false} 를 주므로
-              # status 만 찍으면 실패가 묻힌다. body 까지 남겨서 추적 가능하게.
-              try:
-                  with urllib.request.urlopen(notify_req, timeout=10) as notify_resp:
-                      nstatus = notify_resp.status
-                      nbody = notify_resp.read().decode('utf-8', errors='replace')
-                  print(f"[RESULT] 카웍 알림: status={nstatus} body={nbody}")
-                  # 카웍 정상 응답은 {"code": "ok"} (실측 2026-07-27)
-                  if json.loads(nbody or '{}').get('code') != 'ok':
-                      print("[WARN] 카웍이 알림을 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
-              except Exception as e:
-                  print(f"[WARN] 카웍 알림 발사 실패: {e}")
-          else:
-              print("[INFO] KAKAOWORK_WEBHOOK_URL 비어있음 — 카웍 알림 생략")
-
+          # 카웍 발행 완료 알림은 pending 정리까지 끝난 뒤 별도 스텝에서 발사한다.
+          # 여기서는 알림에 필요한 값만 넘긴다.
+          # (Agit 응답의 thread URL 필드명이 불확실 → 가능한 키 순회, 없으면 페이지로 fallback)
+          thread_url = (
+              result.get('url')
+              or result.get('permalink')
+              or result.get('link')
+              or result.get('post_url')
+              or link
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"thread_url={thread_url}\n")
+              f.write(f"date_label={date_label}\n")
           PYEOF
 
       - name: Clear pending-publish.json
@@ -424,14 +379,78 @@ jobs:
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
           git add pending-publish.json
-          # 발행 완료 알림은 Post digest step 에서 이미 발사했으므로, 여기 commit 메시지는
-          # notify.yml 의 이모지 라벨링에 잡히지 않도록 일반 chore: 로 둔다.
+          # 발행 완료 알림은 아래 Notify publish success 스텝이 따로 발사하므로,
+          # 여기 commit 메시지는 notify.yml 의 이모지 라벨링에 잡히지 않도록 일반 chore: 로 둔다.
           git commit -m "chore(publish): pending-publish.json 비우기 (${PUBLISHED_DATE} 발행 후)"
           git pull --rebase
           git push
 
+      # 발행 완료 알림. 발행·pending 정리가 모두 끝난 뒤에 도는 별도 스텝이라,
+      # 알림이 실패해 워크플로우가 빨갛게 떨어져도 정리는 이미 끝난 상태 → 다음 날 stale 이 안 난다.
+      # (2026-07-27 이전에는 발행 스텝 안에서 예외를 삼켜, 알림 실패가 조용히 묻혔다)
+      - name: Notify publish success
+        if: always() && steps.post.outcome == 'success'
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          THREAD_URL: ${{ steps.post.outputs.thread_url }}
+          DATE_LABEL: ${{ steps.post.outputs.date_label }}
+          TEST_MODE: ${{ steps.params.outputs.test_mode }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, urllib.error
+
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[INFO] KAKAOWORK_WEBHOOK_URL 비어있음 — 카웍 알림 생략")
+              raise SystemExit(0)
+
+          test_mode = os.environ.get('TEST_MODE', '').strip().lower() == 'true'
+          thread_url = os.environ.get('THREAD_URL', '').strip()
+          date_label = os.environ.get('DATE_LABEL', '').strip()
+
+          title = f"{'🧪 ' if test_mode else ''}Agit 발행 완료"
+          desc = (
+              f"{date_label} 다이제스트가 "
+              f"{'개인 아지트(테스트)' if test_mode else '트렌드림 아지트'}에 올라갔어요."
+          )
+          payload = {
+              "text": f"✅ {title}\n👉 {thread_url}",  # blocks 미지원 시 text fallback
+              "blocks": [
+                  {"type": "header", "text": title, "style": "blue"},
+                  {"type": "text", "text": desc},
+                  {
+                      "type": "button",
+                      "text": "스레드 보기 →",
+                      "style": "default",
+                      "action_type": "open_system_browser",
+                      "value": thread_url,
+                  },
+              ],
+          }
+          req = urllib.request.Request(
+              webhook,
+              data=json.dumps(payload).encode('utf-8'),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  status, body = resp.status, resp.read().decode('utf-8', errors='replace')
+          except urllib.error.HTTPError as e:
+              print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
+              raise
+          print(f"[RESULT] status={status} body={body}")
+          # 카웍은 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"} (실측 2026-07-27)
+          if json.loads(body or '{}').get('code') != 'ok':
+              print("[ERROR] 카웍이 알림을 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
+              raise SystemExit(1)
+          print("[OK] 발행 완료 알림 발사")
+          PYEOF
+
+      # 발행 자체가 실패했을 때만. 발행은 됐는데 알림만 실패한 경우까지 "발행 실패" 로
+      # 알리면 오히려 오해를 부르므로 post 스텝 결과로 한 번 더 거른다.
       - name: Notify failure
-        if: failure()
+        if: failure() && steps.post.outcome != 'success'
         run: |
           curl -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
