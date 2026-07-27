@@ -372,11 +372,17 @@ jobs:
                   headers={"Content-Type": "application/json"},
                   method="POST",
               )
+              # 알림 실패해도 발행 자체는 성공 → 워크플로우는 통과시킨다.
+              # 다만 카웍은 거부 시에도 HTTP 200 + {"success": false} 를 주므로
+              # status 만 찍으면 실패가 묻힌다. body 까지 남겨서 추적 가능하게.
               try:
                   with urllib.request.urlopen(notify_req, timeout=10) as notify_resp:
-                      print(f"[OK] 카웍 알림 발사: status={notify_resp.status}")
+                      nstatus = notify_resp.status
+                      nbody = notify_resp.read().decode('utf-8', errors='replace')
+                  print(f"[RESULT] 카웍 알림: status={nstatus} body={nbody}")
+                  if not json.loads(nbody or '{}').get('success', False):
+                      print("[WARN] 카웍이 알림을 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
               except Exception as e:
-                  # 알림 실패해도 발행 자체는 성공 → 워크플로우는 통과
                   print(f"[WARN] 카웍 알림 발사 실패: {e}")
           else:
               print("[INFO] KAKAOWORK_WEBHOOK_URL 비어있음 — 카웍 알림 생략")
