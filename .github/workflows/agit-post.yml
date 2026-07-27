@@ -380,7 +380,8 @@ jobs:
                       nstatus = notify_resp.status
                       nbody = notify_resp.read().decode('utf-8', errors='replace')
                   print(f"[RESULT] 카웍 알림: status={nstatus} body={nbody}")
-                  if not json.loads(nbody or '{}').get('success', False):
+                  # 카웍 정상 응답은 {"code": "ok"} (실측 2026-07-27)
+                  if json.loads(nbody or '{}').get('code') != 'ok':
                       print("[WARN] 카웍이 알림을 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
               except Exception as e:
                   print(f"[WARN] 카웍 알림 발사 실패: {e}")

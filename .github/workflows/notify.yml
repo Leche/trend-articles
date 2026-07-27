@@ -32,6 +32,14 @@ jobs:
           python3 << 'PYEOF'
           import os, json, urllib.request, urllib.error
 
+          def kw_accepted(body):
+              """카웍 webhook 수락 여부. 정상 응답은 {"code": "ok"} (실측 2026-07-27)."""
+              try:
+                  parsed = json.loads(body or '{}')
+              except json.JSONDecodeError:
+                  return False
+              return parsed.get('code') == 'ok' or parsed.get('success') is True
+
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
               print("[ERROR] KAKAOWORK_WEBHOOK_URL secret 비어있음")
@@ -57,7 +65,7 @@ jobs:
               print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
               raise
           print(f"[RESULT] status={status} body={body}")
-          if not json.loads(body or '{}').get('success', False):
+          if not kw_accepted(body):
               print("[ERROR] 카웍이 메시지를 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
               raise SystemExit(1)
           print("[OK] 웹훅 정상")
@@ -72,10 +80,14 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
+      # main 최신 커밋을 본다. Pages 빌드의 workflow_run.head_sha 는 신뢰할 수 없다 —
+      # 2026-07-26 22:05 큐레이션 푸시로 돈 빌드가 이틀 전(07-24) 커밋을 head_sha 로
+      # 보고했고, 그 커밋엔 라벨 이모지가 없어 알림이 통째로 skip 됐다.
+      # 알림은 배포 직후 1~2분 내에 도니 main tip 이 방금 배포된 내용과 사실상 같다.
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: main
 
       - name: Send KakaoWork notification
         env:
@@ -84,6 +96,14 @@ jobs:
         run: |
           python3 << 'PYEOF'
           import os, re, json, subprocess, urllib.request, urllib.error
+
+          def kw_accepted(body):
+              """카웍 webhook 수락 여부. 정상 응답은 {"code": "ok"} (실측 2026-07-27)."""
+              try:
+                  parsed = json.loads(body or '{}')
+              except json.JSONDecodeError:
+                  return False
+              return parsed.get('code') == 'ok' or parsed.get('success') is True
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
@@ -168,10 +188,10 @@ jobs:
           except urllib.error.HTTPError as e:
               print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
               raise
-          # 카웍은 메시지를 거부해도 HTTP 200 + {"success": false} 를 돌려준다.
+          # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
           # status 만 보면 실패가 통째로 묻히므로 body 로 판정한다.
           print(f"[RESULT] status={status} body={body}")
-          if not json.loads(body or '{}').get('success', False):
+          if not kw_accepted(body):
               print("[ERROR] 카웍이 메시지를 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
               raise SystemExit(1)
           print("[OK] 알림 발사 완료")
@@ -192,6 +212,14 @@ jobs:
         run: |
           python3 << 'PYEOF'
           import os, json, urllib.request, urllib.error
+
+          def kw_accepted(body):
+              """카웍 webhook 수락 여부. 정상 응답은 {"code": "ok"} (실측 2026-07-27)."""
+              try:
+                  parsed = json.loads(body or '{}')
+              except json.JSONDecodeError:
+                  return False
+              return parsed.get('code') == 'ok' or parsed.get('success') is True
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:
@@ -237,10 +265,10 @@ jobs:
           except urllib.error.HTTPError as e:
               print(f"[HTTPError] {e.code} {e.reason} body={e.read().decode('utf-8', errors='replace')}")
               raise
-          # 카웍은 메시지를 거부해도 HTTP 200 + {"success": false} 를 돌려준다.
+          # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
           # status 만 보면 실패가 통째로 묻히므로 body 로 판정한다.
           print(f"[RESULT] status={status} body={body}")
-          if not json.loads(body or '{}').get('success', False):
+          if not kw_accepted(body):
               print("[ERROR] 카웍이 메시지를 거부했습니다 — 봇/웹훅 URL 상태 확인 필요")
               raise SystemExit(1)
           print("[OK] 알림 발사 완료")
