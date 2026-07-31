@@ -40,7 +40,10 @@ jobs:
           SOURCE_DATE: ${{ github.event.inputs.source_date || '' }}
           TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
         run: |
-          python3 << 'PYEOF'
+          # 실패 알림에 원인을 실어 보내려고 출력을 파일에도 남긴다.
+          # pipefail 없으면 tee 의 종료코드가 스텝 결과를 덮어써 실패가 성공으로 보인다.
+          set -o pipefail
+          python3 << 'PYEOF' 2>&1 | tee "$RUNNER_TEMP/repurpose.log"
           import os, re, json, datetime
           import holidays
 
@@ -186,7 +189,12 @@ jobs:
       - name: Notify failure
         if: failure()
         run: |
-          payload=$(jq -n '{text: "❌ 다이제스트 재배치 실패\n로그를 확인해주세요."}')
+          # 원인 없는 "로그를 확인해주세요" 알림은 매번 수동 조사를 부른다 → 마지막 출력을 함께 보낸다.
+          reason=$(tail -c 400 "$RUNNER_TEMP/repurpose.log" 2>/dev/null || true)
+          payload=$(jq -n \
+            --arg reason "${reason:-(스크립트 실행 전 단계에서 실패 — 로그 없음)}" \
+            --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{text: ("❌ 다이제스트 재배치 실패\n\n" + $reason + "\n\n" + $url)}')
           resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" -d "$payload")
           # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
