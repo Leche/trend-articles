@@ -82,16 +82,19 @@ jobs:
 
           if not os.path.isdir(src_dir):
               raise SystemExit(f"[ERROR] 소스 폴더 없음: {src_dir}")
-          if os.path.isdir(tgt_dir):
-              raise SystemExit(f"[ERROR] 타겟 폴더 이미 존재: {tgt_dir} — 덮어쓰기 방지")
+          if not os.path.isfile(f"{src_dir}/index.html"):
+              raise SystemExit(f"[ERROR] 소스 폴더에 index.html 없음: {src_dir}")
+          if os.path.exists(tgt_dir):
+              raise SystemExit(f"[ERROR] 타겟 이미 존재: {tgt_dir} — 덮어쓰기 방지")
 
-          # ── 폴더 안 파일 이동 ─────────────────────────────
-          src_html = f"{src_dir}/index.html"
+          # ── 폴더를 통째로 이동 ────────────────────────────
+          # index.html 만 옮기면 썸네일(thumb-*.png/jpg/webp)이 소스 폴더에 남아
+          # rmdir 이 "Directory not empty" 로 터진다. 아지트 발행도 {날짜}/{thumb}
+          # 경로로 썸네일을 읽으므로 폴더 단위 rename 이 맞다.
+          moved = sorted(os.listdir(src_dir))
+          os.rename(src_dir, tgt_dir)
           tgt_html = f"{tgt_dir}/index.html"
-          os.makedirs(tgt_dir, exist_ok=True)
-          os.rename(src_html, tgt_html)
-          os.rmdir(src_dir)
-          print(f"[OK] {src_dir}/ → {tgt_dir}/ 이동")
+          print(f"[OK] {src_dir}/ → {tgt_dir}/ 이동 ({len(moved)}개: {', '.join(moved)})")
 
           # ── title 라벨 교체 ──────────────────────────────
           weekdays_ko = ['월요일','화요일','수요일','목요일','금요일','토요일','일요일']
