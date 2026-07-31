@@ -13,6 +13,10 @@ on:
         description: '타겟 날짜 (YYYY-MM-DD, 비워두면 소스 기준 다음 영업일 자동 계산)'
         required: false
         default: ''
+      dry_run:
+        description: '리허설 — 러너에서만 실제로 옮겨보고 커밋·발행예약·알림은 안 함 (true/false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -39,6 +43,7 @@ jobs:
         env:
           SOURCE_DATE: ${{ github.event.inputs.source_date || '' }}
           TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
           # 실패 알림에 원인을 실어 보내려고 출력을 파일에도 남긴다.
           # pipefail 없으면 tee 의 종료코드가 스텝 결과를 덮어써 실패가 성공으로 보인다.
@@ -147,9 +152,33 @@ jobs:
               f.write(f"target_date={tgt_dir}\n")
               f.write(f"source_label={src_label}\n")
               f.write(f"target_label={tgt_label}\n")
+
+          # ── 리허설 결과 리포트 ─────────────────────────────
+          # 이 버튼은 놀금·공휴일에만 쓰는 비상구라 몇 달씩 안 쏴보게 된다.
+          # (실제로 5/29 작성 후 7/30 첫 실행에서 처음 터졌다.)
+          # dry_run 은 러너에서 진짜로 옮겨본 뒤 커밋만 안 하는 경로 —
+          # 아무 날에나 눌러서 이 코드가 아직 도는지 확인할 수 있게 한다.
+          report = [
+              f"| 항목 | 값 |", "| --- | --- |",
+              f"| 소스 | `{src_dir}/` ({src_label}) |",
+              f"| 타겟 | `{tgt_dir}/` ({tgt_label}) |",
+              f"| 옮겨진 파일 | {len(moved)}개 — {', '.join(moved)} |",
+              f"| 타겟 폴더 실제 내용 | {', '.join(sorted(os.listdir(tgt_dir)))} |",
+              f"| 발행 예약 | {tgt_dir} 09:30 KST |",
+          ]
+          dry = os.environ.get('DRY_RUN','').lower() == 'true'
+          summary = ("## 🧪 리허설 (dry_run) — 커밋·발행예약·알림 없음\n\n"
+                     if dry else "## 📦 재배치 실행\n\n") + "\n".join(report) + "\n"
+          print(summary)
+          if os.environ.get('GITHUB_STEP_SUMMARY'):
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+                  f.write(summary)
+          if dry:
+              print("[DRY RUN] 러너 작업트리에서만 반영됨 — 아래 커밋·Pages·알림 스텝은 모두 skip 됩니다.")
           PYEOF
 
       - name: Commit and push
+        if: github.event.inputs.dry_run != 'true'
         env:
           SOURCE_DATE: ${{ steps.run.outputs.source_date }}
           TARGET_DATE: ${{ steps.run.outputs.target_date }}
@@ -166,6 +195,7 @@ jobs:
           git push
 
       - name: Trigger Pages
+        if: github.event.inputs.dry_run != 'true'
         run: |
           curl -s -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -173,6 +203,7 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/pages/builds
 
       - name: Notify success
+        if: github.event.inputs.dry_run != 'true'
         run: |
           payload=$(jq -n \
             --arg src "${{ steps.run.outputs.source_label }}" \
@@ -190,11 +221,15 @@ jobs:
         if: failure()
         run: |
           # 원인 없는 "로그를 확인해주세요" 알림은 매번 수동 조사를 부른다 → 마지막 출력을 함께 보낸다.
+          # 리허설 실패도 알린다 — 비상구가 썩었는지 알려주는 게 dry_run 의 존재 이유니까.
           reason=$(tail -c 400 "$RUNNER_TEMP/repurpose.log" 2>/dev/null || true)
+          head='❌ 다이제스트 재배치 실패'
+          [ "${{ github.event.inputs.dry_run }}" = "true" ] && head='❌ 다이제스트 재배치 리허설 실패 (실제 발행엔 영향 없음)'
           payload=$(jq -n \
+            --arg head "$head" \
             --arg reason "${reason:-(스크립트 실행 전 단계에서 실패 — 로그 없음)}" \
             --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            '{text: ("❌ 다이제스트 재배치 실패\n\n" + $reason + "\n\n" + $url)}')
+            '{text: ($head + "\n\n" + $reason + "\n\n" + $url)}')
           resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" -d "$payload")
           # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
