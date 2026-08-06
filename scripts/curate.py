@@ -14,7 +14,7 @@ import base64
 import datetime
 import textwrap
 from io import BytesIO
-from urllib.parse import urljoin, urlparse, parse_qs
+from urllib.parse import urljoin, urlparse
 
 import anthropic
 import requests
@@ -751,36 +751,15 @@ def _normalize_url(u):
     return u.rstrip('/')
 
 
-def _unwrap_auth_redirect(url):
-    """로그인 경유 URL을 원문 URL로 되돌린다.
-    브런치는 비로그인 접근 시 /auth/kakao?url=%2F%40author%2F123&auto_login=true 로 튕기는데,
-    리다이렉트를 그대로 따라가면 이 로그인 URL이 최종 URL로 잡힌다(2026-08-07 다이제스트 실사고).
-    아지트 본문 링크가 로그인 화면으로 가버리므로 url 파라미터를 풀어 원문으로 복원."""
-    try:
-        parsed = urlparse(url)
-        if "/auth/" not in parsed.path:
-            return url
-        inner = parse_qs(parsed.query).get("url", [""])[0]
-        if not inner:
-            return url
-        inner = urlparse(inner)
-        # 내부 url 파라미터는 보통 경로만 담김 → 원 도메인에 붙이고 추적 쿼리는 버린다
-        path = inner.path or "/"
-        host = f"{inner.scheme}://{inner.netloc}" if inner.netloc else f"{parsed.scheme}://{parsed.netloc}"
-        return host + path
-    except Exception:
-        return url
-
-
 def resolve_final_url(url, timeout=8):
     """리다이렉트(서핏 link 등)를 따라가 최종 URL 반환. 실패 시 원본 반환."""
     try:
         r = requests.head(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
         if r.url:
-            return _unwrap_auth_redirect(r.url)
+            return r.url
         # 일부 서버는 HEAD 미지원 → GET 으로 재시도
         r = requests.get(url, headers=HEADERS, timeout=timeout, allow_redirects=True, stream=True)
-        return _unwrap_auth_redirect(r.url) if r.url else url
+        return r.url or url
     except Exception:
         return url
 
@@ -1162,24 +1141,12 @@ def generate_intro(articles):
 
 응답: 인트로 텍스트만 (다른 설명, 따옴표 등 없이)"""
     try:
-        msgs = [{"role": "user", "content": prompt}]
         response = client.messages.create(
-            model="claude-sonnet-4-6", max_tokens=500, messages=msgs
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
         )
-        intro = response.content[0].text.strip()
-        # 프롬프트로만 길이를 요구하면 종종 넘긴다(2026-08-07: 255자·4문장) → 초과 시 한 번 조인다
-        if len(intro) > 200:
-            print(f"[WARN] intro {len(intro)}자 — 200자 초과, 축약 재시도")
-            msgs += [
-                {"role": "assistant", "content": intro},
-                {"role": "user", "content": "길어요. 같은 논지를 유지하면서 170~195자, 3문장 이내로 줄여주세요. 인트로 텍스트만."},
-            ]
-            retry = client.messages.create(
-                model="claude-sonnet-4-6", max_tokens=500, messages=msgs
-            ).content[0].text.strip()
-            if len(retry) <= 200:
-                intro = retry
-        return intro
+        return response.content[0].text.strip()
     except Exception as e:
         print(f"[WARN] intro generation failed: {e}")
         return f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요."
