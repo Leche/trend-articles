@@ -86,7 +86,9 @@ jobs:
     needs: guard
     if: needs.guard.outputs.should_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 큐레이션 본체는 평소 4~7분. 2026-08-05 러너에서 Playwright 설치가 평소 30초 대신
+    # 10분 34초 걸려 15분 예산을 다 먹고 스크립트가 잘렸다 → 설치 지연을 흡수할 여유 확보.
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
