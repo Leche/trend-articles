@@ -205,6 +205,29 @@ if REJECTED_ARTICLES:
     print(f"🗑  버려진 기사 {len(REJECTED_ARTICLES)}건 제외 목록에 반영")
 print(f"🔍 과거 기사 {len(past_titles)}개 제목, {len(past_links)}개 링크 로드 완료")
 
+# ── 프롬프트에 넣을 과거 목록 (비용 상한) ──────────────────────
+# past_titles/past_links 전체는 dedup_articles()가 정확 일치 중복 차단에 그대로 쓴다.
+# 프롬프트에는 의미적 유사 판단(같은 사건의 다른 매체 보도 등)에 필요한 최근 분량만
+# 넣는다 — 아카이브가 98일치까지 늘면서 전체를 넣을 때 약 36,500토큰(일 입력의 41%)을
+# 차지했고, 발행할수록 무한히 커지는 구조였다. 선정 기준 자체가 '발행일 2주 이내'라
+# 그보다 오래된 기사와는 애초에 같은 기사일 수 없다.
+# 교체(버려진) 기사는 사람이 직접 빼낸 것이라 날짜 무관 전량 유지한다.
+PROMPT_HISTORY_DAYS = 30
+_prompt_history_cutoff = (TODAY - datetime.timedelta(days=PROMPT_HISTORY_DAYS)).isoformat()
+
+
+def _is_recent(entry):
+    return entry.get("file", "").split("/")[0] >= _prompt_history_cutoff
+
+
+prompt_past_titles = [a["title"] for a in PAST_ARTICLES if "title" in a and _is_recent(a)]
+prompt_past_links = [a["link"] for a in PAST_ARTICLES if "link" in a and _is_recent(a)]
+prompt_past_titles += [r["title"] for r in REJECTED_ARTICLES if r.get("title")]
+prompt_past_links += [r["url"] for r in REJECTED_ARTICLES if r.get("url")]
+print(f"🔍 프롬프트용 과거 목록: 최근 {PROMPT_HISTORY_DAYS}일 + 교체분 "
+      f"→ 제목 {len(prompt_past_titles)}개, 링크 {len(prompt_past_links)}개 "
+      f"(전체 대비 {len(prompt_past_titles)}/{len(past_titles)})")
+
 
 # ─── Playwright 유틸 ──────────────────────────────────────────
 def _pw_available():
@@ -598,6 +621,33 @@ def scan_priority_sites():
     return candidates
 
 
+# structured outputs 스키마 — API가 이 형태의 유효한 JSON을 보장한다.
+# 문자열 길이·문체 규칙은 스키마로 표현할 수 없으므로 프롬프트에 남긴다.
+ARTICLES_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "articles": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "기사 원문 URL"},
+                    "title_ko": {"type": "string", "description": "한국어 제목"},
+                    "one_line": {"type": "string", "description": "20자 내외, 명사형 + 마침표"},
+                    "summary_1": {"type": "string", "description": "첫 번째 요약 (약 100자, 해요체)"},
+                    "summary_2": {"type": "string", "description": "두 번째 요약 (약 100자, 해요체)"},
+                    "summary_3": {"type": "string", "description": "세 번째 요약 (약 100자, 해요체)"},
+                },
+                "required": ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["articles"],
+    "additionalProperties": False,
+}
+
+
 # ─── Claude API로 기사 선정 및 요약 ──────────────────────────
 def curate_with_claude(candidates):
     """Claude API를 사용하여 기사 선정, 제목 번역, 요약 생성"""
@@ -614,12 +664,14 @@ def curate_with_claude(candidates):
             candidate_text += f"   날짜: {c['date_hint']}\n"
         candidate_text += "\n"
 
-    # 과거 기사 목록
-    past_text = "과거 큐레이션된 기사 제목:\n"
-    for t in past_titles:
+    # 과거 기사 목록 — 프롬프트엔 최근분만, 전체는 dedup_articles() 후처리가 사용
+    past_text = "Python 후처리에서 전체 과거 URL·제목으로 한 번 더 자동 필터링됩니다.\n"
+    past_text += "여기 목록은 의미적 유사성(같은 사건을 다른 매체가 보도한 기사 등) 판단용으로 활용하세요.\n\n"
+    past_text += f"최근 {PROMPT_HISTORY_DAYS}일 큐레이션 + 교체로 제외된 기사 — 제목:\n"
+    for t in prompt_past_titles:
         past_text += f"- {t}\n"
-    past_text += "\n과거 큐레이션된 기사 링크:\n"
-    for l in past_links:
+    past_text += f"\n최근 {PROMPT_HISTORY_DAYS}일 큐레이션 + 교체로 제외된 기사 — 링크:\n"
+    for l in prompt_past_links:
         past_text += f"- {l}\n"
 
     prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
@@ -657,24 +709,22 @@ def curate_with_claude(candidates):
 **출처 다양성 필수**: 같은 출처(사이트)에서 최대 2개까지만 선정하세요. 가능한 한 서로 다른 사이트에서 기사를 골라야 합니다.
 **중복 기사는 절대 선정하지 마세요.** 과거 기사 목록에 있는 제목이나 링크와 동일하거나 유사한 기사는 제외합니다.
 
-각 기사에 대해 아래 JSON 형식으로 답변하세요. JSON 배열만 출력하세요:
+각 기사에 대해 아래 형식으로 답변하세요:
 
 ```json
-[
-  {{
-    "url": "기사 원문 URL",
-    "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
-    "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
-    "summary_1": "첫 번째 요약 (약 100자, 해요체)",
-    "summary_2": "두 번째 요약 (약 100자, 해요체)",
-    "summary_3": "세 번째 요약 (약 100자, 해요체)"
-  }}
-]
+{{
+  "articles": [
+    {{
+      "url": "기사 원문 URL",
+      "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
+      "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
+      "summary_1": "첫 번째 요약 (약 100자, 해요체)",
+      "summary_2": "두 번째 요약 (약 100자, 해요체)",
+      "summary_3": "세 번째 요약 (약 100자, 해요체)"
+    }}
+  ]
+}}
 ```
-
-## JSON 출력 주의 (필수)
-- 유효한 JSON만 출력. 문자열 값 안의 큰따옴표(")는 반드시 \\" 로 이스케이프.
-- 문자열 안에 줄바꿈·제어문자 금지. 배열 마지막 요소 뒤 trailing comma 금지.
 
 ## 한 줄 요약 규칙
 - 20자 내외, 명사형 + 마침표
@@ -689,46 +739,29 @@ def curate_with_claude(candidates):
 
     print("\n🤖 Claude API로 기사 선정 및 요약 중...")
 
-    # 최대 3회 시도 — LLM이 깨진 JSON을 반환하면 재생성
-    articles = None
-    for attempt in range(3):
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=8192,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = response.content[0].text
+    # structured outputs로 API가 스키마에 맞는 유효한 JSON을 보장한다.
+    # 이전에는 파싱 실패 시 3회까지 재시도했는데, 재시도마다 프롬프트를 통째로
+    # 재전송해 그날 입력 비용이 2~3배로 뛰었다(실측 최고 144K 토큰/일).
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=16000,
+        output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}},
+        messages=[{"role": "user", "content": prompt}],
+    )
 
-        # 코드펜스(```json … ```) 우선, 없으면 최외곽 대괄호 매칭
-        fence_match = re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text)
-        if fence_match:
-            json_str = fence_match.group(1)
-        else:
-            bracket_match = re.search(r'\[[\s\S]*\]', text)
-            json_str = bracket_match.group(0) if bracket_match else None
-
-        if not json_str:
-            print(f"  ⚠️  JSON 블록을 찾을 수 없음 (시도 {attempt + 1}/3)")
-            continue
-
-        try:
-            articles = json.loads(json_str)
-            break
-        except json.JSONDecodeError as e:
-            print(f"  ⚠️  JSON 파싱 실패 (시도 {attempt + 1}/3): {e}")
-            # 흔한 LLM 오류 보정: 제어문자 제거 + trailing comma 제거
-            cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_str)
-            cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)
-            try:
-                articles = json.loads(cleaned)
-                print(f"  ✅ 보정 후 파싱 성공")
-                break
-            except json.JSONDecodeError:
-                continue
-
-    if articles is None:
-        print("❌ 3회 시도 후에도 Claude 응답 JSON 파싱 실패")
+    # structured outputs는 잘린 응답까지 유효하게 만들어주지는 못한다 — 소리내어 실패시킨다.
+    if response.stop_reason == "max_tokens":
+        print("❌ 응답이 max_tokens에서 잘렸습니다 — max_tokens를 올려야 합니다")
         sys.exit(1)
+    if response.stop_reason == "refusal":
+        print(f"❌ 모델이 요청을 거부했습니다: {response.stop_details}")
+        sys.exit(1)
+
+    text = next((b.text for b in response.content if b.type == "text"), None)
+    if not text:
+        print(f"❌ 응답에 text 블록이 없습니다 (stop_reason={response.stop_reason})")
+        sys.exit(1)
+    articles = json.loads(text)["articles"]
 
     print(f"✅ {len(articles)}개 기사 1차 선정")
 
