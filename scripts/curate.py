@@ -315,6 +315,47 @@ def _fetch_googlebot(url, timeout=15):
     return None
 
 
+# 러너 IP 자체를 막는 사이트(Akamai 등 데이터센터 대역 차단)의 최후 수단.
+# 프록시가 자기 IP로 대신 읽어 본문 텍스트만 돌려주므로 IP 차단을 우회한다.
+# 2026-08-11 news.samsung.com 실측: requests·Googlebot UA·Playwright(실제 Chromium)·
+# 구글 캐시 4단계가 전부 막혔는데 이 경로로는 본문 31KB 확보.
+# HTML이 아니라 텍스트를 돌려주므로 og:image 추출에는 쓸 수 없다 → 요약 구제용으로만.
+TEXT_PROXY = "https://r.jina.ai/"
+
+
+def _clean_proxy_markdown(txt, max_len=3000):
+    """프록시가 준 마크다운에서 본문만 남긴다.
+
+    그냥 앞에서 잘라 쓰면 안 된다 — 응답 앞부분이 전역 내비게이션이고, 링크마다
+    퍼센트 인코딩된 URL이 붙어 덩치가 커서 본문이 컷 밖으로 밀린다
+    (news.samsung.com 실측: 본문이 4,155자 지점에서 시작). 링크를 라벨만 남기고
+    접으면 같은 문서가 5,201자로 줄고 본문이 앞 1,300자 안으로 들어온다.
+    """
+    i = txt.find("Markdown Content:")
+    if i >= 0:
+        txt = txt[i + len("Markdown Content:"):]
+    txt = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', txt)       # 이미지 제거
+    txt = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', txt)   # 링크 → 라벨만
+    txt = re.sub(r'^\s*[\*\-]\s+', '', txt, flags=re.M)  # 리스트 불릿 제거
+    lines = [l.strip() for l in txt.split('\n') if l.strip()]
+    return '\n'.join(lines)[:max_len]
+
+
+def _fetch_text_via_proxy(url, timeout=40):
+    """텍스트 추출 프록시로 본문만 가져오기. 실패 시 빈 문자열."""
+    try:
+        r = requests.get(TEXT_PROXY + url, headers=HEADERS, timeout=timeout)
+        if r.status_code == 200:
+            text = _clean_proxy_markdown(r.text)
+            if len(text) >= 300:
+                print(f"  ✅ 텍스트 프록시로 {len(text)}자 확보 성공")
+                return text
+        print(f"  ⚠️  텍스트 프록시 응답 부족 (status={r.status_code}, {len(r.text)}자)")
+    except Exception as e:
+        print(f"  ⚠️  텍스트 프록시 접근 실패: {e}")
+    return ""
+
+
 def _fetch_google_cache(url, timeout=15):
     """Google 캐시에서 페이지 가져오기 (직접 접근 불가 사이트 fallback)"""
     cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
@@ -1507,6 +1548,13 @@ def summarize_single_article(url):
         else:
             print(f"  ⚠️  Playwright로도 텍스트 부족 ({len(pw_text)}자)")
 
+    # 실제 브라우저까지 막혔다면 헤더가 아니라 러너 IP가 차단된 것 → 프록시로 우회.
+    # 프록시 응답도 3000자로 잘라 넘기므로 프롬프트 토큰은 본문 확보 케이스와 같다.
+    if len(page_text) < 300:
+        proxy_text = _fetch_text_via_proxy(url)  # 이미 정리·3000자 컷된 평문
+        if len(proxy_text) > len(page_text):
+            page_text = proxy_text
+
     # 본문 추출 완전 실패 시: URL 메타데이터 기반 요약 시도
     content_available = len(page_text) >= 300
     if not content_available:
@@ -1667,12 +1715,35 @@ def main():
         rejected_this_run = []  # 이번 교체로 밀려난 기존 기사 (버려진 기사로 기록)
         failed_replacements = []  # 실패한 교체 요청 (번호 + 이유) — 조용히 넘기지 않고 알림까지 흘려보냄
 
+        # 교체 대상 슬롯은 검사 기준에서 빼둔다 (그 자리는 어차피 덮어써짐).
+        replaced_idx = {n - 1 for n in REPLACEMENTS}
+        accepted_urls = {}  # 정규화 URL -> 이미 차지한 슬롯 번호
+
         for num, new_url in REPLACEMENTS.items():
             idx = num - 1  # 0-based
             if idx < 0 or idx >= len(existing):
                 print(f"⚠️  기사 {num}번은 범위 밖 (총 {len(existing)}개)")
                 failed_replacements.append((num, "번호가 범위 밖"))
                 continue
+
+            # 같은 기사가 다이제스트에 두 번 실리는 것을 막는다.
+            # 신규 큐레이션은 dedup_articles가 걸러주지만 교체 경로는 그 검사를 안 거쳐서,
+            # 2026-08-11에 2번·4번이 완전히 같은 URL로 들어간 사고가 났다.
+            # 제목·요약은 슬롯별로 따로 생성되므로 겉보기로는 중복이 드러나지 않는다.
+            new_norm = _normalize_url(new_url)
+            dup_slot = accepted_urls.get(new_norm)
+            if dup_slot is None:
+                for i, art in enumerate(existing):
+                    if i in replaced_idx:
+                        continue
+                    if _normalize_url(art.get("url", "")) == new_norm:
+                        dup_slot = i + 1
+                        break
+            if dup_slot is not None:
+                print(f"⚠️  기사 {num}번 교체 취소 — {dup_slot}번과 같은 기사예요: {new_url}")
+                failed_replacements.append((num, f"{dup_slot}번과 중복"))
+                continue
+            accepted_urls[new_norm] = num
 
             print(f"\n🔄 기사 {num}번 교체: {new_url}")
             new_art = summarize_single_article(new_url)
@@ -1684,9 +1755,11 @@ def main():
             # 저품질 결과로 멀쩡한 기존 기사를 덮어쓰지 않도록 가드.
             # 본문 접근 불가(URL 추론)·요약 품질 미달이면 교체 취소하고 기존 유지.
             if new_art.get("_needs_manual_patch") or new_art.get("_inferred_from_url"):
-                reason = "본문 접근 불가(URL 추론)" if new_art.get("_inferred_from_url") else "요약 품질 미달"
+                # 프록시 폴백까지 실패한 뒤라 자동으로는 더 손쓸 수 없다 → 알림에 대응 방법을 박는다.
+                reason = ("본문 접근 불가 · 수동 교체 필요" if new_art.get("_inferred_from_url")
+                          else "요약 품질 미달")
                 print(f"  ⚠️  {reason} — 기존 기사 유지 (교체 취소)")
-                print(f"      → 이 URL은 본문 스크랩이 안 됩니다. 다른 URL을 쓰거나 수동 입력 필요.")
+                print(f"      → 폴백 5단계 전부 실패. 이 사이트는 자동 스크랩이 안 됩니다.")
                 failed_replacements.append((num, reason))
                 continue
 
