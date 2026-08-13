@@ -1318,13 +1318,32 @@ def _thumb_ext(b64):
 def write_thumbnails(articles, out_dir):
     """base64 썸네일을 out_dir/thumb-{num}.{ext} 파일로 저장 (아지트 본문 인라인용).
     base64는 아지트 본문에 못 넣으므로, GitHub Pages가 서빙할 실제 이미지 파일이 필요.
-    비디오·무썸네일 기사는 건너뜀 (아지트 본문에서 이미지 라인 생략)."""
+    비디오·무썸네일 기사는 건너뜀 (아지트 본문에서 이미지 라인 생략).
+
+    쓰기 전에 같은 번호의 다른 확장자 파일을 지운다. 썸네일·기사 교체로 확장자가
+    바뀌면(jpg→webp) 이전 파일이 폴더에 남는데, HTML·아지트 발행 모두 정확한
+    파일명을 참조하므로 표시는 안 깨져 조용히 누적된다 (2026-08-14 발견:
+    12개 날짜에 24개 잔여). 인자는 항상 그 날짜의 전체 기사 집합이다."""
     written = []
     for art in articles:
         b64 = art.get("thumbnail_b64")
-        if not b64 or b64.startswith("data:video/"):
-            continue
-        ext = _thumb_ext(b64)
+        ext = None
+        if b64 and not b64.startswith("data:video/"):
+            ext = _thumb_ext(b64)
+
+        # 이 번호의 기존 파일 중 지금 쓸 것만 남기고 정리
+        num = art.get("article_num")
+        if num is not None:
+            keep = f"thumb-{num}.{ext}" if ext else None
+            for old in glob.glob(os.path.join(out_dir, f"thumb-{num}.*")):
+                if os.path.basename(old) == keep:
+                    continue
+                try:
+                    os.remove(old)
+                    print(f"   🧹 잔여 썸네일 제거: {old}")
+                except OSError as e:
+                    print(f"[WARN] 잔여 썸네일 제거 실패 ({old}): {e}")
+
         if not ext:
             continue
         m = re.match(r"data:[^;]+;base64,(.*)$", b64, re.DOTALL)
