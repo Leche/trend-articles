@@ -14,7 +14,7 @@ import base64
 import datetime
 import textwrap
 from io import BytesIO
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit, quote
 
 import anthropic
 import requests
@@ -450,6 +450,28 @@ def extract_og_image(html_text, base_url=""):
     return None
 
 
+def _ascii_url(u):
+    """URL의 non-ASCII 문자를 퍼센트 인코딩해 순수 ASCII로 만든다.
+
+    HTTP 헤더 값은 latin-1로 인코딩되므로, 한글이 그대로 들어간 URL을 Referer에
+    넣으면 요청 자체가 UnicodeEncodeError로 터진다 (2026-08-13 발견:
+    about.daangn.com은 기사 slug이 한글 원문이라 5/19 Referer 도입 이후 썸네일이
+    계속 실패했다). requests는 URL 자체는 알아서 인코딩하지만 헤더는 손대지 않는다.
+    """
+    if not u:
+        return u
+    try:
+        p = urlsplit(u)
+        return urlunsplit((
+            p.scheme, p.netloc,
+            quote(p.path, safe="/%:@&=+$,~"),
+            quote(p.query, safe="/%:@&=+$,~?"),
+            quote(p.fragment, safe="/%:@&=+$,~?"),
+        ))
+    except Exception:
+        return u.encode("ascii", "ignore").decode("ascii")
+
+
 def download_image_as_base64(img_url, max_size_kb=500, referer=None):
     """이미지를 다운로드하여 base64로 인코딩.
     referer: hotlink 차단(designcompass 등) 우회용 — 기사 페이지 URL을 넘기면
@@ -457,7 +479,7 @@ def download_image_as_base64(img_url, max_size_kb=500, referer=None):
     try:
         headers = dict(HEADERS)
         if referer:
-            headers["Referer"] = referer
+            headers["Referer"] = _ascii_url(referer)
         r = requests.get(img_url, headers=headers, timeout=15)
         r.raise_for_status()
         content_type = r.headers.get("Content-Type", "image/jpeg")
