@@ -105,6 +105,25 @@ jobs:
         run: |
           pip install anthropic requests beautifulsoup4 lxml Pillow playwright
 
+      # 브라우저 바이너리를 캐시해 CDN 장애를 흡수한다. 2026-08-19 22:00 큐레이션이
+      # cdn.playwright.dev 403(AccessDenied, "not available in your location")로 죽었는데,
+      # 어제와 playwright·Chrome 버전이 완전히 동일했으므로 러너 egress IP 쪽 거부였다.
+      # 캐시가 맞으면 install 이 CDN 을 아예 안 건드린다. playwright 를 핀하지 않으므로
+      # 버전이 올라가면 키가 바뀌어 자동 갱신된다.
+      - name: Resolve Playwright version
+        id: pwver
+        run: |
+          set -e
+          V=$(python3 -c "from importlib.metadata import version; print(version('playwright'))")
+          [ -n "$V" ] || { echo "playwright 버전 확인 실패 — 캐시 키가 뭉개지므로 중단"; exit 1; }
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ steps.pwver.outputs.version }}
+
       - name: Install Playwright browser
         run: playwright install chromium --with-deps
 
