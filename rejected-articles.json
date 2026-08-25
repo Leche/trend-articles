@@ -453,5 +453,15 @@
     "url": "https://toss.tech/article/tech_talk_talk_1",
     "title": "AI에게 투자 정보를 말하게 하기까지 — 근거 선택, 절차 통제, 실패 재작성의 세 관문",
     "rejected_at": "2026-08-25"
+  },
+  {
+    "url": "https://techcrunch.com/2026/08/25/andy-dunns-startup-pie-becomes-less-of-an-events-app-and-more-of-a-social-network/",
+    "title": "앤디 던의 스타트업 Pie, 이벤트 앱에서 소셜 네트워크로 진화",
+    "rejected_at": "2026-08-26"
+  },
+  {
+    "url": "https://toss.tech/article/tech_talk_talk_2",
+    "title": "LLM 서빙, 띄우는 것과 잘 띄우는 것 사이 — 토스 테크 톡",
+    "rejected_at": "2026-08-26"
   }
 ]
