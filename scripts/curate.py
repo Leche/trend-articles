@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 트렌드림 기사 큐레이션 자동화 스크립트
-- 우선 사이트 스캔 → 기사 선정 → 요약 생성 → 썸네일 다운로드 → HTML 생성
+- 피드·사이트 스캔 → 기사 선정(Claude) → 본문 읽고 제목·요약 생성(Claude) → 썸네일 → HTML 생성
 - GitHub Actions에서 실행되며, Claude API를 사용합니다.
 """
 
@@ -37,34 +37,59 @@ SURFIT_CATEGORIES = [
     "https://www.surfit.io/explore/startup/business-trend",
 ]
 
-PRIORITY_SITES = [
-    # 기존 사이트 (surfit.io는 Playwright로 별도 스캔)
-    "https://techcrunch.com/category/apps/",
-    "https://designcompass.org/magazine/",
-    # 디바이스 / 모바일
-    "https://www.phonearena.com",
-    "https://9to5mac.com/?s=siri",
-    "https://9to5google.com",
-    "https://www.theverge.com",
+# ─── RSS/Atom 피드 (후보 수집의 1차 소스) ─────────────────────
+# 피드는 제목·발행일·요약을 공짜로 준다. 홈 HTML 의 링크를 긁던 방식은 광고·소셜·내비 링크가
+# 후보의 절반을 차지했고(2026-09-09 실측: verge 상위 5 중 Archives/Youtube/RSS 3개, 9to5google 은
+# 소셜 링크 5개, techcrunch 는 Disrupt 티켓 광고 3개), 날짜가 없어 '2주 이내'를 모델이 판단할 수
+# 없었다. 피드가 없는 곳만 아래 PRIORITY_SITES 에 남겨 HTML 스캔한다.
+FEEDS = [
+    # 해외 테크 미디어
+    "https://techcrunch.com/category/apps/feed/",
+    "https://www.theverge.com/rss/index.xml",
+    "https://9to5mac.com/feed/",
+    "https://9to5google.com/feed/",
     # 빅테크 공식 뉴스룸
-    "https://www.apple.com/newsroom/",
-    "https://news.samsung.com/kr/",
-    "https://openai.com/ko-KR/news/",
+    "https://www.apple.com/newsroom/rss-feed.rss",
+    "https://openai.com/news/rss.xml",
+    "https://blog.google/rss/",
+    "https://about.fb.com/feed/",
+    "https://blog.youtube/rss/",
+    # 디자인 / 프로덕트
+    "https://designcompass.org/feed/",
+    "https://uxdesign.cc/feed",
+    # 국내 테크 / 프로덕트 (검수 때 리체가 자주 가져오는 출처)
+    "https://byline.network/feed/",
+    "https://news.hada.io/rss/news",
+    "https://toss.tech/rss.xml",
+    "https://oliveyoung.tech/rss.xml",
+]
+MAX_PER_FEED = 6          # 피드당 최신 N개
+FEED_WINDOW_DAYS = 14     # 선정 기준 '발행 2주 이내'와 동일
+MAX_PROMPT_CANDIDATES = 130
+
+# 피드가 없는 사이트만 HTML 링크 스캔 (surfit.io는 Playwright로 별도 스캔)
+PRIORITY_SITES = [
     "https://www.anthropic.com/news",
-    "https://about.fb.com/news/",
-    "https://about.instagram.com/blog/?locale=ko_KR",
-    "https://blog.google",
-    "https://blog.youtube/news-and-events/",
-    "https://www.uber.com/us/en/newsroom/",
-    # 국내 테크 / 프로덕트
-    "https://fficial.naver.com/contentsAll?categorySeq=1004&pageNumber=1",
-    "https://m.blog.naver.com/PostList.naver?blogId=naver_search&tab=1",
-    "https://toss.tech",
     "https://about.daangn.com/company/pr/",
-    "https://oliveyoung.tech",
-    "https://www.woowahan.com/newsroom/report?page=1",
-    # 디자인 툴
-    "https://www.figma.com/ko-kr/release-notes/",
+    "https://www.phonearena.com",
+    # figma 릴리스 노트는 JS 렌더링이라 HTML 스캔에 제품 내비 링크만 잡혀 제외 (2026-09-09 실측)
+]
+
+# 독자(리체)가 검수 중 직접 골라 실은 기사 제목 — 선정 프롬프트에 톤·깊이의 기준점으로 넣는다.
+# 2026-07-28 ~ 09-08 교체로 들어온 58건에서 고름. 투자 유치·리브랜딩 발표류는 같은 기간 밀려났다.
+READER_PICKED_EXAMPLES = [
+    "후발주자가 이기는 방식, 클로드는 어떻게 챗GPT를 따라잡았을까?",
+    "고객의 1초를 줄이기 위해, POS 결제 구조를 다시 설계하다",
+    "디자인은 타협이다",
+    "[단독] 쿠팡이츠, 로켓배송 물류망 활용한 퀵커머스 '쿠팡나우' 시동",
+    "처음 하는 사람도 헤매지 않는 알뜰폰 셀프개통 UX, 모요",
+    "삼성 월렛, 코레일 '종이 없는 승차권' 서비스 출시",
+    "바이브 코딩 시대, 미감은 왜 더 비싸졌을까",
+    "1%가 겪은 버그, 고쳐야 할까요?",
+    "당근부동산, '살아본 후기 지도' 기능 출시",
+    "구글 검색·뉴스·디스커버, 개인화 기능 대폭 강화",
+    "Claude Fable 5.1 및 Mythos 5.1 공개",
+    "'적립'보다 '소멸'이 지갑을 연다 | 포인트 소멸 문구는 잔고를 위협한다",
 ]
 
 HEADERS = {
@@ -209,7 +234,7 @@ print(f"🔍 과거 기사 {len(past_titles)}개 제목, {len(past_links)}개 �
 # 차지했고, 발행할수록 무한히 커지는 구조였다. 선정 기준 자체가 '발행일 2주 이내'라
 # 그보다 오래된 기사와는 애초에 같은 기사일 수 없다.
 # 교체(버려진) 기사는 사람이 직접 빼낸 것이라 날짜 무관 전량 유지한다.
-PROMPT_HISTORY_DAYS = 30
+PROMPT_HISTORY_DAYS = 14
 _prompt_history_cutoff = (TODAY - datetime.timedelta(days=PROMPT_HISTORY_DAYS)).isoformat()
 
 
@@ -217,13 +242,12 @@ def _is_recent(entry):
     return entry.get("file", "").split("/")[0] >= _prompt_history_cutoff
 
 
+# 링크는 넣지 않는다 — 정확 일치는 dedup_articles() 가 전량 잡고, 모델이 링크로 의미 유사성을
+# 판단할 일은 없다. 2026-09-09 이전엔 30일 제목+링크 ≈ 12K 토큰이었다.
 prompt_past_titles = [a["title"] for a in PAST_ARTICLES if "title" in a and _is_recent(a)]
-prompt_past_links = [a["link"] for a in PAST_ARTICLES if "link" in a and _is_recent(a)]
 prompt_past_titles += [r["title"] for r in REJECTED_ARTICLES if r.get("title")]
-prompt_past_links += [r["url"] for r in REJECTED_ARTICLES if r.get("url")]
 print(f"🔍 프롬프트용 과거 목록: 최근 {PROMPT_HISTORY_DAYS}일 + 교체분 "
-      f"→ 제목 {len(prompt_past_titles)}개, 링크 {len(prompt_past_links)}개 "
-      f"(전체 대비 {len(prompt_past_titles)}/{len(past_titles)})")
+      f"→ 제목 {len(prompt_past_titles)}개 (전체 대비 {len(prompt_past_titles)}/{len(past_titles)})")
 
 
 # ─── Playwright 유틸 ──────────────────────────────────────────
@@ -601,11 +625,131 @@ def scan_surfit_categories():
     return candidates
 
 
+# ─── RSS/Atom 피드 스캔 ───────────────────────────────────────
+def _parse_feed_date(s):
+    """RFC 2822(RSS pubDate) 또는 ISO 8601(Atom published/updated) → date. 실패 시 None."""
+    if not s:
+        return None
+    s = s.strip()
+    try:
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(s).date()
+    except Exception:
+        pass
+    try:
+        return datetime.datetime.fromisoformat(s.replace("Z", "+00:00")).date()
+    except Exception:
+        return None
+
+
+def _clean_feed_text(s, max_len=220):
+    """description/summary 의 HTML 을 걷어내고 공백을 접어 max_len 자로 자른다."""
+    if not s:
+        return ""
+    text = BeautifulSoup(s, "lxml").get_text(" ", strip=True)
+    return re.sub(r"\s+", " ", text).strip()[:max_len]
+
+
+def _parse_feed(xml_text, feed_url):
+    """RSS 2.0 / Atom → 후보 dict 목록. 네임스페이스는 태그의 끝 이름만 보고 무시한다."""
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.fromstring(xml_text.encode("utf-8") if isinstance(xml_text, str) else xml_text)
+    except ET.ParseError as e:
+        print(f"  ⚠️  피드 파싱 실패: {e}")
+        return []
+
+    def local(tag):
+        return tag.rsplit("}", 1)[-1]
+
+    def child(el, *names):
+        for ch in el:
+            if local(ch.tag) in names:
+                return ch
+        return None
+
+    source = urlparse(feed_url).netloc.replace("www.", "")
+    out = []
+    for it in root.iter():
+        if local(it.tag) not in ("item", "entry"):
+            continue
+        link = ""
+        for ch in it:  # Atom 은 rel=self/alternate 가 섞여 있어 alternate(또는 rel 없음)만
+            if local(ch.tag) == "link" and ch.get("rel") in (None, "alternate"):
+                link = (ch.get("href") or ch.text or "").strip()
+                if link:
+                    break
+        if not link.startswith("http"):
+            continue
+        title_el = child(it, "title")
+        date_el = child(it, "pubDate", "published", "updated")
+        desc_el = child(it, "description", "summary", "content", "encoded")
+        d = _parse_feed_date(date_el.text if date_el is not None else "")
+        out.append({
+            "url": link,
+            "title_hint": _clean_feed_text(title_el.text if title_el is not None else "", 120),
+            "summary_hint": _clean_feed_text(desc_el.text if desc_el is not None else ""),
+            "date_hint": d.isoformat() if d else "",
+            "_date": d,
+            "source": source,
+        })
+    return out
+
+
+def fetch_feed(url, timeout=15):
+    """피드 XML 가져오기. 봇을 막는 사이트는 Googlebot UA 로 한 번 더 시도한다."""
+    for headers in (HEADERS, GOOGLEBOT_HEADERS):
+        try:
+            r = requests.get(url, headers=headers, timeout=timeout)
+            head = r.text[:2000]
+            if r.status_code < 400 and ("<rss" in head or "<feed" in head or "<rdf" in head):
+                return r.text
+            print(f"  ⚠️  피드 응답 이상 (http {r.status_code}): {url}")
+        except Exception as e:
+            print(f"  ⚠️  피드 접근 실패: {url} → {e}")
+    return None
+
+
+def scan_feeds():
+    """FEEDS 의 최근 FEED_WINDOW_DAYS 일 기사를 후보로 모은다. 피드당 최신 MAX_PER_FEED 개.
+    날짜를 못 읽은 항목은 버리지 않고 '날짜 미상'으로 넘겨 모델이 문맥으로 판단하게 한다."""
+    cutoff = TODAY - datetime.timedelta(days=FEED_WINDOW_DAYS)
+    out = []
+    for feed_url in FEEDS:
+        print(f"\n📡 피드 스캔: {feed_url}")
+        xml_text = fetch_feed(feed_url)
+        if not xml_text:
+            print("  ❌ 접근 실패 — 건너뜀")
+            continue
+        items = _parse_feed(xml_text, feed_url)
+        recent = [i for i in items if i["_date"] is None or i["_date"] >= cutoff]
+        recent.sort(key=lambda i: i["_date"] or datetime.date.min, reverse=True)
+        picked = recent[:MAX_PER_FEED]
+        for i in picked:
+            i.pop("_date", None)
+        stale = len(items) - len(recent)
+        print(f"  → {len(items)}개 중 최근 {FEED_WINDOW_DAYS}일 {len(recent)}개, {len(picked)}개 선택"
+              + (f" (오래된 {stale}개 제외)" if stale else ""))
+        out.extend(picked)
+    return out
+
+
 # ─── 우선 사이트 스캔 ─────────────────────────────────────────
 def scan_priority_sites():
     """우선 사이트에서 최근 기사 목록 수집"""
     # ── 서핏은 Playwright로 별도 스캔 ──
-    candidates = scan_surfit_categories()
+    # 서핏 링크는 리다이렉트라 모델이 실제 출처를 볼 수 없다 → 최종 URL 을 미리 풀어 출처를
+    # 보여주고, 차단 도메인(ditoday 등)은 선정 전에 걸러 여유분을 낭비하지 않는다.
+    candidates = []
+    for cand in scan_surfit_categories():
+        final = resolve_final_url(cand["url"])
+        netloc = urlparse(final).netloc.lower()
+        if any(b in netloc for b in BLOCKED_DOMAINS):
+            print(f"  ⛔ 차단 도메인 후보 제외(서핏): {final[:90]}")
+            continue
+        cand["final_url"] = final
+        cand["source"] = f"{netloc.replace('www.', '')} (via surfit)"
+        candidates.append(cand)
 
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
 
@@ -645,10 +789,16 @@ def scan_priority_sites():
                 continue
             if any(skip in path.lower() for skip in skip_patterns):
                 continue
+            # 홈 화면의 외부 링크(유튜브·링크드인·스마트뉴스·제품 페이지)는 기사가 아니다
+            if parsed.netloc.lower().replace("www.", "") != urlparse(site_url).netloc.lower().replace("www.", ""):
+                continue
             if any(kw in path for kw in article_patterns) or len(path.strip("/").split("/")) >= 2:
                 if href not in links_found and href != site_url:
-                    links_found.add(href)
                     title_text = a_tag.get_text(strip=True)[:100] if a_tag.get_text(strip=True) else ""
+                    # 제목 없는 링크(아이콘·이미지 링크)는 모델이 판단할 정보가 없다
+                    if len(title_text) < 12:
+                        continue
+                    links_found.add(href)
                     site_candidates.append({
                         "url": href,
                         "title_hint": title_text,
@@ -658,6 +808,9 @@ def scan_priority_sites():
         # 사이트당 최대 MAX_PER_SITE개만 추가 (상위 링크 우선)
         candidates.extend(site_candidates[:MAX_PER_SITE])
         print(f"  → {len(links_found)}개 발견, {min(len(site_candidates), MAX_PER_SITE)}개 선택")
+
+    # ── 피드 후보 합류 (제목·날짜·요약이 있는 1차 소스) ──
+    candidates.extend(scan_feeds())
 
     # 후보 URL 중복 제거 (여러 카테고리에 같은 기사가 잡히는 경우 방지)
     seen_cand = set()
@@ -677,7 +830,8 @@ def scan_priority_sites():
     # 출처 분포 리포트
     source_counts = {}
     for c in candidates:
-        domain = urlparse(c["source"]).netloc
+        # source 는 URL(HTML 스캔) 또는 도메인 문자열(피드·서핏) 둘 다 온다
+        domain = urlparse(c["source"]).netloc or c["source"]
         source_counts[domain] = source_counts.get(domain, 0) + 1
     print(f"\n📊 출처 분포: {source_counts}")
     print(f"📋 총 {len(candidates)}개 후보 (사이트 {len(source_counts)}곳)")
@@ -712,124 +866,123 @@ ARTICLES_SCHEMA = {
 }
 
 
-# ─── Claude API로 기사 선정 및 요약 ──────────────────────────
+SELECT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "articles": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "후보 목록에 있는 URL 그대로"},
+                    "reason": {"type": "string", "description": "선정 이유 한 문장"},
+                },
+                "required": ["url", "reason"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["articles"],
+    "additionalProperties": False,
+}
+
+
+# ─── Claude API로 기사 선정 ──────────────────────────────────
 def curate_with_claude(candidates):
-    """Claude API를 사용하여 기사 선정, 제목 번역, 요약 생성"""
+    """Claude API로 기사를 '선정만' 한다. 제목·요약은 summarize_articles()가 본문을 읽고 쓴다.
+    2026-09-09 이전엔 이 호출 하나가 URL·앵커 텍스트만 보고 12개를 고르고 요약까지 썼다 —
+    모델이 기사를 한 번도 읽지 않은 채 요약을 쓰는 구조였고, 후보 절반이 광고·내비 링크였다."""
     client = anthropic.Anthropic(max_retries=8)
 
     # 중복·차단 도메인으로 빠지는 분을 감안해 여유있게 선정 요청 → 후처리 후 ARTICLE_COUNT개로 맞춤
     select_count = ARTICLE_COUNT + 4
 
-    # 후보 기사 정보 정리 (최대 100개, 다양한 출처 유지)
+    by_url = {}
     candidate_text = ""
-    for i, c in enumerate(candidates[:100], 1):
-        candidate_text += f"{i}. URL: {c['url']}\n   힌트: {c['title_hint']}\n   출처: {c['source']}\n"
-        if c.get("date_hint"):
-            candidate_text += f"   날짜: {c['date_hint']}\n"
-        candidate_text += "\n"
+    for i, cand in enumerate(candidates[:MAX_PROMPT_CANDIDATES], 1):
+        by_url[_normalize_url(cand["url"])] = cand
+        date = cand.get("date_hint") or "날짜 미상"
+        candidate_text += f"{i}. [{date}] {cand.get('title_hint') or '(제목 없음)'} — {cand.get('source', '')}\n"
+        if cand.get("summary_hint"):
+            candidate_text += f"   요약: {cand['summary_hint']}\n"
+        candidate_text += f"   URL: {cand['url']}\n\n"
 
-    # 과거 기사 목록 — 프롬프트엔 최근분만, 전체는 dedup_articles() 후처리가 사용
-    past_text = "Python 후처리에서 전체 과거 URL·제목으로 한 번 더 자동 필터링됩니다.\n"
-    past_text += "여기 목록은 의미적 유사성(같은 사건을 다른 매체가 보도한 기사 등) 판단용으로 활용하세요.\n\n"
-    past_text += f"최근 {PROMPT_HISTORY_DAYS}일 큐레이션 + 교체로 제외된 기사 — 제목:\n"
-    for t in prompt_past_titles:
-        past_text += f"- {t}\n"
-    past_text += f"\n최근 {PROMPT_HISTORY_DAYS}일 큐레이션 + 교체로 제외된 기사 — 링크:\n"
-    for l in prompt_past_links:
-        past_text += f"- {l}\n"
+    past_text = "\n".join(f"- {t}" for t in prompt_past_titles)
+    liked_text = "\n".join(f"- {t}" for t in READER_PICKED_EXAMPLES)
 
     prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
-트렌드림은 프로덕트, 디자인, 테크, 비즈니스에 관심 있는 독자들을 위한 뉴스레터입니다.
+독자는 프로덕트 디자이너·기획자·메이커로, 프로덕트·디자인·테크·비즈니스의 '구체적인 움직임'에 관심이 있습니다.
 
-## 기사 선정 기준
-1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내 기사만
+## 선정 기준
+1. 발행일: 현재 날짜({TODAY.isoformat()}) 기준 2주 이내. 날짜가 있는 후보는 그대로 판단하고, '날짜 미상'은 요약·문맥으로 최신인지 판단하세요.
 2. 구성 가이드 (전체 {select_count}개 기준):
-   - 빅테크(구글, 애플, 메타, OpenAI 등) 신제품/업데이트 소식: 1~2개
-   - 나머지는 아래 범주에서 자유롭게 조합:
-     • 프로덕트 디자인 / UX / UI 트렌드
-     • 프로덕트 그로스 / 비즈니스 인사이트
-     • AI 서비스/툴 활용 및 트렌드
-     • 국내외 스타트업/서비스 새로운 시도
+   - 빅테크(구글, 애플, 메타, OpenAI, 앤스로픽 등) 신제품/업데이트: 1~2개
+   - 나머지는 아래 범주에서 조합:
+     • 국내외 서비스·앱의 구체적인 기능 출시, 전략 전환, 실험 (특히 국내 서비스)
+     • 프로덕트 디자인 / UX 케이스 스터디, 프로덕트 사고에 대한 에세이
+     • AI 서비스·툴의 실무 활용과 트렌드
+     • 프로덕트 그로스 / 비즈니스 인사이트 (마케팅은 그로스 관점인 것만)
      • 사회적으로 주목할 만한 테크/비즈니스 이슈
-3. 마케팅 기사는 프로덕트 그로스 관점인 것만 허용
-4. 후보 목록에 없더라도 당신이 알고 있는 최근 기사 중 트렌드림 독자에게 가치 있다고 판단되면 자유롭게 추가 가능
-5. 다양한 관점과 주제가 섞인 구성을 지향 — 비슷한 주제끼리 몰리지 않도록
+3. 피하기: 투자 유치·펀딩 라운드 소식 (조달 금액·밸류에이션이 핵심인 기사)
+4. 같은 뉴스가 여러 후보로 잡히면 공식 발표(뉴스룸·블로그 원문)를 2차 보도보다 우선하고, 하나만 고르세요.
+5. 다양한 관점·주제가 섞이게 — 비슷한 주제끼리 몰리지 않도록.
+6. **반드시 아래 후보 목록 안에서만** 고르세요. 목록에 없는 URL 을 만들어내지 마세요.
 
-## 과거 기사 (중복 방지 - 반드시 크로스체크)
+## 독자가 실제로 골라 실은 기사 (톤·깊이의 기준점)
+{liked_text}
+
+## 최근 {PROMPT_HISTORY_DAYS}일 큐레이션·교체로 제외된 기사 (같은 사건의 다른 매체 보도도 제외)
 {past_text}
 
 ## 후보 기사 목록
 {candidate_text}
 
 ## 요청
-위 후보 중에서, 그리고 필요하다면 후보에 없더라도 직접 떠올린 최근 빅테크/프로덕트 뉴스를 포함하여,
-서로 다른 실제 기사 {select_count}개를 선정해주세요. (후처리 중복 제거 후 최종 {ARTICLE_COUNT}개로 추려집니다)
+후보 중에서 서로 다른 기사 {select_count}개를 골라 URL 과 선정 이유(한 문장)를 주세요.
+(후처리 중복 제거·차단 도메인 제외 후 최종 {ARTICLE_COUNT}개로 추려지므로 여유분을 포함한 개수입니다.)
+**출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만.
+적합한 기사가 {select_count}개가 안 되면 억지로 채우지 말고 더 적게 주세요."""
 
-**절대 규칙**: 모든 항목은 실제로 존재하는 개별 기사여야 합니다.
-- 중복이거나 적합한 기사를 못 찾으면 그 자리에 **다른 기사**를 고르세요.
-- '중복', '재선정 제외', 'placeholder' 등의 표시를 제목·요약에 넣은 가짜 항목을 절대 만들지 마세요.
-- {select_count}개를 채우지 못하겠으면 가짜로 채우지 말고 차라리 더 적은 개수로 응답하세요.
+    print(f"\n🤖 Claude API로 기사 선정 중... (후보 {min(len(candidates), MAX_PROMPT_CANDIDATES)}개)")
 
-**출처 다양성 필수**: 같은 출처(사이트)에서 최대 2개까지만 선정하세요. 가능한 한 서로 다른 사이트에서 기사를 골라야 합니다.
-**중복 기사는 절대 선정하지 마세요.** 과거 기사 목록에 있는 제목이나 링크와 동일하거나 유사한 기사는 제외합니다.
-
-각 기사에 대해 아래 형식으로 답변하세요:
-
-```json
-{{
-  "articles": [
-    {{
-      "url": "기사 원문 URL",
-      "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
-      "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
-      "summary_1": "첫 번째 요약 (약 100자, 해요체)",
-      "summary_2": "두 번째 요약 (약 100자, 해요체)",
-      "summary_3": "세 번째 요약 (약 100자, 해요체)"
-    }}
-  ]
-}}
-```
-
-## 한 줄 요약 규칙
-- 20자 내외, 명사형 + 마침표
-- ~해요, ~입니다, ~했다, ~한 것 사용 금지
-
-## 3줄 요약 규칙
-- 각 줄 약 100자 내외
-- 해요체 (~해요, ~돼요, ~있어요, ~했어요, ~거예요)
-- "이 글은", "이 기사는" 등 메타 문장 금지
-- 핵심 내용부터 바로 시작
-- 현상 / 맥락 / 의미 중심"""
-
-    print("\n🤖 Claude API로 기사 선정 및 요약 중...")
-
-    # structured outputs로 API가 스키마에 맞는 유효한 JSON을 보장한다.
-    # 이전에는 파싱 실패 시 3회까지 재시도했는데, 재시도마다 프롬프트를 통째로
-    # 재전송해 그날 입력 비용이 2~3배로 뛰었다(실측 최고 144K 토큰/일).
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=16000,
-        output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}},
+        max_tokens=3000,
+        output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}},
         messages=[{"role": "user", "content": prompt}],
     )
-
-    # structured outputs는 잘린 응답까지 유효하게 만들어주지는 못한다 — 소리내어 실패시킨다.
     if response.stop_reason == "max_tokens":
         print("❌ 응답이 max_tokens에서 잘렸습니다 — max_tokens를 올려야 합니다")
         sys.exit(1)
     if response.stop_reason == "refusal":
         print(f"❌ 모델이 요청을 거부했습니다: {response.stop_details}")
         sys.exit(1)
-
     text = next((b.text for b in response.content if b.type == "text"), None)
     if not text:
         print(f"❌ 응답에 text 블록이 없습니다 (stop_reason={response.stop_reason})")
         sys.exit(1)
-    articles = json.loads(text)["articles"]
+    picks = json.loads(text)["articles"]
+
+    articles = []
+    for p in picks:
+        cand = by_url.get(_normalize_url(p.get("url", "")))
+        if not cand:
+            print(f"  ⛔ 후보 목록에 없는 URL 제외: {p.get('url', '')[:90]}")
+            continue
+        print(f"  • {cand.get('title_hint', '')[:60]}  ← {p.get('reason', '')[:90]}")
+        articles.append({
+            "url": cand["url"],
+            "title_ko": cand.get("title_hint", ""),  # 임시 — summarize_articles() 가 본문을 읽고 덮어쓴다
+            "title_hint": cand.get("title_hint", ""),
+            "summary_hint": cand.get("summary_hint", ""),
+            "date_hint": cand.get("date_hint", ""),
+            "source": cand.get("source", ""),
+            "select_reason": p.get("reason", ""),
+        })
 
     print(f"✅ {len(articles)}개 기사 1차 선정")
 
-    # 후처리: 같은 큐레이션 내 + 과거 중복 제거 (legacy 모드도 안전망 적용)
+    # 후처리: 같은 큐레이션 내 + 과거 중복 제거
     articles = dedup_articles(articles)
     print(f"✅ 중복 제거 후 {len(articles)}개")
 
@@ -960,6 +1113,7 @@ def enrich_articles(articles, target_count=None):
             "thumbnail_b64": thumb_b64,
             "article_num": num,
             "final_url": final_url,
+            "_html": html,  # summarize_articles() 가 본문 추출에 재사용 (페이지 두 번 안 가져오게)
         })
 
     print(f"\n📊 썸네일 결과:")
@@ -1561,6 +1715,87 @@ submit_summary 도구로 결과를 제출하세요.
     return None
 
 
+def _article_text(url, html=None):
+    """본문 텍스트 확보: 받아둔 HTML → Playwright → 프록시 순. summarize_single_article 와 같은 폴백."""
+    if html is None:
+        html = fetch_page(url)
+    text = _extract_text(html)
+    if len(text) < 300 and _pw_available():
+        pw_text = _extract_text(fetch_page_playwright(url))
+        if len(pw_text) > len(text):
+            text = pw_text
+    if len(text) < 300:
+        proxy_text = _fetch_text_via_proxy(url)  # 이미 정리·3000자 컷된 평문
+        if len(proxy_text) > len(text):
+            text = proxy_text
+    return text, html
+
+
+def summarize_articles(articles):
+    """선정된 기사들의 본문을 읽고 제목·한 줄·3줄 요약을 한 번의 호출로 쓴다.
+    enrich_articles() 가 받아둔 HTML(_html) 을 재사용해 페이지를 두 번 가져오지 않는다.
+    본문을 못 얻은 기사는 피드 요약·메타 정보로 대신하되 지어내지 말라고 못 박고,
+    응답에서 빠진 기사는 summarize_single_article() 로 개별 보강한다."""
+    if not articles:
+        return articles
+    client = anthropic.Anthropic(max_retries=8)
+
+    blocks = []
+    for art in articles:
+        text, html = _article_text(art["url"], art.pop("_html", None))
+        if len(text) >= 300:
+            body = f"본문(앞 {len(text)}자):\n{text}"
+        else:
+            meta = _extract_meta(html) if html else {}
+            meta_block = "\n".join(f"- {k}: {v}" for k, v in meta.items() if v)
+            body = ("본문을 가져올 수 없었습니다. 아래 정보로 추론해 쓰되, 확인되지 않은 구체 수치·인용은 만들지 마세요.\n"
+                    + (f"메타:\n{meta_block}\n" if meta_block else ""))
+            print(f"  ⚠️  기사 {art['article_num']} 본문 {len(text)}자 — 피드 요약·메타로 대체")
+        blocks.append(
+            f"### 기사 {art['article_num']}\nURL: {art['url']}\n"
+            f"피드 제목: {art.get('title_hint', '')}\n"
+            + (f"피드 요약: {art['summary_hint']}\n" if art.get("summary_hint") else "")
+            + body
+        )
+
+    prompt = f"""아래 {len(articles)}개 기사 각각에 대해 한국어 제목과 요약을 써주세요. 독자는 프로덕트 디자이너·기획자·메이커입니다.
+반드시 주어진 본문·정보에 근거해 쓰고, 본문에 없는 사실을 만들지 마세요. url 은 주어진 값을 그대로 돌려주세요.
+
+## 형식 규칙
+- title_ko: 원문 제목의 의미를 살린 한국어 제목 (이미 한국어면 다듬기만)
+- one_line: 20자 내외 한 줄 요약. 명사형 + 마침표. ~해요, ~입니다, ~했다, ~한 것 사용 금지
+- summary_1~3: 각 약 100자, 해요체(~해요, ~돼요, ~있어요, ~했어요, ~거예요). "이 글은", "이 기사는" 같은 메타 문장 금지. 핵심 내용부터 바로 시작. 현상 / 맥락 / 의미 순.
+
+{chr(10).join(blocks)}"""
+
+    print(f"\n✍️  본문 기반 제목·요약 생성 ({len(articles)}개)...")
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=6000,
+        output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}},
+        messages=[{"role": "user", "content": prompt}],
+    )
+    if response.stop_reason == "max_tokens":
+        print("❌ 요약 응답이 max_tokens에서 잘렸습니다 — max_tokens를 올려야 합니다")
+        sys.exit(1)
+    text = next((b.text for b in response.content if b.type == "text"), None)
+    if not text:
+        print(f"❌ 요약 응답에 text 블록이 없습니다 (stop_reason={response.stop_reason})")
+        sys.exit(1)
+    by_url = {_normalize_url(a.get("url", "")): a for a in json.loads(text)["articles"]}
+
+    for art in articles:
+        got = by_url.get(_normalize_url(art["url"]))
+        if not got:
+            print(f"  ⚠️  기사 {art['article_num']} 요약 응답 누락 — 개별 요약으로 보강")
+            got = summarize_single_article(art["url"]) or {}
+        for k in ("title_ko", "one_line", "summary_1", "summary_2", "summary_3"):
+            if got.get(k):
+                art[k] = got[k]
+        print(f"  ✓ {art['article_num']}. {art.get('title_ko', '')[:60]}")
+    return articles
+
+
 def load_existing_articles():
     """오늘 날짜의 기존 HTML에서 기사 데이터를 추출.
     lxml/libxml2는 매우 큰 attribute(수십 MB base64 GIF 썸네일 등)를 잘라먹어
@@ -1718,6 +1953,9 @@ def main():
 
         # 3. 각 기사 상세 + 썸네일 (차단 도메인 건너뛰며 ARTICLE_COUNT개 채움)
         enriched = enrich_articles(articles, ARTICLE_COUNT)
+
+        # 4. 본문을 읽고 제목·요약 작성 (선정 단계는 URL·피드 요약만 봤다)
+        enriched = summarize_articles(enriched)
 
     # 4. HTML 생성
     html_content = generate_html(enriched)
