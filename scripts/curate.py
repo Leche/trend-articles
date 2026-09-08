@@ -28,9 +28,6 @@ TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
 # 저녁 큐레이션 — 다음날 발행용 다이제스트를 만들 때 true.
 # CUSTOM_DATE 가 명시되면 그게 우선이고, FOR_TOMORROW 는 무시.
 FOR_TOMORROW = os.environ.get("FOR_TOMORROW", "").strip().lower() == "true"
-# CURATE_MODE: "legacy" (default, scrape SURFIT_CATEGORIES + PRIORITY_SITES)
-#              | "web_search" (internet-wide via Claude web_search tool — billed per use)
-CURATE_MODE = os.environ.get("CURATE_MODE", "legacy").strip().lower()
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
 SURFIT_CATEGORIES = [
@@ -472,8 +469,44 @@ def _ascii_url(u):
         return u.encode("ascii", "ignore").decode("ascii")
 
 
-def download_image_as_base64(img_url, max_size_kb=500, referer=None):
-    """이미지를 다운로드하여 base64로 인코딩.
+THUMB_MAX_WIDTH = 960  # 카드 폭 100%·모바일 2x 기준. 그 이상은 페이지·레포 용량만 늘린다.
+
+
+def _normalize_image(img_data, content_type):
+    """다운받은 이미지를 썸네일 규격으로 정규화 — WebP, 폭 ≤ THUMB_MAX_WIDTH.
+    GIF는 첫 프레임만 쓴다(수십 MB GIF가 히스토리에 박힌 2026-05-20 사고 방지). SVG는 그대로.
+    Pillow가 못 열면 원본 바이트를 돌려주되 경고를 남긴다(조용히 삼키지 않음).
+    반환: (bytes, ext) — ext 는 data URL 의 image/<ext>."""
+    if "svg" in content_type:
+        return img_data, "svg+xml"
+    try:
+        from PIL import Image
+        img = Image.open(BytesIO(img_data))
+        img.load()  # 애니메이션 GIF/WebP 는 첫 프레임에서 멈춘다
+        has_alpha = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
+        if img.mode not in ("RGB", "RGBA"):
+            img = img.convert("RGBA" if has_alpha else "RGB")
+        if img.width > THUMB_MAX_WIDTH:
+            ratio = THUMB_MAX_WIDTH / img.width
+            img = img.resize((THUMB_MAX_WIDTH, max(1, int(img.height * ratio))), Image.LANCZOS)
+        buf = BytesIO()
+        img.save(buf, format="WEBP", quality=82, method=4)
+        return buf.getvalue(), "webp"
+    except Exception as e:
+        print(f"  ⚠️  이미지 정규화 실패, 원본 유지: {e}")
+        if "png" in content_type:
+            ext = "png"
+        elif "gif" in content_type:
+            ext = "gif"
+        elif "webp" in content_type:
+            ext = "webp"
+        else:
+            ext = "jpeg"
+        return img_data, ext
+
+
+def download_image_as_base64(img_url, referer=None):
+    """이미지를 다운로드 → 썸네일 규격으로 정규화(_normalize_image) → base64 data URL.
     referer: hotlink 차단(designcompass 등) 우회용 — 기사 페이지 URL을 넘기면
     이미지 CDN이 정상 요청으로 인식할 확률이 높아짐."""
     try:
@@ -483,39 +516,7 @@ def download_image_as_base64(img_url, max_size_kb=500, referer=None):
         r = requests.get(img_url, headers=headers, timeout=15)
         r.raise_for_status()
         content_type = r.headers.get("Content-Type", "image/jpeg")
-
-        # 확장자 결정
-        if "png" in content_type:
-            ext = "png"
-        elif "gif" in content_type:
-            ext = "gif"
-        elif "webp" in content_type:
-            ext = "webp"
-        elif "svg" in content_type:
-            ext = "svg+xml"
-        else:
-            ext = "jpeg"
-
-        img_data = r.content
-
-        # 너무 큰 이미지는 리사이즈
-        if len(img_data) > max_size_kb * 1024 and ext in ("jpeg", "png", "webp"):
-            try:
-                from PIL import Image
-                img = Image.open(BytesIO(img_data))
-                # 너비 1200px로 리사이즈
-                if img.width > 1200:
-                    ratio = 1200 / img.width
-                    new_size = (1200, int(img.height * ratio))
-                    img = img.resize(new_size, Image.LANCZOS)
-                buf = BytesIO()
-                save_fmt = "JPEG" if ext == "jpeg" else "PNG"
-                img.save(buf, format=save_fmt, quality=85, optimize=True)
-                img_data = buf.getvalue()
-                ext = save_fmt.lower()
-            except Exception:
-                pass
-
+        img_data, ext = _normalize_image(r.content, content_type)
         b64 = base64.b64encode(img_data).decode("utf-8")
         return f"data:image/{ext};base64,{b64}"
     except Exception as e:
@@ -835,7 +836,7 @@ def curate_with_claude(candidates):
     return articles
 
 
-# ─── Claude web_search로 인터넷 전체 큐레이션 ──────────────────
+# ─── URL 정규화·중복 제거 헬퍼 ────────────────────────────────
 def _normalize_url(u):
     """URL 정규화: 비교용. 프로토콜·쿼리·프래그먼트 무시, 트레일링 슬래시 제거."""
     if not u:
@@ -909,188 +910,6 @@ def dedup_articles(articles):
     if removed:
         print(f"  → 중복 {removed}건 제거, 최종 {len(result)}개")
     return result
-
-
-def curate_via_web_search():
-    """Claude의 web_search 툴로 인터넷 전체에서 기사 큐레이션.
-    사이트 화이트리스트 없이, 카테고리 가이드와 한국 사이트 균형 요건만 프롬프트로 통제."""
-    client = anthropic.Anthropic(max_retries=8)
-
-    # ── 발행일 범위: 오늘로부터 14일 전 ~ 오늘 ──
-    two_weeks_ago = TODAY - datetime.timedelta(days=14)
-    date_range_str = f"{two_weeks_ago.isoformat()} ~ {TODAY.isoformat()}"
-
-    # ── 과거 기사: 프롬프트에는 최근 30개만 힌트로, 전체는 Python 후처리에서 사용 ──
-    past_text = "## 최근 큐레이션된 기사 (참고용 힌트 — 같은 기사·같은 사건의 다른 매체 보도 금지)\n"
-    past_text += "Python 후처리에서 전체 과거 URL과 제목으로 한 번 더 자동 필터링됩니다. 여기서는 의미적 유사성·최근 트렌드 파악용으로만 활용하세요.\n\n"
-    past_text += "최근 제목 (newest first):\n"
-    for t in past_titles[:30]:
-        past_text += f"- {t}\n"
-    past_text += "\n최근 링크 (newest first):\n"
-    for l in past_links[:30]:
-        past_text += f"- {l}\n"
-
-    prompt = f"""당신은 **3년 넘게 '트렌드림'을 운영해온 프로덕트 디자이너 본인**입니다.
-트렌드림은 일반 테크 뉴스 게시판이 아니라, 다음 두 가지 축으로 차별화됩니다.
-
-1. **서비스·제품과 관련된 모든 소식을 빠짐없이 챙긴다** — 출시·업데이트·정책 변경·디자인 리뉴얼 등 표면적 뉴스도 포함. 최신 제품 소식을 빠르게 전달하는 것 자체가 목적의 절반.
-2. **그 안에서 '프로덕트 디자이너의 시선'이 드러나는 글을 함께 큐레이션한다** — 일반 뉴스 게시판과 차별점. 디자이너·메이커가 직접 쓴 글, 디자인 의사결정·UX 디테일이 보이는 분석, 디자인 시스템·도구·조직 글에 가산점.
-
-## 임무
-오늘은 {TODAY.isoformat()} ({WEEKDAY_KO[TODAY.weekday()]})입니다.
-**발행일이 {date_range_str} 범위 안에 있는 기사만** 선정 대상입니다 (큐레이션 날짜 기준 14일 이내).
-이 범위 밖에 발행된 기사는 어떤 이유로도 선정하지 마세요. 트렌딩이거나 유명해도 14일 초과면 즉시 탈락.
-**web_search 툴을 적극 활용**하여 인터넷에서 최신 글을 직접 검색·읽고 적합한 기사를 정확히 {ARTICLE_COUNT}개 골라주세요.
-
-## 발행일 검증 (필수)
-- 검색 결과에서 각 후보의 **발행일을 반드시 확인**할 것 (페이지의 published date / `<time>` 태그 / og:article:published_time / 본문 첫줄 날짜 등)
-- 발행일이 명시되어 있지 않거나 확인 불가하면 그 기사는 선정 후보에서 제외
-- {date_range_str} 범위를 벗어나는 기사는 절대 선정 금지
-
-## 중복 방지 (필수)
-- 아래 "과거 큐레이션 링크" 섹션에 있는 URL과 **동일하거나 같은 기사를 가리키는** URL은 절대 선정 금지
-- "과거 큐레이션 제목"과 동일하거나 거의 같은 의미의 제목도 금지 (다른 매체의 같은 사건 보도 포함)
-- 같은 사건이라도 제목·관점이 명확히 다르고 새로운 정보가 추가된 경우만 예외적으로 허용
-
-## 카테고리 가이드 ({ARTICLE_COUNT}개 구성 — 두 축 균형)
-
-**A. 제품·서비스 트렌드 (≈ 절반)** — 단순 출시·발표 보도도 환영
-  • 빅테크(구글/애플/메타/OpenAI/Anthropic/Microsoft 등) 신제품·업데이트
-  • 국내외 스타트업·서비스의 새로운 시도, 신규 출시, 정책 변경
-  • AI 서비스/툴 신기능
-  • 디자인·프로덕트 관점에서 영향이 있는 정책·제도 변화
-
-**B. 프로덕트 디자이너 시선의 글 (≈ 절반, 차별점)**
-  • 프로덕트 디자이너·메이커가 **직접 쓴 글** (회고, 인사이트, 케이스 스터디)
-  • UX/UI 디테일·디자인 의사결정 과정이 잘 드러나는 분석
-  • 디자인 시스템 / 디자인 도구(Figma 등) / 디자인 토큰 / 프로세스 변화
-  • 디자인 조직·커리어·팀 구성·디자이너 인터뷰
-  • 프로덕트 그로스 인사이트 (디자인이 그로스에 어떻게 기여했는지 류)
-
-## 디자이너 시선 가산점
-같은 주제·시점이라면 다음에 해당하는 글을 우선:
-- 디자이너·메이커의 1인칭 글 (X사 디자이너의 회고 vs X사가 Y를 출시했다 → 전자 우선)
-- 단순 사실 나열보다 "**왜·어떻게·임팩트**"를 짚는 글
-- 한국 디자이너 커뮤니티 출처 (brunch story, 폴인, 퍼블리, 토스 디자인 챕터, 당근 디자인, 카카오/네이버 디자인 블로그, 우아한형제들·올리브영·SK·라인 디자인, 디자인컴파스)
-
-## 피해야 할 콘텐츠
-- 임원 인사·기업 가십 (제품·디자인과 무관한 것)
-- SEO 광고성 마케팅 글 (제품 본질 없이 키워드만 나열)
-- 정치·사회 이슈 (테크·프로덕트와 무관한 것)
-- 디자인·UX 함의 없는 순수 스펙 비교
-
-## 제외 도메인 (절대 선정 금지)
-- ditoday.com — 이 도메인의 기사는 어떤 경우에도 선정하지 마세요.
-
-## 출처 다양성 (필수)
-- **한국어 출처 비중 ≥ 40%** — 영어권 편향 방지
-  - 한국 기업 블로그/뉴스룸: toss.tech, daangn.com, navercorp, kakao, line, coupang, woowahan.com, oliveyoung.tech, sk*, kt, samsung
-  - 한국 IT 언론: IT조선, 디지털타임스, ZDNet Korea, 더기어, BLOTER, 아웃스탠딩, 모비인사이드, 더밀크
-  - 한국 디자인·리서치 매체: designcompass, brunch story, 퍼블리, 폴인
-- 같은 도메인 최대 2개
-- 영문 출처도 함께 (TechCrunch, The Verge, 9to5mac/google, Anthropic/OpenAI/Google blog 등)
-
-## 검색 전략 (디자이너 키워드 적극 활용)
-- **디자이너 한국어**: "프로덕트 디자이너 회고", "토스 디자인 시스템", "당근 디자이너 인터뷰", "디자인 의사결정", "디자인 토큰", "디자이너 커리어", "UX 라이팅"
-- **디자이너 영어**: "product designer essay", "design case study", "figma update rationale", "design system at \\\\[company\\\\]", "ux writing"
-- **일반 한국어**: "토스 신기능", "네이버 AI 출시", "카카오 새 서비스", "당근마켓 업데이트", "쿠팡 발표"
-- **일반 영어**: "OpenAI launch this week", "Figma update {TODAY.year}"
-- 카테고리별 1~2회 검색하여 후보 풀을 만든 뒤 최종 {ARTICLE_COUNT}개 선정
-
-## 다양성
-- 비슷한 주제·출처에 몰리지 않게
-- 두 축(A·B) 균형, 한국·해외 균형, 카테고리 분산
-
-{past_text}
-
-## 출력 형식 (엄격)
-- 아래 JSON 배열 **하나만** 출력. 그 외에는 단 한 글자도 출력 금지.
-- **JSON 안에 주석(`//`, `#`) 절대 금지**. JSON 표준에 주석은 없습니다.
-- 추론·고민·후보 비교는 **머릿속으로만** 하고 최종 결과만 JSON으로 출력.
-- 마크다운 코드펜스(\\`\\`\\`)는 사용해도 되고 안 해도 됨. 단 JSON은 반드시 valid해야 함.
-
-```json
-[
-  {{
-    "url": "기사 원문 URL (실제 접근 가능한 URL)",
-    "title_ko": "한국어 제목 (원문 의미 최대한 살려 번역)",
-    "one_line": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남",
-    "summary_1": "첫 번째 요약 (약 100자, 해요체)",
-    "summary_2": "두 번째 요약 (약 100자, 해요체)",
-    "summary_3": "세 번째 요약 (약 100자, 해요체)"
-  }}
-]
-```
-
-## 한 줄 요약 규칙
-- 20자 내외, 명사형 + 마침표
-- ~해요/~입니다/~했다/~한 것 사용 금지
-
-## 3줄 요약 규칙 (디자이너 시선이 묻어나도록)
-- 각 줄 약 100자 내외, 해요체 (~해요/~돼요/~있어요/~했어요/~거예요)
-- "이 글은", "이 기사는" 등 메타 문장 금지
-- 핵심부터 바로 시작 — 현상 / 사용자·디자인 임팩트 / 의미·맥락 흐름
-- 단순 발표 뉴스라도 **"디자인·UX적으로 무엇이 바뀌는가"** 한 줄은 들어가게
-"""
-
-    print(f"\n🌐 Claude web_search로 인터넷 전체에서 큐레이션 (모델: claude-sonnet-4-6)…")
-
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=24000,
-        tools=[{
-            "type": "web_search_20250305",
-            "name": "web_search",
-            "max_uses": 10,
-        }],
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    print(f"  stop_reason: {response.stop_reason}")
-    # tool_use 블록 개수 디버그용
-    tool_uses = sum(1 for b in response.content if getattr(b, "type", None) == "server_tool_use")
-    if tool_uses:
-        print(f"  web_search 호출 횟수: {tool_uses}")
-
-    # 최종 어시스턴트 텍스트 블록만 합치기
-    text = ""
-    for block in response.content:
-        if getattr(block, "type", None) == "text":
-            text += getattr(block, "text", "")
-
-    # JSON 추출: 1) ```json …``` 코드펜스 우선, 2) 폴백 [ … ] 배열 매칭
-    json_str = None
-    fence_match = re.search(r'```(?:json)?\s*(\[[\s\S]*?\])\s*```', text)
-    if fence_match:
-        json_str = fence_match.group(1)
-    else:
-        bracket_match = re.search(r'\[[\s\S]*\]', text)
-        if bracket_match:
-            json_str = bracket_match.group(0)
-
-    if not json_str:
-        print("❌ Claude 응답에서 JSON을 찾을 수 없습니다.")
-        print(f"--- stop_reason={response.stop_reason} ---")
-        print(f"--- text 전체 ({len(text)} chars) ---")
-        print(text or "(빈 텍스트)")
-        sys.exit(1)
-
-    try:
-        articles = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        print(f"❌ JSON 파싱 실패: {e}")
-        print(f"--- 추출된 JSON 문자열 ({len(json_str)} chars) ---")
-        print(json_str[:5000])
-        sys.exit(1)
-
-    # ── 후처리: 같은 큐레이션 내 + 과거 중복 제거 (안전망) ──
-    deduped = dedup_articles(articles)
-
-    if len(deduped) < ARTICLE_COUNT:
-        print(f"⚠️  중복 제거 후 {len(deduped)}개만 남음 (요청 {ARTICLE_COUNT}). 프롬프트 강화 필요할 수 있음.")
-
-    print(f"✅ {len(deduped)}개 기사 선정 완료")
-    return deduped
 
 
 # ─── 각 기사 상세 읽기 + 썸네일 ───────────────────────────────
@@ -1315,6 +1134,35 @@ def _thumb_ext(b64):
     return {"jpeg": "jpg", "svg+xml": "svg"}.get(sub, sub)
 
 
+_THUMB_MIME = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "webp": "webp", "gif": "gif", "svg": "svg+xml"}
+
+
+def _thumb_file_to_b64(src, archive_dir):
+    """HTML 의 <img src="thumb-N.ext"> 파일 참조를 읽어 base64 data URL 로 복원.
+    교체(REPLACE) 흐름은 기존 기사 썸네일을 thumbnail_b64 로 들고 다니다가
+    write_thumbnails() 로 다시 파일에 쓰므로, 파일 참조 HTML 도 같은 형태로 맞춘다.
+    루트 미러는 'YYYY-MM-DD/thumb-N.ext' 로 날짜가 붙어 있어 basename 만 쓴다."""
+    name = os.path.basename(src.split("?")[0])
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    mime = _THUMB_MIME.get(ext)
+    if not name.startswith("thumb-") or not mime:
+        return None
+    path = os.path.join(archive_dir, name)
+    try:
+        with open(path, "rb") as f:
+            return f"data:image/{mime};base64," + base64.b64encode(f.read()).decode("utf-8")
+    except OSError as e:
+        print(f"[WARN] 썸네일 파일 읽기 실패: {path} → {e}")
+        return None
+
+
+def root_mirror_html(html, date_dir):
+    """날짜 폴더 HTML → 루트 미러 HTML. 썸네일 상대 경로(thumb-N.ext)에 날짜 폴더를 붙인다.
+    trigger.html(썸네일 교체)·repurpose.yml(폴더 이동)도 같은 규칙으로 루트를 다룬다."""
+    return re.sub(r'(class="article-image"[^>]*src=")(thumb-\d+\.[a-z0-9]+)"',
+                  lambda m: f'{m.group(1)}{date_dir}/{m.group(2)}"', html)
+
+
 def write_thumbnails(articles, out_dir):
     """base64 썸네일을 out_dir/thumb-{num}.{ext} 파일로 저장 (아지트 본문 인라인용).
     base64는 아지트 본문에 못 넣으므로, GitHub Pages가 서빙할 실제 이미지 파일이 필요.
@@ -1411,12 +1259,18 @@ def generate_html(articles):
     for art in articles:
         num = f"{art['article_num']:02d}"
 
-        # 썸네일 처리
+        # 썸네일 처리 — 이미지는 write_thumbnails() 가 같은 폴더에 쓰는 thumb-N.ext 파일을
+        # 참조한다(base64 임베드 X). 페이지가 3.5MB→수십 KB 로 줄고, 검수 중 편집마다 수 MB
+        # 블롭이 히스토리에 쌓이던 것도 멈춘다. 루트 미러는 main() 이 날짜 접두를 붙인다.
+        # 비디오(mp4)는 파일로 안 쓰므로 인라인 유지(트리거 업로드로만 들어온다).
         if art.get("thumbnail_b64"):
             b64 = art["thumbnail_b64"]
+            ext = None if b64.startswith("data:video/") else _thumb_ext(b64)
             # mp4/webm은 <video>로 — img에 video data URL 넣으면 크롬에서 깨진 이미지로 표시됨.
             if b64.startswith("data:video/"):
                 img_html = f'<div class="image-frame"><video class="article-image" src="{b64}" autoplay muted loop playsinline preload="metadata"></video></div>'
+            elif ext:
+                img_html = f'<div class="image-frame"><img class="article-image" src="thumb-{art["article_num"]}.{ext}" alt="썸네일"></div>'
             else:
                 img_html = f'<div class="image-frame"><img class="article-image" src="{b64}" alt="썸네일"></div>'
         else:
@@ -1728,8 +1582,16 @@ def load_existing_articles():
         summary_m = re.search(r'class="article-summary"[^>]*>([^<]+)', block)
         bullets   = re.findall(r'class="bullet-item"[^>]*>([^<]+)', block)
         link_m    = re.search(r'class="article-link"[^>]*href="([^"]+)"', block)
-        # img/video 양쪽 매칭 — src 가 data:URL 인 경우만 thumbnail_b64 로 인정
-        thumb_m   = re.search(r'class="article-image"[^>]*src="(data:[^"]+)"', block)
+        # img/video 양쪽 매칭. src 가 data:URL 이면 그대로, thumb-N.ext 파일 참조면 파일을 읽어
+        # data:URL 로 복원 — 이후 흐름(교체·번호 재부여·write_thumbnails)은 base64 를 전제한다.
+        thumb_m   = re.search(r'class="article-image"[^>]*src="([^"]+)"', block)
+        thumb_src = thumb_m.group(1) if thumb_m else ""
+        if thumb_src.startswith("data:"):
+            thumb_b64 = thumb_src
+        elif thumb_src:
+            thumb_b64 = _thumb_file_to_b64(thumb_src, archive_dir)
+        else:
+            thumb_b64 = None
         articles.append({
             "title_ko":      title_m.group(1).strip()   if title_m   else "",
             "one_line":      summary_m.group(1).strip() if summary_m else "",
@@ -1737,7 +1599,7 @@ def load_existing_articles():
             "summary_2":     bullets[1].strip() if len(bullets) > 1 else "",
             "summary_3":     bullets[2].strip() if len(bullets) > 2 else "",
             "url":           link_m.group(1) if link_m else "",
-            "thumbnail_b64": thumb_m.group(1) if thumb_m else None,
+            "thumbnail_b64": thumb_b64,
         })
 
     print(f"📂 기존 기사 {len(articles)}개 로드 완료")
@@ -1844,16 +1706,11 @@ def main():
                 f.write(f"replace_failed_summary={summary}\n")
     else:
         # ── 일반 모드 ──
-        if CURATE_MODE == "legacy":
-            print(f"\n🗂  CURATE_MODE=legacy — 기존 사이트 화이트리스트 스캔")
-            # 1. 우선 사이트 스캔
-            candidates = scan_priority_sites()
-            print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
-            # 2. Claude API로 기사 선정 + 요약
-            articles = curate_with_claude(candidates)
-        else:
-            print(f"\n🌐 CURATE_MODE=web_search — Claude 인터넷 검색 큐레이션")
-            articles = curate_via_web_search()
+        # 1. 우선 사이트 스캔
+        candidates = scan_priority_sites()
+        print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
+        # 2. Claude API로 기사 선정 + 요약
+        articles = curate_with_claude(candidates)
 
         # 기사 수 검증 — 여유분은 enrich 단계에서 ARTICLE_COUNT개까지만 채움
         if len(articles) < ARTICLE_COUNT:
@@ -1867,10 +1724,11 @@ def main():
 
     # 5. 파일 저장
     if not TEST_MODE:
-        # index.html로 저장 (GitHub Pages 메인) — 테스트 모드에서는 건드리지 않음
+        # index.html로 저장 (GitHub Pages 메인) — 테스트 모드에서는 건드리지 않음.
+        # 루트는 최신 날짜의 미러라, 썸네일 상대 경로에 날짜 폴더를 붙여야 같은 파일을 가리킨다.
         output_path = "index.html"
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
+            f.write(root_mirror_html(html_content, TODAY.strftime("%Y-%m-%d")))
         print(f"\n💾 저장 완료: {output_path}")
     else:
         print(f"\n🧪 [TEST MODE] root index.html 변경 없음")
