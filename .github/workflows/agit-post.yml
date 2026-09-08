@@ -280,21 +280,27 @@ jobs:
               print("[ERROR] articles 비어있음")
               raise SystemExit(1)
 
-          # v3 포맷 조립:
-          #   (인트로: 인용문)
-          #   # *N. 제목*
-          #   so-what 한 줄 (평문, 제목 바로 밑)
-          #   (빈 줄)
-          #   ![thumb](pages/thumb-N.ext)
-          #   > *[🔗 기사 원문 링크](원문url)*
+          # v4 포맷 조립 (2026-09-09):
+          #   # ⚡️
+          #   # [헤드라인 한 줄](다이제스트 링크)      ← curate.py 가 생성한 그날 가장 구체적인 사건. 없으면 날짜 제목
+          #   날짜 라벨 평문
+          #   > 인트로
+          #   # *N. 제목* / so-what / 썸네일 / 원문 링크   ← 앞 FULL_COUNT 개만 본문형
+          #   *이것도 함께 실렸어요* + 나머지는 제목 링크만
+          # 근거: 49건 클랩 분석 — 링크형→본문형 8개 전환은 5.5→5.9 로 무효였고, 상위 글은 전부
+          # 첫 문장이 구체적 사건 단문이었다. 편집자 한 줄·질문 유도는 스펙아웃(리체 결정).
+          headline = (digest.get('headline') or '').strip()
+          title_text = headline or f"{date_label} 트렌드림 다이제스트"
+          FULL_COUNT = 5
           parts = [
               "# ⚡️",
-              f"# [{date_label} 트렌드림 다이제스트]({link})",
+              f"# [{title_text}]({link})",
           ]
+          if headline:
+              parts.append(f"{date_label} 트렌드림 다이제스트")
           if intro_text:
               parts += ["", f"> {intro_text}"]
-
-          for a in arts:
+          for a in arts[:FULL_COUNT]:
               num = a.get('num')
               title = (a.get('title') or '').strip()
               so_what = (a.get('so_what') or '').strip()
@@ -308,9 +314,15 @@ jobs:
                   parts.append(f"![thumb]({pages_base}/{thumb})")
               if art_link:
                   parts.append(f"> *[🔗 기사 원문 링크]({art_link})*")
-
+          rest = arts[FULL_COUNT:]
+          if rest:
+              parts += ["", "*이것도 함께 실렸어요*"]
+              for a in rest:
+                  num = a.get('num')
+                  title = (a.get('title') or '').strip()
+                  art_link = (a.get('link') or '').strip()
+                  parts.append(f"- *[{num}. {title}]({art_link})*" if art_link else f"- *{num}. {title}*")
           parts += ["", f"> *[다이제스트 풀버전 보기]({link})*"]
-
           # 테스트 모드(개인 아지트)에서는 단체 멘션 제거
           if not test_mode:
               parts += ["", "cc. @@moretab @@onboarding.design @@trenddaily"]
