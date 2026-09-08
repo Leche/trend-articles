@@ -93,14 +93,20 @@ READER_PICKED_EXAMPLES = [
 ]
 
 # ─── 모델 배치 (2026-09-09) ──────────────────────────────────
-# 판단이 필요한 두 호출(기사 선정 · 인트로/헤드라인/리드)은 Opus 5, 글쓰기(본문 요약 · so-what ·
-# 교체 단일 요약)는 Sonnet 5. 단가(1M 토큰, 2026-06 기준): Sonnet 4.6 $3/$15 → Sonnet 5 $2/$10,
-# Opus 5 $5/$25. 이 배치면 회당 비용이 종전(전부 Sonnet 4.6, ≈$0.20)과 같은 수준에서 판단 구간만
-# 상위 모델이 된다. 글쓰기 호출은 effort=low — 생각 토큰이 출력으로 과금되는데 요약은 추론이 필요
-# 없다. 실제 토큰은 _log_usage() 가 호출마다 Actions 로그에 남긴다 — 비용 논의는 이 숫자로 한다.
-MODEL_JUDGE = "claude-opus-5"
+# 단가(1M 토큰, 2026-06 기준): Sonnet 4.6 $3/$15 → Sonnet 5 $2/$10, Opus 5 $5/$25.
+# - 기사 선정: Sonnet 5, effort medium. 후보 130개 프롬프트가 크다(Sonnet 4.6 토크나이저로 ~17K,
+#   Opus 5 토크나이저로는 23.9K 실측) — Opus 로 두면 이 호출 하나가 $0.20 이라 회당 비용이 1.5배가 된다.
+# - 인트로·헤드라인·리드: Opus 5, effort low. 입력이 4~5K 라 싸고, 좋아요 레버(헤드라인 훅)가 걸린 판단.
+# - 본문 요약 · so-what · 교체 단일 요약: Sonnet 5, effort low. 글쓰기는 추론이 필요 없다.
+# ⚠️ 5 계열은 thinking 이 기본으로 켜져 있고 생각 토큰이 max_tokens 에 포함된다 — 2026-09-09 첫 시도에서
+#   선정 호출이 max_tokens=3000 에 잘렸다. 상한은 눈에 보이는 출력의 2~3배로 잡는다.
+# 실제 토큰은 _log_usage() 가 호출마다 Actions 로그에 남긴다 — 비용 논의는 이 숫자로 한다.
+MODEL_SELECT = "claude-sonnet-5"
+MODEL_HEADLINE = "claude-opus-5"
 MODEL_WRITE = "claude-sonnet-5"
-WRITE_EFFORT = {"effort": "low"}
+SELECT_EFFORT = {"effort": "medium"}
+LOW_EFFORT = {"effort": "low"}
+WRITE_EFFORT = LOW_EFFORT
 
 
 def _log_usage(label, response):
@@ -984,9 +990,9 @@ def curate_with_claude(candidates):
     print(f"\n🤖 Claude API로 기사 선정 중... (후보 {min(len(candidates), MAX_PROMPT_CANDIDATES)}개)")
 
     response = client.messages.create(
-        model=MODEL_JUDGE,
-        max_tokens=3000,
-        output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}},
+        model=MODEL_SELECT,
+        max_tokens=8000,  # 12개 선정 JSON ≈ 1.5K + thinking
+        output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}, **SELECT_EFFORT},
         messages=[{"role": "user", "content": prompt}],
     )
     _log_usage("기사 선정", response)
@@ -1281,9 +1287,9 @@ def generate_intro(articles):
 응답: intro · headlines · lead_num 세 필드 (다른 설명, 따옴표 등 없이)"""
     try:
         response = client.messages.create(
-            model=MODEL_JUDGE,
-            max_tokens=600,
-            output_config={"format": {"type": "json_schema", "schema": INTRO_SCHEMA}},
+            model=MODEL_HEADLINE,
+            max_tokens=3000,  # 인트로 + 헤드라인 8개 ≈ 700 + thinking
+            output_config={"format": {"type": "json_schema", "schema": INTRO_SCHEMA}, **LOW_EFFORT},
             messages=[{"role": "user", "content": prompt}]
         )
         _log_usage("인트로·헤드라인", response)
