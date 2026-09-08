@@ -628,11 +628,15 @@ def scan_surfit_categories():
                     seen_urls = set()
 
                     for article in soup.find_all("article"):
+                        # 광고 카드 제외 — data-variant="fullImage" 이고 링크에 ?material= 이 붙는다
+                        # (2026-09-09 실측: 카테고리 첫 카드가 광고라 5개 슬롯 중 하나를 매번 먹고 있었다)
+                        if (article.get("data-variant") or "") == "fullImage":
+                            continue
                         # surfit.io/link/XXXXX 형태 링크 추출
                         link_tag = article.find(
                             "a", href=lambda h: h and "surfit.io/link/" in h
                         )
-                        if not link_tag:
+                        if not link_tag or "material=" in link_tag["href"]:
                             continue
                         url = link_tag["href"]
                         if not url.startswith("http"):
@@ -645,17 +649,27 @@ def scan_surfit_categories():
                         heading = article.find(["h1", "h2", "h3", "h4"])
                         title_hint = heading.get_text(strip=True)[:100] if heading else ""
 
-                        # 날짜 추출 (YYYY.MM.DD 패턴)
+                        # 날짜: <time datetime="2026-09-07T02:56:50+09:00"> 우선, 없으면 YYYY.MM.DD 텍스트
                         date_hint = ""
-                        for text_node in article.find_all(string=_re.compile(r"\d{4}\.\d{2}\.\d{2}")):
-                            m = _re.search(r"(\d{4})\.(\d{2})\.(\d{2})", text_node)
-                            if m:
-                                date_hint = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
-                                break
+                        time_tag = article.find("time")
+                        if time_tag and (time_tag.get("datetime") or "")[:10].count("-") == 2:
+                            date_hint = time_tag["datetime"][:10]
+                        else:
+                            for text_node in article.find_all(string=_re.compile(r"\d{4}\.\d{2}\.\d{2}")):
+                                m = _re.search(r"(\d{4})\.(\d{2})\.(\d{2})", text_node)
+                                if m:
+                                    date_hint = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+                                    break
+
+                        # 부제(a.content-desc) → 요약 힌트. 피드 후보는 요약이 있는데 서핏 후보만 제목뿐이라
+                        # 선정에서 밀렸다(2026-09-09 두 번 연속 서핏 0건). 부제가 없으면 뒤에서 og:description 을 붙인다.
+                        desc_tag = article.find("a", class_="content-desc")
+                        summary_hint = desc_tag.get_text(strip=True)[:220] if desc_tag else ""
 
                         site_candidates.append({
                             "url": url,
                             "title_hint": title_hint,
+                            "summary_hint": summary_hint,
                             "source": "https://www.surfit.io",
                             "date_hint": date_hint,
                         })
@@ -798,6 +812,14 @@ def scan_priority_sites():
             continue
         cand["final_url"] = final
         cand["source"] = f"{netloc.replace('www.', '')} (via surfit)"
+        if not cand.get("summary_hint"):
+            # 부제가 없는 카드는 원문의 og:description 으로 요약 힌트를 채운다 (요청 1회, 실패해도 후보는 유지)
+            try:
+                r = requests.get(final, headers=HEADERS, timeout=8)
+                meta = _extract_meta(r.text) if r.ok else {}
+                cand["summary_hint"] = next((v for k, v in meta.items() if "description" in k.lower() and v), "")[:220]
+            except Exception:
+                pass
         candidates.append(cand)
 
     two_weeks_ago = TODAY - datetime.timedelta(days=14)
@@ -989,7 +1011,8 @@ def curate_with_claude(candidates):
 ## 요청
 후보 중에서 서로 다른 기사 {select_count}개를 골라 URL 과 선정 이유(한 문장)를 주세요.
 (후처리 중복 제거·차단 도메인 제외 후 최종 {ARTICLE_COUNT}개로 추려지므로 여유분을 포함한 개수입니다.)
-**출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만.
+**출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만 — 이건 상한이지 목표가 아닙니다. 한 출처에서 2개를 채우려 하지 마세요.
+"(via surfit)"는 전달 경로 표시일 뿐이라 출처 상한은 실제 도메인 기준으로 세세요. 서핏 경유 후보는 국내 큐레이션 플랫폼이 이미 골라 올린 글이라 요약이 짧아도 동등하게 고려하세요.
 적합한 기사가 {select_count}개가 안 되면 억지로 채우지 말고 더 적게 주세요."""
 
     print(f"\n🤖 Claude API로 기사 선정 중... (후보 {min(len(candidates), MAX_PROMPT_CANDIDATES)}개)")
