@@ -1358,7 +1358,8 @@ def generate_so_what(articles):
             messages=[{"role": "user", "content": prompt}],
         )
         _log_usage("so-what", response)
-        text = response.content[0].text.strip()
+        # thinking 이 켜진 모델은 첫 블록이 ThinkingBlock 일 수 있다 → text 블록을 찾아 읽는다 (2026-09-09 실측)
+        text = next((b.text for b in response.content if b.type == "text"), "").strip()
         # 혹시 코드펜스로 감싸 나오면 제거
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.DOTALL).strip()
         arr = json.loads(text)

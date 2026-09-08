@@ -267,7 +267,7 @@ def ai_sync_with_source(article_section: str, source: dict, instruction: str) ->
             f"[현재 다이제스트 섹션]\n{article_section}"
         )}],
     )
-    raw = response.content[0].text.strip()
+    raw = next((b.text for b in response.content if b.type == "text"), "").strip()
     m = re.search(r'\[[\s\S]*\]', raw)
     if not m:
         raise ValueError(f"sync 응답 파싱 실패: {raw}")
