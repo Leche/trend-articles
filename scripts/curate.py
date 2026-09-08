@@ -830,7 +830,8 @@ def scan_priority_sites():
     # 출처 분포 리포트
     source_counts = {}
     for c in candidates:
-        domain = urlparse(c["source"]).netloc
+        # source 는 URL(HTML 스캔) 또는 도메인 문자열(피드·서핏) 둘 다 온다
+        domain = urlparse(c["source"]).netloc or c["source"]
         source_counts[domain] = source_counts.get(domain, 0) + 1
     print(f"\n📊 출처 분포: {source_counts}")
     print(f"📋 총 {len(candidates)}개 후보 (사이트 {len(source_counts)}곳)")
