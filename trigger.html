@@ -2066,7 +2066,7 @@ function replaceImageFrame(content, articleNum, dataUrl) {
 }
 
 // ── agit-digest-data JSON 블록 조작 ──
-// 아지트 발행(agit-post.yml)은 이 블록만 소스로 읽는다. 페이지 카드(base64 임베드)와
+// 아지트 발행(agit-post.yml)은 이 블록만 소스로 읽는다. 페이지 카드(파일 참조 <img>)와
 // 별개라, 썸네일·순서 편집이 아지트에 반영되려면 이 블록도 함께 갱신해야 한다.
 // 블록이 없는 파일(root landing 등)은 손대지 않고 원본 그대로 반환.
 const AGIT_DATA_RE = /(<script id="agit-digest-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
@@ -2153,12 +2153,16 @@ async function replaceThumbnails() {
     const nums    = converted.map(t => t.num).join(', ');
     const msg     = `🖼️ 썸네일 교체: ${nums}번 기사 (${dateVal})`;
 
-    // 페이지 카드(base64 임베드)를 바꾸고, daily 페이지에선 아지트 블록의 thumb 파일명도 갱신.
+    // 페이지 카드의 <img> 는 커밋되는 썸네일 파일(thumb-N.ext)을 참조한다 — base64 임베드 X.
+    // daily 는 같은 폴더라 파일명만, root 미러는 최신 날짜 복사본이라 날짜 폴더를 붙인다
+    // (curate.py root_mirror_html 과 같은 규칙). 비디오·확장자 불명은 파일이 없어 인라인 유지.
+    // daily 페이지에선 아지트 블록의 thumb 파일명도 갱신.
     // (root index 의 블록은 최신 날짜 복사본이라 건드리지 않음 — 과거 날짜 편집 시 오염 방지)
     async function modifyHtml(path, isDaily) {
       let html = await ghGetRaw(path);
       for (const c of converted) {
-        html = replaceImageFrame(html, c.num, c.dataUrl);
+        const src = c.thumbName ? (isDaily ? c.thumbName : `${dateVal}/${c.thumbName}`) : c.dataUrl;
+        html = replaceImageFrame(html, c.num, src);
         if (isDaily) html = setAgitThumb(html, c.num, c.thumbName);
       }
       return html;
@@ -2171,7 +2175,7 @@ async function replaceThumbnails() {
       files.push({ path: 'index.html', content: await modifyHtml('index.html', false) });
     } catch(_) {}
 
-    // 아지트가 실제로 읽는 썸네일 파일 자체를 커밋 (페이지의 base64 임베드는 아지트에서 안 보임)
+    // 썸네일 파일 자체를 커밋 — 페이지 <img> 와 아지트 본문 모두 이 파일을 참조한다.
     for (const c of converted) {
       if (c.thumbName) {
         files.push({ path: `${dateVal}/${c.thumbName}`, content: c.rawB64, encoding: 'base64' });

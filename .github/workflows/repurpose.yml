@@ -128,9 +128,11 @@ jobs:
                   root_html = f.read()
               if src_title in root_html:
                   root_html = root_html.replace(src_title, tgt_title)
+                  # 루트 미러의 썸네일 경로는 'YYYY-MM-DD/thumb-N.ext' — 폴더가 옮겨졌으니 같이 바꾼다.
+                  root_html = root_html.replace(f'src="{src_dir}/thumb-', f'src="{tgt_dir}/thumb-')
                   with open(root, 'w', encoding='utf-8') as f:
                       f.write(root_html)
-                  print(f"[OK] root index.html title 업데이트")
+                  print(f"[OK] root index.html title·썸네일 경로 업데이트")
               else:
                   print(f"[INFO] root index.html 은 다른 날짜 미러 중 — 건드리지 않음")
 
