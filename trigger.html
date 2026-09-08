@@ -2039,6 +2039,32 @@ function fileToDataUrl(file) {
   });
 }
 
+// ── 업로드 썸네일 정규화: 16:10 센터 크롭 + 폭 ≤960 + WebP(지원 안 되면 JPEG) ──
+// curate.py _normalize_image 와 같은 규격. 아지트는 이미지를 원본 비율로 보여줘서 세로로 긴
+// 썸네일 하나가 글을 길게 늘린다(2026-09-09). 비디오·GIF·SVG 는 그대로 둔다(애니·벡터 보존).
+const THUMB_RATIO = 16 / 10, THUMB_MAX_WIDTH = 960;
+function normalizeThumb(dataUrl) {
+  if (!/^data:image\/(jpeg|jpg|png|webp|bmp|tiff)/i.test(dataUrl)) return Promise.resolve(dataUrl);
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
+        if (sw / sh > THUMB_RATIO) { const nw = Math.round(sh * THUMB_RATIO); sx = Math.floor((sw - nw) / 2); sw = nw; }
+        else if (sw / sh < THUMB_RATIO) { const nh = Math.round(sw / THUMB_RATIO); sy = Math.floor((sh - nh) / 2); sh = nh; }
+        const w = Math.min(sw, THUMB_MAX_WIDTH), h = Math.round(w / THUMB_RATIO);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+        let out = c.toDataURL('image/webp', 0.85);
+        if (!/^data:image\/webp/i.test(out)) out = c.toDataURL('image/jpeg', 0.85);  // Safari 구버전 폴백
+        resolve(out);
+      } catch (_) { resolve(dataUrl); }  // 캔버스 실패 시 원본 그대로 (교체 자체를 막지 않는다)
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 // ── image-frame 교체 (div depth 방식) ──
 function replaceImageFrame(content, articleNum, dataUrl) {
   const numStr   = String(articleNum).padStart(2, '0');
@@ -2137,7 +2163,7 @@ async function replaceThumbnails() {
   try {
     // 모든 파일 먼저 dataUrl 변환 + 아지트 썸네일 파일명/raw base64 준비
     const converted = await Promise.all(tasks.map(async t => {
-      const dataUrl = await fileToDataUrl(t.file);
+      const dataUrl = await normalizeThumb(await fileToDataUrl(t.file));
       const isVideo = /^data:video\//.test(dataUrl);
       const ext     = isVideo ? null : _imgExtFromDataUrl(dataUrl);
       return {

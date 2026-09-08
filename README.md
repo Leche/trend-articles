@@ -78,7 +78,7 @@ GitHub Actions의 `schedule:` 트리거는 인덱싱이 비결정적이라 정�
 ### 데이터 파일 (저장소 루트)
 
 - **`YYYY-MM-DD/index.html`** — 날짜별 다이제스트. `index.html`(루트)은 최신 날짜의 미러.
-- **`YYYY-MM-DD/thumb-N.ext`** — 기사별 썸네일 파일(WebP, 폭 ≤ 960px로 정규화). 다이제스트 페이지의 `<img>`와 아지트 본문이 모두 이 파일을 참조하며, HTML에 base64를 넣지 않습니다. 루트 미러는 `YYYY-MM-DD/thumb-N.ext`처럼 날짜가 붙은 경로를 씁니다. 비디오 썸네일(mp4)만 HTML에 인라인으로 남습니다.
+- **`YYYY-MM-DD/thumb-N.ext`** — 기사별 썸네일 파일(WebP, 16:10 센터 크롭, 폭 ≤ 960px로 정규화 — 트리거 업로드도 같은 규격). 다이제스트 페이지의 `<img>`와 아지트 본문이 모두 이 파일을 참조하며, HTML에 base64를 넣지 않습니다. 루트 미러는 `YYYY-MM-DD/thumb-N.ext`처럼 날짜가 붙은 경로를 씁니다. 비디오 썸네일(mp4)만 HTML에 인라인으로 남습니다.
 - **`test/index.html`** — `curate.yml`을 `test_mode=true`로 실행했을 때만 쓰는 폴더. 실 데이터(날짜 폴더·루트 미러)를 건드리지 않고 결과만 확인할 수 있습니다.
 - **`pending-publish.json`** — 발행 예약 상태(`{date, test_mode, scheduled_at}`). 예약이 없으면 `{}`. 발행·정리 후 다시 비워집니다.
 - **`rejected-articles.json`** — 검수 중 교체로 밀려난 기사(`{url, title, rejected_at}`) 기록. 다음 큐레이션이 이 목록을 참고해 버려진 기사를 다시 뽑지 않습니다.

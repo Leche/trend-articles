@@ -494,10 +494,27 @@ def _ascii_url(u):
 
 
 THUMB_MAX_WIDTH = 960  # 카드 폭 100%·모바일 2x 기준. 그 이상은 페이지·레포 용량만 늘린다.
+THUMB_RATIO = 16 / 10  # 다이제스트 .image-frame 의 aspect-ratio 와 동일. 아지트는 이미지를 원본 비율로
+                       # 보여줘서 세로 긴 썸네일 하나가 글을 길게 늘렸다(2026-09-09) → 파일 자체를 크롭한다.
+
+
+def _center_crop(img, ratio):
+    """가로/세로 비율이 ratio 가 되도록 긴 쪽을 가운데 기준으로 잘라낸다."""
+    w, h = img.size
+    if w / h > ratio:          # 너무 넓다 → 좌우를 잘라냄
+        nw = max(1, round(h * ratio))
+        left = (w - nw) // 2
+        return img.crop((left, 0, left + nw, h))
+    if w / h < ratio:          # 너무 길다 → 위아래를 잘라냄
+        nh = max(1, round(w / ratio))
+        top = (h - nh) // 2
+        return img.crop((0, top, w, top + nh))
+    return img
 
 
 def _normalize_image(img_data, content_type):
     """다운받은 이미지를 썸네일 규격으로 정규화 — WebP, 폭 ≤ THUMB_MAX_WIDTH.
+    16:10(THUMB_RATIO) 으로 센터 크롭 — 페이지 카드(object-fit: cover)와 아지트 글이 같은 프레임을 갖게.
     GIF는 첫 프레임만 쓴다(수십 MB GIF가 히스토리에 박힌 2026-05-20 사고 방지). SVG는 그대로.
     Pillow가 못 열면 원본 바이트를 돌려주되 경고를 남긴다(조용히 삼키지 않음).
     반환: (bytes, ext) — ext 는 data URL 의 image/<ext>."""
@@ -510,9 +527,10 @@ def _normalize_image(img_data, content_type):
         has_alpha = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
         if img.mode not in ("RGB", "RGBA"):
             img = img.convert("RGBA" if has_alpha else "RGB")
+        img = _center_crop(img, THUMB_RATIO)
         if img.width > THUMB_MAX_WIDTH:
             ratio = THUMB_MAX_WIDTH / img.width
-            img = img.resize((THUMB_MAX_WIDTH, max(1, int(img.height * ratio))), Image.LANCZOS)
+            img = img.resize((THUMB_MAX_WIDTH, max(1, round(img.height * ratio))), Image.LANCZOS)
         buf = BytesIO()
         img.save(buf, format="WEBP", quality=82, method=4)
         return buf.getvalue(), "webp"
