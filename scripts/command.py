@@ -245,7 +245,7 @@ def ai_sync_with_source(article_section: str, source: dict, instruction: str) ->
     """원본 기사와 다이제스트 섹션을 받아 [{old, new}] 교정 쌍 반환"""
     client = anthropic.Anthropic()
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=2048,
         system="""당신은 트렌드림 다이제스트 편집 도우미입니다.
 원본 기사와 현재 다이제스트의 해당 기사 섹션을 받아, 원본 기준으로 어긋난 부분을
