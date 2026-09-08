@@ -1096,18 +1096,26 @@ def _is_placeholder_article(art):
     return any(m in text for m in markers)
 
 
+def _normalize_title(t):
+    """제목 비교용 정규화 — 소문자, 따옴표·괄호·구두점·공백 제거.
+    2026-09-09: 교체로 버려진 "모든 글에 AI를 쓰면서도 'AI 슬롭'을 피하는 방법"이 곧은 따옴표(')와
+    둥근 따옴표(‘’) 차이로 정확 일치에 안 걸려 다음날 다시 뽑혔다."""
+    t = (t or "").lower()
+    return re.sub(r"[\s'\"‘’“”「」『』\[\]()（）…·\-—–:,.!?]+", "", t)
+
+
 def dedup_articles(articles):
     """placeholder/메타 항목 + 같은 큐레이션 내 중복(self) + 과거 큐레이션
     중복을 모두 제거. URL(정규화)·제목(소문자) 양쪽 기준."""
     past_link_set = {_normalize_url(l) for l in past_links if l}
-    past_title_set = {(t or "").strip().lower() for t in past_titles}
+    past_title_set = {_normalize_title(t) for t in past_titles}
 
     seen_urls = set()
     seen_titles = set()
     result = []
     for art in articles:
         url_norm = _normalize_url(art.get("url", ""))
-        title_norm = (art.get("title_ko") or "").strip().lower()
+        title_norm = _normalize_title(art.get("title_ko"))
         label = art.get("title_ko") or art.get("url") or "(제목 없음)"
 
         if _is_placeholder_article(art):
