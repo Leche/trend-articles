@@ -88,93 +88,9 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
 @media (min-width: 1200px) { .agit-cta { padding: 40px 0 36px; } }
 /*GNB-CSS-START*/html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}body{padding-top:var(--gnb-h,55px);}:root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}.gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:55px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}.gnb-inner{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}.gnb-brand{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}.gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}.gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}.gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}.gnb-toc-btn:active{opacity:0.75;}.gnb-toc-label{font-weight:500;font-size:13px;}.gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}.gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}body.toc-open{overflow:hidden;}.toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}.toc-panel.open{visibility:visible;pointer-events:auto;}.toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}.toc-panel.open .toc-overlay{opacity:1;}.toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}.toc-panel.open .toc-drawer{transform:translateY(0);}.toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}.toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}.toc-close{background:transparent;border:0;font-size:28px;cursor:pointer;color:var(--text2);padding:0 6px;line-height:1;font-family:inherit;}.toc-close:hover{color:var(--text);}.toc-list{list-style:none;padding:4px 12px 32px;margin:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}.toc-list li{margin:0;}.toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}.toc-panel.open .toc-item{opacity:1;transform:translateY(0);}.toc-item:hover{background:var(--page);}.toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}.toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}.toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}.article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}.link-box{padding:8px 12px;}.agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}.back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}}.back-to-top:active,.agit-cta-btn:active{opacity:0.75;}.back-to-top:focus,.agit-cta-btn:focus{outline:none;}.back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}@media (min-width:768px){html,body{background:var(--surface);}.card{border:0;border-radius:0;}}@media (min-width:768px){.gnb-inner{padding:14px 32px;}.toc-drawer{left:auto;width:420px;max-width:92vw;transform:translateX(100%);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,0.12);}.toc-panel.open .toc-drawer{transform:translateX(0);}.toc-item{transform:translateX(30px);}.toc-panel.open .toc-item{transform:translateX(0);}.toc-header{padding:22px 24px 16px;}.toc-title{font-size:20px;}.toc-list{padding:4px 16px 40px;}.agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}.back-to-top,.agit-cta-btn{height:48px;font-size:14px;}}.digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}.digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}.digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}.pc-fabs{display:none;}@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}.pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}.pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}.pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}.pc-fab svg{flex-shrink:0;display:block;}.pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}.pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}.digest-intro{grid-column:1 / -1;padding:36px 0 40px;}.article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}.article-item > *{min-width:0;}}@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}.article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}:root{--gnb-flash-bg:rgba(0,0,0,0.08);}@media (prefers-color-scheme:dark){:root{--gnb-flash-bg:rgba(255,255,255,0.08);}}@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}@media (min-width:1200px){.article-item{position:relative;isolation:isolate;}.article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}}/*GNB-CSS-END*/</style></head><body><!--GNB-HTML-START--><nav class="gnb"><div class="gnb-inner"><a href="#top" class="gnb-brand" data-gnb-top><span class="gnb-brand-name">트렌드림</span><span class="gnb-date"></span></a><button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel"><span class="gnb-toc-label">목차</span><span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span></button></div><div class="gnb-progress-fill"></div></nav><aside id="toc-panel" class="toc-panel" aria-hidden="true"><div class="toc-overlay"></div><div class="toc-drawer"><div class="toc-header"><span class="toc-title">목차</span><button type="button" class="toc-close" aria-label="목차 닫기">×</button></div><ol class="toc-list"></ol></div></aside><!--GNB-HTML-END--><div class="card"><main class="article-wrap article-list">
 <section class="digest-intro" data-static-intro><div class="digest-meta"><span>8개 기사</span><span>·</span><span>약 5분 읽기</span></div><p class="digest-summary">티빙은 2024년 모의해킹에서 발견된 취약점을 고치지 않은 채로 뒀고, 공격자는 그 구멍을 통해 운영 접속키 43개를 손에 넣었어요. 합성 사용자 연구에서도 비슷한 구조가 보여요 — AI가 '그럴듯하게' 답한다고 해서 실제 사용자의 실패를 재현하진 못해요. 시스템이 작동하는 것처럼 보이는 것과 실제로 안전한 것 사이의 간극을, 제품을 만드는 사람이 제일 먼저 의심해야 해요.</p></section>
-<script id="agit-digest-data" type="application/json">{"headline":"티빙 3,954만 계정 유출, 2024년 모의해킹 취약점 방치가 원인","intro":"티빙은 2024년 모의해킹에서 발견된 취약점을 고치지 않은 채로 뒀고, 공격자는 그 구멍을 통해 운영 접속키 43개를 손에 넣었어요. 합성 사용자 연구에서도 비슷한 구조가 보여요 — AI가 '그럴듯하게' 답한다고 해서 실제 사용자의 실패를 재현하진 못해요. 시스템이 작동하는 것처럼 보이는 것과 실제로 안전한 것 사이의 간극을, 제품을 만드는 사람이 제일 먼저 의심해야 해요.","articles":[{"num":1,"title":"배민, 전통 민화 기반 새 캐릭터 '도치학' 공개","so_what":"'도치+학=도착'이라는 말장난이 서비스 동선을 그대로 담고 있어요. 브랜드 네이밍이 UX 메타포까지 겸할 수 있다는 작은 사례예요.","link":"https://designcompass.org/2026/09/08/baemin-do-chak-character/","thumb":"thumb-1.webp"},{"num":2,"title":"인스타그램은 내 말을 듣고 있을까? 나를 너무 잘 아는 알고리즘에 대하여","so_what":"인스타그램이 내 대화를 엿듣는 게 아니라, 내가 말하기 전부터 행동 신호를 이미 수집하고 있는 거예요. 알고리즘은 나보다 내 관심사를 먼저 알고 있어요.","link":"https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io","thumb":"thumb-2.webp"},{"num":3,"title":"구글 Gemini Spark, 구글 포토 관리 기능 추가","so_what":"Gemini Spark가 구글 포토를 직접 조작할 수 있게 됐어요. 다만 '작은 업데이트마다 과잉 홍보'하는 패턴이 AI 피로감을 키운다는 지적도 함께 나왔어요.","link":"https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/","thumb":"thumb-3.webp"},{"num":4,"title":"'취업 면접 사기로 모아둔 돈을 잃었습니다'...간절한 구직자들 피해 잇따라","so_what":"구인 플랫폼에서 면접 도구로 위장한 악성코드 사기가 늘고 있어요. 별도 앱 설치를 요구하는 채용 연락은 일단 사기로 의심하는 게 맞아요.","link":"https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io","thumb":"thumb-4.webp"},{"num":5,"title":"테트리스는 '무작위처럼 느껴지기' 위해 속임수를 써야 했다","so_what":"테트리스는 진짜 무작위가 '불공평하게 느껴져서' 결과를 조작해야 했어요. 사용자가 공정하다고 느끼게 하는 것과 수학적으로 공정한 것은 전혀 다른 설계 문제예요.","link":"https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4","thumb":"thumb-5.webp"},{"num":6,"title":"합성 사용자(Synthetic User)를 보는 세 가지 기준 - Align","so_what":"합성 사용자는 말은 실제 사용자와 비슷하지만 행동은 달라요. 리서치에 쓰기 전에 실제 응답과 얼마나 일치하는지 검증 단계를 꼭 거쳐야 해요.","link":"https://story.pxd.co.kr/1922?ref=surfit.io","thumb":"thumb-6.webp"},{"num":7,"title":"티빙 3,954만 계정 정보 유출…보상은 직접 신청해야 함","so_what":"티빙에서 약 3,954만 계정 정보가 유출됐고, 보상은 9월 30일까지 직접 신청해야 받을 수 있어요. 자동 지급이 아니니 해당 기간 놓치지 마세요.","link":"https://news.hada.io/topic?id=33308&ref=surfit.io","thumb":"thumb-7.webp"},{"num":8,"title":"'사스포칼립스' 공포를 실적으로 뒤집은 SaaS 기업들","so_what":"AI가 SaaS 구독 모델을 무너뜨릴 거란 공포는 200일 만에 실적으로 반박됐어요. 사용자 수 대신 에이전트 작업량으로 과금하는 모델 전환이 핵심 신호예요.","link":"https://byline.network/2026/09/8-521/","thumb":"thumb-8.webp"}]}</script>
+<script id="agit-digest-data" type="application/json">{"intro": "티빙은 2024년 모의해킹에서 발견된 취약점을 고치지 않은 채로 뒀고, 공격자는 그 구멍을 통해 운영 접속키 43개를 손에 넣었어요. 합성 사용자 연구에서도 비슷한 구조가 보여요 — AI가 '그럴듯하게' 답한다고 해서 실제 사용자의 실패를 재현하진 못해요. 시스템이 작동하는 것처럼 보이는 것과 실제로 안전한 것 사이의 간극을, 제품을 만드는 사람이 제일 먼저 의심해야 해요.", "articles": [{"num": 1, "title": "티빙 3,954만 계정 정보 유출…보상은 직접 신청해야 함", "so_what": "티빙에서 약 3,954만 계정 정보가 유출됐고, 보상은 9월 30일까지 직접 신청해야 받을 수 있어요. 자동 지급이 아니니 해당 기간 놓치지 마세요.", "link": "https://news.hada.io/topic?id=33308&ref=surfit.io", "thumb": "thumb-7.webp", "headline": "티빙 3,954만 계정 유출, 2024년 모의해킹 취약점 방치가 원인"}, {"num": 2, "title": "배민, 전통 민화 기반 새 캐릭터 '도치학' 공개", "so_what": "'도치+학=도착'이라는 말장난이 서비스 동선을 그대로 담고 있어요. 브랜드 네이밍이 UX 메타포까지 겸할 수 있다는 작은 사례예요.", "link": "https://designcompass.org/2026/09/08/baemin-do-chak-character/", "thumb": "thumb-1.webp", "headline": ""}, {"num": 3, "title": "인스타그램은 내 말을 듣고 있을까? 나를 너무 잘 아는 알고리즘에 대하여", "so_what": "인스타그램이 내 대화를 엿듣는 게 아니라, 내가 말하기 전부터 행동 신호를 이미 수집하고 있는 거예요. 알고리즘은 나보다 내 관심사를 먼저 알고 있어요.", "link": "https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io", "thumb": "thumb-2.webp", "headline": ""}, {"num": 4, "title": "구글 Gemini Spark, 구글 포토 관리 기능 추가", "so_what": "Gemini Spark가 구글 포토를 직접 조작할 수 있게 됐어요. 다만 '작은 업데이트마다 과잉 홍보'하는 패턴이 AI 피로감을 키운다는 지적도 함께 나왔어요.", "link": "https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/", "thumb": "thumb-3.webp", "headline": ""}, {"num": 5, "title": "'취업 면접 사기로 모아둔 돈을 잃었습니다'...간절한 구직자들 피해 잇따라", "so_what": "구인 플랫폼에서 면접 도구로 위장한 악성코드 사기가 늘고 있어요. 별도 앱 설치를 요구하는 채용 연락은 일단 사기로 의심하는 게 맞아요.", "link": "https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io", "thumb": "thumb-4.webp", "headline": ""}, {"num": 6, "title": "테트리스는 '무작위처럼 느껴지기' 위해 속임수를 써야 했다", "so_what": "테트리스는 진짜 무작위가 '불공평하게 느껴져서' 결과를 조작해야 했어요. 사용자가 공정하다고 느끼게 하는 것과 수학적으로 공정한 것은 전혀 다른 설계 문제예요.", "link": "https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4", "thumb": "thumb-5.webp", "headline": ""}, {"num": 7, "title": "합성 사용자(Synthetic User)를 보는 세 가지 기준 - Align", "so_what": "합성 사용자는 말은 실제 사용자와 비슷하지만 행동은 달라요. 리서치에 쓰기 전에 실제 응답과 얼마나 일치하는지 검증 단계를 꼭 거쳐야 해요.", "link": "https://story.pxd.co.kr/1922?ref=surfit.io", "thumb": "thumb-6.webp", "headline": ""}, {"num": 8, "title": "'사스포칼립스' 공포를 실적으로 뒤집은 SaaS 기업들", "so_what": "AI가 SaaS 구독 모델을 무너뜨릴 거란 공포는 200일 만에 실적으로 반박됐어요. 사용자 수 대신 에이전트 작업량으로 과금하는 모델 전환이 핵심 신호예요.", "link": "https://byline.network/2026/09/8-521/", "thumb": "thumb-8.webp", "headline": ""}]}</script>
 <article id="article-1" class="article-item">
 <div class="article-label">ARTICLE 01</div>
-<h2 class="article-title">배민, 전통 민화 기반 새 캐릭터 '도치학' 공개</h2>
-<p class="article-summary">배민 신규 캐릭터 도치학 출시.</p>
-<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">우아한형제들이 고슴도치 '도치'와 두루미 '학'으로 이루어진 새 브랜드 캐릭터 '도치학'을 공개했어요. 한국 전통 민화에서 복을 기원하는 소재로 쓰인 두 동물을 캐릭터의 뿌리로 삼았어요.</li>
-<li class="bullet-item">이름에는 '도치+학'을 빠르게 읽으면 '도착'처럼 들리는 언어유희가 담겼어요. 배달의 출발부터 도착까지 이어지는 서비스 경험을 이름 하나로 표현한 거예요.</li>
-<li class="bullet-item">캐릭터는 이미 4월부터 앱 화면·프로모션·사내 행사에 등장했고, 앞으로 기존 캐릭터 '배달이'와의 접목도 검토할 계획이에요. 전통 이미지·말장난·서비스 동선을 하나의 브랜드 장치로 연결했다는 점이 디자인적 특징이에요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/09/08/baemin-do-chak-character/" target="_blank">https://designcompass.org/2026/09/08/baemin-do-chak-character/</a></div>
-</article>
-<article id="article-2" class="article-item">
-<div class="article-label">ARTICLE 02</div>
-<h2 class="article-title">인스타그램은 내 말을 듣고 있을까? 나를 너무 잘 아는 알고리즘에 대하여</h2>
-<p class="article-summary">도청 아닌 알고리즘이 먼저 눈치채는 구조.</p>
-<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">대화한 적도 없는데 인스타그램에 관련 광고가 뜨는 경험, 많이들 해봤을 거예요. 실제로 상시 녹음을 뒷받침하는 명확한 증거는 현재까지 공개적으로 확인되지 않았어요.</li>
-<li class="bullet-item">알고리즘은 내가 말하기 훨씬 전부터 멈춰 본 영상, 방문한 프로필, 외부 사이트 활동 등 미세한 행동 신호를 이미 수집하고 있어요. 내가 말을 꺼낸 게 아니라, 알고리즘이 먼저 관심사를 눈치챈 거예요.</li>
-<li class="bullet-item">대화 이후 관련 콘텐츠가 '갑자기' 눈에 띄는 건 알고리즘 변화와 우리의 선택적 기억이 동시에 작용한 결과예요. 단, Siri·Alexa 같은 음성 비서가 의도치 않게 대화를 수집한 사례는 실제로 존재했어요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io" target="_blank">https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io</a></div>
-</article>
-<article id="article-3" class="article-item">
-<div class="article-label">ARTICLE 03</div>
-<h2 class="article-title">구글 Gemini Spark, 구글 포토 관리 기능 추가</h2>
-<p class="article-summary">Spark로 포토 라이브러리 자동 관리.</p>
-<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">구글의 개인 에이전트 Gemini Spark가 구글 포토를 직접 관리할 수 있게 됐어요. 앨범 편집·공유 컬렉션 생성·콘서트 전단 사진을 캘린더 일정으로 전환하는 작업을 음성·텍스트 명령으로 실행할 수 있어요.</li>
-<li class="bullet-item">이 기능은 미국 내 Gemini AI Pro·Ultra 구독자에게 향후 몇 주에 걸쳐 순차 배포돼요. 사용하려면 구글 포토를 Gemini에 연결한 뒤 앱 상단에서 Spark를 켜고 프롬프트를 입력하면 돼요.</li>
-<li class="bullet-item">테크크런치는 이런 발표들이 AI의 소비자 가치를 충분히 설득하지 못하는 사례라고 지적해요. AI 업계가 작은 업그레이드마다 홍보하는 경쟁 구도가 오히려 AI에 대한 반감을 키울 수 있다는 맥락이에요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/" target="_blank">https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/</a></div>
-</article>
-<article id="article-4" class="article-item">
-<div class="article-label">ARTICLE 04</div>
-<h2 class="article-title">'취업 면접 사기로 모아둔 돈을 잃었습니다'...간절한 구직자들 피해 잇따라</h2>
-<p class="article-summary">취업 면접 위장 악성코드 사기 급증.</p>
-<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">사기범들이 링크드인·인디드 등 구인·구직 플랫폼에서 채용 담당자를 사칭해 가짜 면접 도구나 앱을 내려받도록 유도하고 있어요. 한 피해자는 구글 문서로 위장한 악성 파일을 열었다가 암호화폐 저축금 약 3,300만 원을 하룻밤 새 모두 잃었어요.</li>
-<li class="bullet-item">사이버 보안 전문가는 이번 사기가 실제 구글 계정과 페이지를 활용하고 디지털 서명까지 위조해 정상 앱처럼 보이도록 정교하게 설계됐다고 경고해요. 링크드인은 Z세대 구직자의 32%가 취업 경쟁이 치열해 의심스러운 징후를 무시한 적 있다고 밝혔어요.</li>
-<li class="bullet-item">인디드는 자사 면접은 웹브라우저에서만 진행되며 별도 앱 설치를 요구하지 않는다고 공지했어요. 면접을 위해 앱을 내려받으라는 요청은 모두 사기이므로, 채용 공고와 기업의 실존 여부를 반드시 먼저 확인하는 것이 중요해요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io" target="_blank">https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io</a></div>
-</article>
-<article id="article-5" class="article-item">
-<div class="article-label">ARTICLE 05</div>
-<h2 class="article-title">테트리스는 '무작위처럼 느껴지기' 위해 속임수를 써야 했다</h2>
-<p class="article-summary">무작위 인식과 실제 확률의 간극.</p>
-<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">테트리스는 순수한 무작위 알고리즘을 쓰면 플레이어가 불공평하다고 느끼기 때문에 실제로는 결과를 조작하는 방식을 사용했어요. 인간이 확률 분포를 직접 볼 수 없고 오직 '순서'만 경험하기 때문이에요.</li>
-<li class="bullet-item">사람의 직관은 연속된 시퀀스에서 무너져요. 같은 블록이 연달아 나오면 통계적으로는 정상이어도 '조작됐다'고 느끼는 거예요. 이 간극을 메우려면 시스템이 인간 인식에 맞게 결과를 보정해야 해요.</li>
-<li class="bullet-item">이 원리는 UX 설계에도 적용돼요. 알고리즘이 수학적으로 공정하더라도 사용자가 공정하다고 느끼지 않으면 신뢰를 잃어요. '느껴지는 무작위'와 '실제 무작위'를 구분해 설계하는 것이 중요해요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4" target="_blank">https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4</a></div>
-</article>
-<article id="article-6" class="article-item">
-<div class="article-label">ARTICLE 06</div>
-<h2 class="article-title">합성 사용자(Synthetic User)를 보는 세 가지 기준 - Align</h2>
-<p class="article-summary">합성 사용자의 현실 정합성 검증 기준.</p>
-<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
-<div class="summary-label">SUMMARY</div>
-<ul class="bullet-list">
-<li class="bullet-item">합성 사용자가 실제 데이터를 기반으로 만들어졌더라도, 새로운 상황에선 실제 사용자와 다르게 반응할 수 있어요. 그래서 '그럴듯함'을 넘어 실제 응답과 얼마나 일치하는지(Alignment)를 확인하는 것이 중요해요.</li>
-<li class="bullet-item">Align의 깊이는 그럴듯함 → 전문가 검토 → 응답 일치 → 행동 일치 순으로 나뉘어요. 퀄트릭스는 합성 패널과 실제 패널의 응답을 동일 조건으로 비교해 정합성을 검증하는 방식을 활용했어요.</li>
-<li class="bullet-item">Userbrain과 NN/g의 실험에서 합성 사용자는 말은 유사하지만 행동은 달랐어요. 합성 사용자는 실제 사용자의 실패를 재현하지 못하고 더 이상적으로 반응하는 경향이 있어, 행동 수준의 비교 검증이 필요해요.</li>
-</ul>
-<div class="link-label">LINK</div>
-<div class="link-box"><a class="article-link" href="https://story.pxd.co.kr/1922?ref=surfit.io" target="_blank">https://story.pxd.co.kr/1922?ref=surfit.io</a></div>
-</article>
-<article id="article-7" class="article-item">
-<div class="article-label">ARTICLE 07</div>
 <h2 class="article-title">티빙 3,954만 계정 정보 유출…보상은 직접 신청해야 함</h2>
 <p class="article-summary">티빙 3,954만 계정 정보 유출 및 보상 신청 안내.</p>
 <div class="image-frame"><img class="article-image" src="thumb-7.webp" alt="썸네일"></div>
@@ -186,8 +102,85 @@ body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-
 </ul>
 <div class="link-label">LINK</div>
 <div class="link-box"><a class="article-link" href="https://news.hada.io/topic?id=33308&ref=surfit.io" target="_blank">https://news.hada.io/topic?id=33308&ref=surfit.io</a></div>
-</article>
-<article id="article-8" class="article-item">
+</article> <article id="article-2" class="article-item">
+<div class="article-label">ARTICLE 02</div>
+<h2 class="article-title">배민, 전통 민화 기반 새 캐릭터 '도치학' 공개</h2>
+<p class="article-summary">배민 신규 캐릭터 도치학 출시.</p>
+<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">우아한형제들이 고슴도치 '도치'와 두루미 '학'으로 이루어진 새 브랜드 캐릭터 '도치학'을 공개했어요. 한국 전통 민화에서 복을 기원하는 소재로 쓰인 두 동물을 캐릭터의 뿌리로 삼았어요.</li>
+<li class="bullet-item">이름에는 '도치+학'을 빠르게 읽으면 '도착'처럼 들리는 언어유희가 담겼어요. 배달의 출발부터 도착까지 이어지는 서비스 경험을 이름 하나로 표현한 거예요.</li>
+<li class="bullet-item">캐릭터는 이미 4월부터 앱 화면·프로모션·사내 행사에 등장했고, 앞으로 기존 캐릭터 '배달이'와의 접목도 검토할 계획이에요. 전통 이미지·말장난·서비스 동선을 하나의 브랜드 장치로 연결했다는 점이 디자인적 특징이에요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/09/08/baemin-do-chak-character/" target="_blank">https://designcompass.org/2026/09/08/baemin-do-chak-character/</a></div>
+</article> <article id="article-3" class="article-item">
+<div class="article-label">ARTICLE 03</div>
+<h2 class="article-title">인스타그램은 내 말을 듣고 있을까? 나를 너무 잘 아는 알고리즘에 대하여</h2>
+<p class="article-summary">도청 아닌 알고리즘이 먼저 눈치채는 구조.</p>
+<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">대화한 적도 없는데 인스타그램에 관련 광고가 뜨는 경험, 많이들 해봤을 거예요. 실제로 상시 녹음을 뒷받침하는 명확한 증거는 현재까지 공개적으로 확인되지 않았어요.</li>
+<li class="bullet-item">알고리즘은 내가 말하기 훨씬 전부터 멈춰 본 영상, 방문한 프로필, 외부 사이트 활동 등 미세한 행동 신호를 이미 수집하고 있어요. 내가 말을 꺼낸 게 아니라, 알고리즘이 먼저 관심사를 눈치챈 거예요.</li>
+<li class="bullet-item">대화 이후 관련 콘텐츠가 '갑자기' 눈에 띄는 건 알고리즘 변화와 우리의 선택적 기억이 동시에 작용한 결과예요. 단, Siri·Alexa 같은 음성 비서가 의도치 않게 대화를 수집한 사례는 실제로 존재했어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io" target="_blank">https://brunch.co.kr/@jihyungyoo/12?ref=surfit.io</a></div>
+</article> <article id="article-4" class="article-item">
+<div class="article-label">ARTICLE 04</div>
+<h2 class="article-title">구글 Gemini Spark, 구글 포토 관리 기능 추가</h2>
+<p class="article-summary">Spark로 포토 라이브러리 자동 관리.</p>
+<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">구글의 개인 에이전트 Gemini Spark가 구글 포토를 직접 관리할 수 있게 됐어요. 앨범 편집·공유 컬렉션 생성·콘서트 전단 사진을 캘린더 일정으로 전환하는 작업을 음성·텍스트 명령으로 실행할 수 있어요.</li>
+<li class="bullet-item">이 기능은 미국 내 Gemini AI Pro·Ultra 구독자에게 향후 몇 주에 걸쳐 순차 배포돼요. 사용하려면 구글 포토를 Gemini에 연결한 뒤 앱 상단에서 Spark를 켜고 프롬프트를 입력하면 돼요.</li>
+<li class="bullet-item">테크크런치는 이런 발표들이 AI의 소비자 가치를 충분히 설득하지 못하는 사례라고 지적해요. AI 업계가 작은 업그레이드마다 홍보하는 경쟁 구도가 오히려 AI에 대한 반감을 키울 수 있다는 맥락이에요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/" target="_blank">https://techcrunch.com/2026/09/04/googles-gemini-spark-can-now-manage-your-google-photos-library/</a></div>
+</article> <article id="article-5" class="article-item">
+<div class="article-label">ARTICLE 05</div>
+<h2 class="article-title">'취업 면접 사기로 모아둔 돈을 잃었습니다'...간절한 구직자들 피해 잇따라</h2>
+<p class="article-summary">취업 면접 위장 악성코드 사기 급증.</p>
+<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">사기범들이 링크드인·인디드 등 구인·구직 플랫폼에서 채용 담당자를 사칭해 가짜 면접 도구나 앱을 내려받도록 유도하고 있어요. 한 피해자는 구글 문서로 위장한 악성 파일을 열었다가 암호화폐 저축금 약 3,300만 원을 하룻밤 새 모두 잃었어요.</li>
+<li class="bullet-item">사이버 보안 전문가는 이번 사기가 실제 구글 계정과 페이지를 활용하고 디지털 서명까지 위조해 정상 앱처럼 보이도록 정교하게 설계됐다고 경고해요. 링크드인은 Z세대 구직자의 32%가 취업 경쟁이 치열해 의심스러운 징후를 무시한 적 있다고 밝혔어요.</li>
+<li class="bullet-item">인디드는 자사 면접은 웹브라우저에서만 진행되며 별도 앱 설치를 요구하지 않는다고 공지했어요. 면접을 위해 앱을 내려받으라는 요청은 모두 사기이므로, 채용 공고와 기업의 실존 여부를 반드시 먼저 확인하는 것이 중요해요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io" target="_blank">https://www.bbc.com/korean/articles/cvgyq9ej434o?ref=surfit.io</a></div>
+</article> <article id="article-6" class="article-item">
+<div class="article-label">ARTICLE 06</div>
+<h2 class="article-title">테트리스는 '무작위처럼 느껴지기' 위해 속임수를 써야 했다</h2>
+<p class="article-summary">무작위 인식과 실제 확률의 간극.</p>
+<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">테트리스는 순수한 무작위 알고리즘을 쓰면 플레이어가 불공평하다고 느끼기 때문에 실제로는 결과를 조작하는 방식을 사용했어요. 인간이 확률 분포를 직접 볼 수 없고 오직 '순서'만 경험하기 때문이에요.</li>
+<li class="bullet-item">사람의 직관은 연속된 시퀀스에서 무너져요. 같은 블록이 연달아 나오면 통계적으로는 정상이어도 '조작됐다'고 느끼는 거예요. 이 간극을 메우려면 시스템이 인간 인식에 맞게 결과를 보정해야 해요.</li>
+<li class="bullet-item">이 원리는 UX 설계에도 적용돼요. 알고리즘이 수학적으로 공정하더라도 사용자가 공정하다고 느끼지 않으면 신뢰를 잃어요. '느껴지는 무작위'와 '실제 무작위'를 구분해 설계하는 것이 중요해요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4" target="_blank">https://uxdesign.cc/tetris-had-to-cheat-to-feel-random-201913dc69ed?source=rss----138adf9c44c---4</a></div>
+</article> <article id="article-7" class="article-item">
+<div class="article-label">ARTICLE 07</div>
+<h2 class="article-title">합성 사용자(Synthetic User)를 보는 세 가지 기준 - Align</h2>
+<p class="article-summary">합성 사용자의 현실 정합성 검증 기준.</p>
+<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">합성 사용자가 실제 데이터를 기반으로 만들어졌더라도, 새로운 상황에선 실제 사용자와 다르게 반응할 수 있어요. 그래서 '그럴듯함'을 넘어 실제 응답과 얼마나 일치하는지(Alignment)를 확인하는 것이 중요해요.</li>
+<li class="bullet-item">Align의 깊이는 그럴듯함 → 전문가 검토 → 응답 일치 → 행동 일치 순으로 나뉘어요. 퀄트릭스는 합성 패널과 실제 패널의 응답을 동일 조건으로 비교해 정합성을 검증하는 방식을 활용했어요.</li>
+<li class="bullet-item">Userbrain과 NN/g의 실험에서 합성 사용자는 말은 유사하지만 행동은 달랐어요. 합성 사용자는 실제 사용자의 실패를 재현하지 못하고 더 이상적으로 반응하는 경향이 있어, 행동 수준의 비교 검증이 필요해요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://story.pxd.co.kr/1922?ref=surfit.io" target="_blank">https://story.pxd.co.kr/1922?ref=surfit.io</a></div>
+</article> <article id="article-8" class="article-item">
 <div class="article-label">ARTICLE 08</div>
 <h2 class="article-title">'사스포칼립스' 공포를 실적으로 뒤집은 SaaS 기업들</h2>
 <p class="article-summary">SaaS 기업의 AI 위기 실적 반전.</p>

@@ -1179,19 +1179,27 @@ def _read_recent_intros(today, n=7):
 INTRO_SCHEMA = {
     "type": "object",
     "properties": {
-        "headline": {"type": "string", "description": "아지트 글 제목용 헤드라인 한 줄 (25~40자, 구체적 사건 단문)"},
         "intro": {"type": "string", "description": "인트로 한 단락 (150~200자, 2~3문장)"},
+        "headlines": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "기사별 헤드라인 (입력 기사 순서와 같은 길이·순서, 각 25~40자 구체적 사건 단문)",
+        },
+        "lead_num": {"type": "integer", "description": "훅이 가장 센 기사 번호 (1부터)"},
     },
-    "required": ["headline", "intro"],
+    "required": ["intro", "headlines", "lead_num"],
     "additionalProperties": False,
 }
 
 
 def generate_intro(articles):
-    """오늘 기사들을 보고 헤드라인 한 줄 + 인트로 한 단락 생성 (Claude, 호출 1회).
-    반환: (headline, intro). headline 은 아지트 글 제목으로 쓰인다 — 49건 클랩 분석(2026-09-09)에서
-    상위 글은 전부 첫 문장이 '구체적 사건 하나를 단문으로' 던진 글이었고, 추상 명제로 시작한
-    글이 하위권이었다. 실패 시 headline 은 빈 문자열(agit-post 가 날짜 제목으로 폴백)."""
+    """오늘 기사들을 보고 인트로 한 단락 + 기사별 헤드라인 + 리드 기사 번호 생성 (Claude, 호출 1회).
+    반환: (intro, headlines, lead_num).
+    - headlines 는 기사마다 하나씩(입력 순서). 아지트 글 제목은 **항상 1번 기사의 헤드라인**을 쓴다 —
+      리체가 트리거에서 순서를 바꾸면 제목이 따라가고, 기사 교체로 새 기사가 오면 이 호출이 다시 돈다.
+      49건 클랩 분석(2026-09-09): 상위 글은 전부 첫 문장이 '구체적 사건 하나를 단문으로'였다.
+    - lead_num 은 훅이 가장 센 기사. 새 큐레이션에서만 generate_html() 이 그 기사를 1번으로 올린다.
+    실패 시 ([], None) — agit-post 가 1번 제목 → 날짜 제목으로 폴백."""
     client = anthropic.Anthropic(max_retries=8)
     article_text = ""
     for i, art in enumerate(articles, 1):
@@ -1223,14 +1231,16 @@ def generate_intro(articles):
 - 억지로 8개를 하나로 꿰지 마세요. 관통하는 맥이 있으면 짚고, 없으면 가장 중요한 1~2개 축으로 묶어 "지금 주목할 지점"을 제시
 - **오늘의 큰 축에 맞지 않는 기사는 인트로에서 과감히 빼세요.** 8개를 다 넣으려다 산만해지는 것보다, 핵심 축에 드는 2개만 밀도 있게 다루는 게 훨씬 좋아요. 나머지는 독자가 기사 목록에서 직접 발견하면 됩니다
 
-헤드라인(headline) — 아지트 글의 제목으로 쓰입니다:
-- 오늘 기사 중 **가장 구체적이고 의외인 사건 하나**를 25~40자 평서문 단문으로. 회사·제품·행위가 들어가야 함
+기사별 헤드라인(headlines) — 그 기사가 1번에 놓이면 아지트 글의 제목으로 쓰입니다. 기사 수({len(articles)})와 같은 개수를 같은 순서로:
+- 각각 **그 기사의 가장 구체적이고 의외인 사건 하나**를 25~40자 평서문 단문으로. 회사·제품·행위가 들어가야 함
 - 추상어("시대", "흐름", "경계", "재편") 금지, 물음표·이모지·"오늘의" 금지, 두 사건을 접속사로 잇지 말 것
-- 좋은 예: "메타가 8년 쌓은 디자인 시스템을 버렸다", "오픈AI가 텍스트 대화 제한을 없앴다", "팁을 요청하는 키오스크가 늘고 있다"
+- 좋은 예: "메타가 8년 쌓은 디자인 시스템을 버렸다", "오픈AI가 텍스트 대화 제한을 없앴다", "테트리스는 공정하게 느껴지려고 확률을 조작했다"
 - 나쁜 예: "AI 시대, 디자이너의 역할이 바뀌고 있다", "플랫폼 경쟁의 새로운 국면"
 
+리드(lead_num): 위 헤드라인 중 독자가 가장 멈춰 볼 것 하나 — 그 기사 번호(1부터). 중요도가 아니라 **훅의 세기**로 고르세요.
+
 인트로(intro) 형식:
-- **첫 문장은 헤드라인의 그 사건을 구체적으로** — 추상 명제("~하는 시대예요")로 시작하지 마세요
+- **첫 문장은 구체적 사건으로 시작** (리드 기사의 사건이면 가장 좋음) — 추상 명제("~하는 시대예요")로 시작하지 마세요
 - **150~200자, 2~3문장**, 친근한 "~요" 톤. 이 범위를 넘기지 마세요 — 짧고 밀도 높은 게 목표예요
 - 구체 사례 2개를 실제 기사에서 인용하되, 각 사례에 **"그래서 지금 왜 의미 있는지" 맥락**을 붙일 것
 - **한 문장에 사례를 2개 이상 접속사로 이어붙이지 마세요** ("A하고, B하고, C한 건…" 금지). 사례는 문장을 끊어서 나눠 담고, 각 문장은 짧게
@@ -1247,7 +1257,7 @@ def generate_intro(articles):
 톤 다양성:
 - "최근 7일 인트로"와 **다른 구조·다른 어휘·다른 시작 문장**을 쓰세요. 매번 같은 틀(예: "오늘은 ~") 반복 금지
 
-응답: headline 과 intro 두 필드 (다른 설명, 따옴표 등 없이)"""
+응답: intro · headlines · lead_num 세 필드 (다른 설명, 따옴표 등 없이)"""
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
@@ -1257,13 +1267,19 @@ def generate_intro(articles):
         )
         text = next((b.text for b in response.content if b.type == "text"), "")
         data = json.loads(text)
-        headline = (data.get("headline") or "").strip()
         intro = (data.get("intro") or "").strip()
-        print(f"🗞  헤드라인: {headline}")
-        return headline, intro
+        n = len(articles)
+        headlines = [(h or "").strip() for h in (data.get("headlines") or [])][:n]
+        headlines += [""] * (n - len(headlines))  # 개수가 모자라면 빈칸 → 제목 폴백
+        lead_num = data.get("lead_num")
+        if not isinstance(lead_num, int) or not (1 <= lead_num <= n):
+            lead_num = None
+        for i, h in enumerate(headlines, 1):
+            print(f"  {'★' if i == lead_num else ' '} {i}. {h or '(없음 → 제목 폴백)'}")
+        return intro, headlines, lead_num
     except Exception as e:
         print(f"[WARN] intro generation failed: {e}")
-        return "", f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요."
+        return f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요.", [], None
 
 
 def generate_so_what(articles):
@@ -1413,8 +1429,19 @@ def write_thumbnails(articles, out_dir):
 def generate_html(articles):
     """확정된 템플릿으로 HTML 생성"""
 
-    # AI 인트로 + 읽기 시간
-    headline, intro_text = generate_intro(articles)
+    # AI 인트로 + 기사별 헤드라인 + 읽기 시간
+    intro_text, headlines, lead_num = generate_intro(articles)
+    for art, h in zip(articles, headlines):
+        art["headline"] = h
+    # 새 큐레이션에서만 훅이 가장 센 기사를 1번으로 올린다 — 아지트 글 제목이 1번 헤드라인이라
+    # 제목·인트로·첫 카드가 한 이야기가 되게. 교체 모드는 리체가 잡은 순서를 존중한다.
+    # (articles 를 제자리에서 바꾼다 — 뒤따르는 write_thumbnails() 가 새 번호로 파일을 쓴다)
+    if lead_num and not REPLACEMENTS and 1 <= lead_num <= len(articles):
+        lead = articles.pop(lead_num - 1)
+        articles.insert(0, lead)
+        for i, art in enumerate(articles, 1):
+            art["article_num"] = i
+        print(f"⭐ 리드 기사를 1번으로: {lead.get('title_ko', '')[:50]}")
     reading_mins = calculate_reading_time(articles)
     intro_html = (
         f'<section class="digest-intro" data-static-intro>'
@@ -1443,13 +1470,14 @@ def generate_html(articles):
         agit_articles.append({
             "num": num,
             "title": art.get("title_ko", ""),
+            "headline": art.get("headline") or "",  # 1번이면 아지트 글 제목. 비면 title 폴백
             "so_what": so_whats[idx] if idx < len(so_whats) else (art.get("one_line") or ""),
             "link": link,
             "thumb": thumb,
         })
     agit_data_script = (
         '<script id="agit-digest-data" type="application/json">'
-        + json.dumps({"headline": headline, "intro": intro_text, "articles": agit_articles}, ensure_ascii=False)
+        + json.dumps({"intro": intro_text, "articles": agit_articles}, ensure_ascii=False)
         + '</script>'
     )
 

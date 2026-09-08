@@ -282,14 +282,16 @@ jobs:
 
           # v4 포맷 조립 (2026-09-09):
           #   # ⚡️
-          #   # [헤드라인 한 줄](다이제스트 링크)      ← curate.py 가 생성한 그날 가장 구체적인 사건. 없으면 날짜 제목
+          #   # [헤드라인 한 줄](다이제스트 링크)      ← 1번 기사의 headline(curate.py 가 기사별로 생성). 순서를 바꾸면
+          #                                              제목이 따라간다. 없으면 1번 제목 → 날짜 제목 순으로 폴백
           #   날짜 라벨 평문
           #   > 인트로
           #   # *N. 제목* / so-what / 썸네일 / 원문 링크   ← 앞 FULL_COUNT 개만 본문형
           #   *이것도 함께 실렸어요* + 나머지는 제목 링크만
           # 근거: 49건 클랩 분석 — 링크형→본문형 8개 전환은 5.5→5.9 로 무효였고, 상위 글은 전부
           # 첫 문장이 구체적 사건 단문이었다. 편집자 한 줄·질문 유도는 스펙아웃(리체 결정).
-          headline = (digest.get('headline') or '').strip()
+          lead = arts[0] if arts else {}
+          headline = (lead.get('headline') or digest.get('headline') or lead.get('title') or '').strip()
           title_text = headline or f"{date_label} 트렌드림 다이제스트"
           FULL_COUNT = 5
           parts = [

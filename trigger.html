@@ -3174,7 +3174,8 @@ function buildAgitMarkdown(digest, dateFull, opts = {}) {
   const dateLabel = agitDateLabel(dateFull);
   const arts = digest.articles || [];
   const intro = (digest.intro || '').trim();
-  const headline = (digest.headline || '').trim();
+  const lead = arts[0] || {};
+  const headline = ((lead.headline || digest.headline || lead.title) || '').trim();  // 제목 = 1번 기사 헤드라인
   const title = headline || `${dateLabel} 트렌드림 다이제스트`;
   const parts = ['# ⚡️', `# [${title}](${link})`];
   if (headline) parts.push(`${dateLabel} 트렌드림 다이제스트`);
@@ -3245,7 +3246,9 @@ async function loadAgitPreview() {
     box.hidden = false;
     const meta = document.getElementById('agitPreviewMeta');
     const n = (digest.articles || []).length;
-    meta.textContent = `${dateVal} · 기사 ${n}개 (본문형 ${Math.min(n, AGIT_FULL_COUNT)} + 링크 ${Math.max(0, n - AGIT_FULL_COUNT)}) · ${md.length.toLocaleString()}자` + (digest.headline ? '' : ' · 헤드라인 없음 → 날짜 제목으로 나가요');
+    const lead = (digest.articles || [])[0] || {};
+    meta.textContent = `${dateVal} · 기사 ${n}개 (본문형 ${Math.min(n, AGIT_FULL_COUNT)} + 링크 ${Math.max(0, n - AGIT_FULL_COUNT)}) · ${md.length.toLocaleString()}자 · 제목은 1번 기사 기준`
+      + (lead.headline ? '' : ' — 1번 기사에 헤드라인이 없어 제목으로 나가요');
     meta.hidden = false;
     document.getElementById('agitPreviewBtn').textContent = '다시 불러오기';
     showStatus('agitPreviewStatus', 'success', '지금 폴더 기준이에요. 순서·썸네일을 바꾸면 다시 불러오세요.');
