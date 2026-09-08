@@ -92,6 +92,32 @@ READER_PICKED_EXAMPLES = [
     "'적립'보다 '소멸'이 지갑을 연다 | 포인트 소멸 문구는 잔고를 위협한다",
 ]
 
+# ─── 모델 배치 (2026-09-09) ──────────────────────────────────
+# 단가(1M 토큰, 2026-06 기준): Sonnet 4.6 $3/$15 → Sonnet 5 $2/$10, Opus 5 $5/$25.
+# - 기사 선정: Sonnet 5, effort medium. 후보 130개 프롬프트가 크다(Sonnet 4.6 토크나이저로 ~17K,
+#   Opus 5 토크나이저로는 23.9K 실측) — Opus 로 두면 이 호출 하나가 $0.20 이라 회당 비용이 1.5배가 된다.
+# - 인트로·헤드라인·리드: Opus 5, effort low. 입력이 4~5K 라 싸고, 좋아요 레버(헤드라인 훅)가 걸린 판단.
+# - 본문 요약 · so-what · 교체 단일 요약: Sonnet 5, effort low. 글쓰기는 추론이 필요 없다.
+# ⚠️ 5 계열은 thinking 이 기본으로 켜져 있고 생각 토큰이 max_tokens 에 포함된다 — 2026-09-09 첫 시도에서
+#   선정 호출이 max_tokens=3000 에 잘렸다. 상한은 눈에 보이는 출력의 2~3배로 잡는다.
+# 실제 토큰은 _log_usage() 가 호출마다 Actions 로그에 남긴다 — 비용 논의는 이 숫자로 한다.
+MODEL_SELECT = "claude-sonnet-5"
+MODEL_HEADLINE = "claude-opus-5"
+MODEL_WRITE = "claude-sonnet-5"
+SELECT_EFFORT = {"effort": "medium"}
+LOW_EFFORT = {"effort": "low"}
+WRITE_EFFORT = LOW_EFFORT
+
+
+def _log_usage(label, response):
+    """호출별 토큰 사용량을 로그에 남긴다 (입력 · 출력 · 모델)."""
+    try:
+        u = response.usage
+        print(f"   📊 {label}: 입력 {u.input_tokens:,} · 출력 {u.output_tokens:,} 토큰 ({response.model})")
+    except Exception:
+        pass
+
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                   "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -964,11 +990,12 @@ def curate_with_claude(candidates):
     print(f"\n🤖 Claude API로 기사 선정 중... (후보 {min(len(candidates), MAX_PROMPT_CANDIDATES)}개)")
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=3000,
-        output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}},
+        model=MODEL_SELECT,
+        max_tokens=8000,  # 12개 선정 JSON ≈ 1.5K + thinking
+        output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}, **SELECT_EFFORT},
         messages=[{"role": "user", "content": prompt}],
     )
+    _log_usage("기사 선정", response)
     if response.stop_reason == "max_tokens":
         print("❌ 응답이 max_tokens에서 잘렸습니다 — max_tokens를 올려야 합니다")
         sys.exit(1)
@@ -1260,11 +1287,12 @@ def generate_intro(articles):
 응답: intro · headlines · lead_num 세 필드 (다른 설명, 따옴표 등 없이)"""
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=600,
-            output_config={"format": {"type": "json_schema", "schema": INTRO_SCHEMA}},
+            model=MODEL_HEADLINE,
+            max_tokens=3000,  # 인트로 + 헤드라인 8개 ≈ 700 + thinking
+            output_config={"format": {"type": "json_schema", "schema": INTRO_SCHEMA}, **LOW_EFFORT},
             messages=[{"role": "user", "content": prompt}]
         )
+        _log_usage("인트로·헤드라인", response)
         text = next((b.text for b in response.content if b.type == "text"), "")
         data = json.loads(text)
         intro = (data.get("intro") or "").strip()
@@ -1319,10 +1347,12 @@ def generate_so_what(articles):
     try:
         client = anthropic.Anthropic(max_retries=8)
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=MODEL_WRITE,
             max_tokens=1500,
+            output_config=WRITE_EFFORT,
             messages=[{"role": "user", "content": prompt}],
         )
+        _log_usage("so-what", response)
         text = response.content[0].text.strip()
         # 혹시 코드펜스로 감싸 나오면 제거
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.DOTALL).strip()
@@ -1749,12 +1779,14 @@ submit_summary 도구로 결과를 제출하세요.
     # 최대 3회 시도 (도구 미호출 또는 빈 값 나오면 재시도)
     for attempt in range(3):
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=MODEL_WRITE,
             max_tokens=1024,
+            output_config=WRITE_EFFORT,
             tools=[SUMMARY_TOOL],
             tool_choice={"type": "tool", "name": "submit_summary"},
             messages=[{"role": "user", "content": prompt}],
         )
+        _log_usage("단일 요약", response)
         tool_use = next(
             (b for b in response.content if getattr(b, "type", None) == "tool_use"),
             None,
@@ -1843,11 +1875,12 @@ def summarize_articles(articles):
 
     print(f"\n✍️  본문 기반 제목·요약 생성 ({len(articles)}개)...")
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=MODEL_WRITE,
         max_tokens=6000,
-        output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}},
+        output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}, **WRITE_EFFORT},
         messages=[{"role": "user", "content": prompt}],
     )
+    _log_usage("본문 요약", response)
     if response.stop_reason == "max_tokens":
         print("❌ 요약 응답이 max_tokens에서 잘렸습니다 — max_tokens를 올려야 합니다")
         sys.exit(1)
