@@ -62,17 +62,22 @@ FEEDS = [
     "https://news.hada.io/rss/news",
     "https://toss.tech/rss.xml",
     "https://oliveyoung.tech/rss.xml",
+    "https://news.samsung.com/kr/feed",        # 홈 HTML 은 타임아웃이지만 피드는 즉시 응답 (2026-09-09 실측)
+    "https://techblog.woowahan.com/feed/",     # 뉴스룸(woowahan.com/newsroom)은 JS 렌더링이라 못 긁음 → 기술블로그 피드
 ]
 MAX_PER_FEED = 6          # 피드당 최신 N개
 FEED_WINDOW_DAYS = 14     # 선정 기준 '발행 2주 이내'와 동일
-MAX_PROMPT_CANDIDATES = 130
+MAX_PROMPT_CANDIDATES = 160  # 출처 22곳 기준 ~150개. 상한에 걸리면 FEEDS 뒤쪽(국내)이 잘리므로 여유 있게
 
 # 피드가 없는 사이트만 HTML 링크 스캔 (surfit.io는 Playwright로 별도 스캔)
 PRIORITY_SITES = [
     "https://www.anthropic.com/news",
     "https://about.daangn.com/company/pr/",
     "https://www.phonearena.com",
-    # figma 릴리스 노트는 JS 렌더링이라 HTML 스캔에 제품 내비 링크만 잡혀 제외 (2026-09-09 실측)
+    "https://www.uber.com/us/en/newsroom/",    # 같은 도메인 필터 뒤엔 실제 기사만 잡힘 (2026-09-09 실측 25개)
+    "https://eopla.net/",                      # 검수 때 리체가 자주 가져오는 출처, 피드 없음 → HTML (실측 29개)
+    # 제외(2026-09-09 실측): figma 릴리스노트·블로그(카테고리 링크만), 네이버 fficial·인스타그램 블로그·
+    # 우아한형제들 뉴스룸(JS 렌더링, Playwright 로도 목록 로딩 실패), oztalking/letter.inlevel9(접속 불가)
 ]
 
 # 독자(리체)가 검수 중 직접 골라 실은 기사 제목 — 선정 프롬프트에 톤·깊이의 기준점으로 넣는다.
