@@ -99,21 +99,34 @@ READER_PICKED_EXAMPLES = [
     "'적립'보다 '소멸'이 지갑을 연다 | 포인트 소멸 문구는 잔고를 위협한다",
 ]
 
-# ─── 모델 배치 (2026-09-09) ──────────────────────────────────
-# 단가(1M 토큰, 2026-06 기준): Sonnet 4.6 $3/$15 → Sonnet 5 $2/$10, Opus 5 $5/$25.
-# - 기사 선정: Sonnet 5, effort medium. 후보 130개 프롬프트가 크다(Sonnet 4.6 토크나이저로 ~17K,
-#   Opus 5 토크나이저로는 23.9K 실측) — Opus 로 두면 이 호출 하나가 $0.20 이라 회당 비용이 1.5배가 된다.
-# - 인트로·헤드라인·리드: Opus 5, effort low. 입력이 4~5K 라 싸고, 좋아요 레버(헤드라인 훅)가 걸린 판단.
-# - 본문 요약 · so-what · 교체 단일 요약: Sonnet 5, effort low. 글쓰기는 추론이 필요 없다.
-# ⚠️ 5 계열은 thinking 이 기본으로 켜져 있고 생각 토큰이 max_tokens 에 포함된다 — 2026-09-09 첫 시도에서
-#   선정 호출이 max_tokens=3000 에 잘렸다. 상한은 눈에 보이는 출력의 2~3배로 잡는다.
+# ─── 모델 배치 (2026-09-30, 5.5 세대) ────────────────────────
+# 단가(1M 토큰, 2026-09-30 공식 가격 페이지): Sonnet 5.5 $2/$10(Sonnet 5 와 동일), Opus 5.5 $4/$20
+# (Opus 5 $5/$25 보다 20%↓). 토크나이저는 각각 전 세대와 같아 토큰 수는 그대로다.
+# - 기사 선정: Sonnet 5.5, effort medium. 후보 130개 프롬프트가 크다(회당 입력 ~27K 실측) — Opus 로 두면
+#   이 호출 하나가 회당 +$0.11, 월 +$2 라 교체율을 본 뒤 판단하기로 했다.
+# - 인트로·헤드라인·리드 + so-what: Opus 5.5, effort low. 아지트 글에서 독자가 실제로 읽는 문장
+#   (제목·인트로·기사별 so-what)이라 여기에 좋은 모델을 쓴다. 입력이 작아(3~7K) so-what 을 올려도 월 +$0.5.
+# - 본문 요약 · 교체 단일 요약: Sonnet 5.5, effort low.
+# ⚠️ thinking 이 늘 켜져 있고 생각 토큰이 max_tokens 에 포함된다 — 2026-09-09 첫 시도에서 선정 호출이
+#   max_tokens=3000 에 잘렸다. 5.5 는 effort 단계가 재조정돼 생각량이 달라질 수 있어 상한을 넉넉히 잡는다.
+# ⚠️ 5.5 는 tool_choice 로 도구 호출을 강제하면 400 — JSON 이 필요하면 구조화 출력(output_config.format)만 쓴다.
 # 실제 토큰은 _log_usage() 가 호출마다 Actions 로그에 남긴다 — 비용 논의는 이 숫자로 한다.
-MODEL_SELECT = "claude-sonnet-5"
-MODEL_HEADLINE = "claude-opus-5"
-MODEL_WRITE = "claude-sonnet-5"
+MODEL_SELECT = "claude-sonnet-5-5"
+MODEL_HEADLINE = "claude-opus-5-5"
+MODEL_SO_WHAT = "claude-opus-5-5"
+MODEL_WRITE = "claude-sonnet-5-5"
 SELECT_EFFORT = {"effort": "medium"}
 LOW_EFFORT = {"effort": "low"}
 WRITE_EFFORT = LOW_EFFORT
+# 5.5 는 안전 분류기가 넓어(AI 모델 개발·일반 위해 등) AI 뉴스 요약에서 오탐 거절이 날 수 있다.
+# 거절되면 API 가 같은 요청을 Anthropic 추천 모델(전 세대)로 한 번 더 돌린다 — 거절 하나로 그날
+# 큐레이션이 멈추지 않게. 재시도분은 그 모델 단가로 과금된다.
+FALLBACK = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
+
+
+def _create(client, **kwargs):
+    """messages.create + 거절 시 서버 측 재시도(FALLBACK). 모든 큐레이션 호출은 이걸로 부른다."""
+    return client.beta.messages.create(**FALLBACK, **kwargs)
 
 
 def _log_usage(label, response):
@@ -123,6 +136,10 @@ def _log_usage(label, response):
         print(f"   📊 {label}: 입력 {u.input_tokens:,} · 출력 {u.output_tokens:,} 토큰 ({response.model})")
     except Exception:
         pass
+    if getattr(response, "stop_reason", None) == "refusal":
+        print(f"   🚫 {label}: 거절됨 (재시도 모델까지) — {getattr(response, 'stop_details', None)}")
+    elif any(getattr(b, "type", None) == "fallback" for b in getattr(response, "content", []) or []):
+        print(f"   ↪️  {label}: 거절돼서 {response.model} 로 재시도해 받음")
 
 
 HEADERS = {
@@ -1019,9 +1036,10 @@ def curate_with_claude(candidates):
 
     print(f"\n🤖 Claude API로 기사 선정 중... (후보 {min(len(candidates), MAX_PROMPT_CANDIDATES)}개)")
 
-    response = client.messages.create(
+    response = _create(
+        client,
         model=MODEL_SELECT,
-        max_tokens=8000,  # 12개 선정 JSON ≈ 1.5K + thinking
+        max_tokens=16000,  # 12개 선정 JSON ≈ 1.5K + thinking (Sonnet 5 실측 출력 평균 4.9K)
         output_config={"format": {"type": "json_schema", "schema": SELECT_SCHEMA}, **SELECT_EFFORT},
         messages=[{"role": "user", "content": prompt}],
     )
@@ -1332,9 +1350,10 @@ def generate_intro(articles, lead_fixed=False):
 
 응답: intro · headlines · lead_num 세 필드 (다른 설명, 따옴표 등 없이)"""
     try:
-        response = client.messages.create(
+        response = _create(
+            client,
             model=MODEL_HEADLINE,
-            max_tokens=3000,  # 인트로 + 헤드라인 8개 ≈ 700 + thinking
+            max_tokens=4000,  # 인트로 + 헤드라인 8개 ≈ 700 + thinking
             output_config={"format": {"type": "json_schema", "schema": INTRO_SCHEMA}, **LOW_EFFORT},
             messages=[{"role": "user", "content": prompt}]
         )
@@ -1392,9 +1411,10 @@ def generate_so_what(articles):
 예: ["문장1", "문장2"]"""
     try:
         client = anthropic.Anthropic(max_retries=8)
-        response = client.messages.create(
-            model=MODEL_WRITE,
-            max_tokens=1500,
+        response = _create(
+            client,
+            model=MODEL_SO_WHAT,
+            max_tokens=3000,
             output_config=WRITE_EFFORT,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -1791,7 +1811,7 @@ URL 구조에서 파악 가능한 주제를 근거로 작성해주세요."""
 기사 URL: {url}
 {content_section}
 
-submit_summary 도구로 결과를 제출하세요.
+결과는 지정된 JSON 형식(url · title_ko · one_line · summary_1~3)으로 답하세요.
 
 ## 한 줄 요약 규칙
 - 20자 내외, 명사형 + 마침표
@@ -1804,45 +1824,41 @@ submit_summary 도구로 결과를 제출하세요.
 
     # 원문 제목·내용에 큰따옴표 등 특수문자가 있으면 모델이 직접 JSON 텍스트를 만들 때
     # 이스케이프를 놓쳐 파싱이 깨지는 사고가 있었음(예: byline.network 인용 제목).
-    # tool_choice로 구조화 출력을 강제하면 API가 파라미터를 dict로 직접 넘겨주므로
-    # 텍스트 파싱 자체가 없어져 이 문제가 원천적으로 발생하지 않음.
-    SUMMARY_TOOL = {
-        "name": "submit_summary",
-        "description": "기사 요약 결과를 제출합니다.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "url": {"type": "string"},
-                "title_ko": {"type": "string", "description": "한국어 제목 (원문 의미 최대한 살려 번역)"},
-                "one_line": {"type": "string", "description": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남"},
-                "summary_1": {"type": "string", "description": "첫 번째 요약 (약 100자, 해요체)"},
-                "summary_2": {"type": "string", "description": "두 번째 요약 (약 100자, 해요체)"},
-                "summary_3": {"type": "string", "description": "세 번째 요약 (약 100자, 해요체)"},
-            },
-            "required": ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"],
+    # 구조화 출력(output_config.format)은 API 가 유효한 JSON 을 보장하므로 이 문제가 원천적으로 없다.
+    # (예전엔 tool_choice 로 도구 호출을 강제했는데 5.5 세대는 그걸 400 으로 거절한다 — 2026-09-30 전환)
+    SUMMARY_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "url": {"type": "string"},
+            "title_ko": {"type": "string", "description": "한국어 제목 (원문 의미 최대한 살려 번역)"},
+            "one_line": {"type": "string", "description": "20자 내외 한 줄 요약. 명사형 + 마침표로 끝남"},
+            "summary_1": {"type": "string", "description": "첫 번째 요약 (약 100자, 해요체)"},
+            "summary_2": {"type": "string", "description": "두 번째 요약 (약 100자, 해요체)"},
+            "summary_3": {"type": "string", "description": "세 번째 요약 (약 100자, 해요체)"},
         },
+        "required": ["url", "title_ko", "one_line", "summary_1", "summary_2", "summary_3"],
+        "additionalProperties": False,
     }
 
-    # 최대 3회 시도 (도구 미호출 또는 빈 값 나오면 재시도)
+    # 최대 3회 시도 (응답이 없거나 빈 값 나오면 재시도)
     for attempt in range(3):
-        response = client.messages.create(
+        response = _create(
+            client,
             model=MODEL_WRITE,
-            max_tokens=1024,
-            output_config=WRITE_EFFORT,
-            tools=[SUMMARY_TOOL],
-            tool_choice={"type": "tool", "name": "submit_summary"},
+            max_tokens=2048,  # 요약 JSON ≈ 500 + thinking
+            output_config={"format": {"type": "json_schema", "schema": SUMMARY_SCHEMA}, **WRITE_EFFORT},
             messages=[{"role": "user", "content": prompt}],
         )
         _log_usage("단일 요약", response)
-        tool_use = next(
-            (b for b in response.content if getattr(b, "type", None) == "tool_use"),
-            None,
-        )
-        if not tool_use:
-            print(f"  ⚠️  도구 호출 없음 (시도 {attempt + 1}/3, stop_reason={response.stop_reason})")
+        if response.stop_reason == "max_tokens":  # 잘린 JSON 은 파싱이 깨진다
+            print(f"  ⚠️  max_tokens 에서 잘림 (시도 {attempt + 1}/3)")
+            continue
+        text = next((b.text for b in response.content if getattr(b, "type", None) == "text"), None)
+        if not text:
+            print(f"  ⚠️  응답 없음 (시도 {attempt + 1}/3, stop_reason={response.stop_reason})")
             continue
 
-        result = dict(tool_use.input)
+        result = json.loads(text)
         result["url"] = result.get("url") or url
 
         # 필수 키 보정
@@ -1921,9 +1937,10 @@ def summarize_articles(articles):
 {chr(10).join(blocks)}"""
 
     print(f"\n✍️  본문 기반 제목·요약 생성 ({len(articles)}개)...")
-    response = client.messages.create(
+    response = _create(
+        client,
         model=MODEL_WRITE,
-        max_tokens=6000,
+        max_tokens=12000,  # Sonnet 5 실측 출력 평균 3.2K
         output_config={"format": {"type": "json_schema", "schema": ARTICLES_SCHEMA}, **WRITE_EFFORT},
         messages=[{"role": "user", "content": prompt}],
     )
@@ -2101,7 +2118,7 @@ def main():
             new_art = summarize_single_article(new_url)
             if not new_art:
                 print(f"  ❌ 요약 실패, 기존 기사 유지")
-                failed_replacements.append((num, "요약 실패(도구 미호출 반복)"))
+                failed_replacements.append((num, "요약 실패(응답 없음 반복)"))
                 continue
 
             # 저품질 결과로 멀쩡한 기존 기사를 덮어쓰지 않도록 가드.
