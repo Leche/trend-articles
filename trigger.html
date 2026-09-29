@@ -2395,7 +2395,22 @@ async function reorderArticles() {
     showStatus('reorderStatus', 'loading', 'commit 진행 중...');
     await ghMultiFileCommit({ message: msg, files });
 
-    showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.');
+    // 1번이 바뀌었으면 인트로를 새 1번 기준으로 다시 쓴다 — 인트로 첫 문장과 아지트 제목이 둘 다
+    // 1번 기사 얘기라, 순서만 옮기면 제목은 새 1번·인트로는 옛 1번으로 어긋난다(2026-09-30).
+    // 2~8번끼리만 바뀐 건 인트로가 여전히 맞으므로 건드리지 않는다(검수한 문장 보존).
+    let introMsg = '';
+    if (order[0] !== 0) {
+      try {
+        const res = await triggerWorkflow({ custom_date: dateVal, refresh_intro: 'true' });
+        introMsg = res.status === 204
+          ? ' 1번이 바뀌어서 인트로도 새 1번 기준으로 다시 쓰고 있어요. 카카오워크로 완료 알림이 올 거예요.'
+          : ' 다만 인트로 다시 쓰기 요청이 실패했어요 — Actions에서 큐레이션을 refresh_intro=true로 돌려주세요.';
+      } catch (_) {
+        introMsg = ' 다만 인트로 다시 쓰기 요청이 실패했어요 — Actions에서 큐레이션을 refresh_intro=true로 돌려주세요.';
+      }
+    }
+
+    showStatus('reorderStatus', 'success', '순서 적용 완료! 번호도 자동 재부여됐어요. 1~2분 후 반영돼요.' + introMsg);
     document.getElementById('reorderList').innerHTML = '';
     document.getElementById('reorderBtn').style.display = 'none';
     document.getElementById('reorderLoadBtn').style.display = '';

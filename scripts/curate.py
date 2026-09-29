@@ -28,7 +28,9 @@ TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
 # 저녁 큐레이션 — 다음날 발행용 다이제스트를 만들 때 true.
 # CUSTOM_DATE 가 명시되면 그게 우선이고, FOR_TOMORROW 는 무시.
 FOR_TOMORROW = os.environ.get("FOR_TOMORROW", "").strip().lower() == "true"
-KST = datetime.timezone(datetime.timedelta(hours=9))
+# 인트로만 다시 쓰기 — 트리거에서 순서를 바꿔 1번 기사가 달라졌을 때 true. refresh_intro() 참조.
+REFRESH_INTRO = os.environ.get("REFRESH_INTRO", "").strip().lower() == "true"
+KST =datetime.timezone(datetime.timedelta(hours=9))
 
 SURFIT_CATEGORIES = [
     "https://www.surfit.io/explore/startup/new-product",
@@ -1255,13 +1257,14 @@ INTRO_SCHEMA = {
 }
 
 
-def generate_intro(articles):
+def generate_intro(articles, lead_fixed=False):
     """오늘 기사들을 보고 인트로 한 단락 + 기사별 헤드라인 + 리드 기사 번호 생성 (Claude, 호출 1회).
     반환: (intro, headlines, lead_num).
     - headlines 는 기사마다 하나씩(입력 순서). 아지트 글 제목은 **항상 1번 기사의 헤드라인**을 쓴다 —
       리체가 트리거에서 순서를 바꾸면 제목이 따라가고, 기사 교체로 새 기사가 오면 이 호출이 다시 돈다.
       49건 클랩 분석(2026-09-09): 상위 글은 전부 첫 문장이 '구체적 사건 하나를 단문으로'였다.
     - lead_num 은 훅이 가장 센 기사. 새 큐레이션에서만 generate_html() 이 그 기사를 1번으로 올린다.
+    - lead_fixed=True 면 1번을 리드로 못 박는다 — 리체가 순서를 바꿔 고른 1번으로 인트로를 시작하게.
     실패 시 ([], None) — agit-post 가 1번 제목 → 날짜 제목으로 폴백."""
     client = anthropic.Anthropic(max_retries=8)
     article_text = ""
@@ -1282,6 +1285,13 @@ def generate_intro(articles):
             recent_block += f"  {i}. {intro}\n"
         recent_block += "\n"
 
+    if lead_fixed:
+        lead_block = ("리드(lead_num): 편집자가 **1번 기사를 리드로 확정**했어요. lead_num 은 1로 답하고, "
+                      "인트로 첫 문장은 반드시 1번 기사의 사건으로 시작하세요.")
+    else:
+        lead_block = ("리드(lead_num): 위 헤드라인 중 독자가 가장 멈춰 볼 것 하나 — 그 기사 번호(1부터). "
+                      "중요도가 아니라 **훅의 세기**로 고르세요.")
+
     prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
 독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
 
@@ -1300,7 +1310,7 @@ def generate_intro(articles):
 - 좋은 예: "메타가 8년 쌓은 디자인 시스템을 버렸다", "오픈AI가 텍스트 대화 제한을 없앴다", "테트리스는 공정하게 느껴지려고 확률을 조작했다"
 - 나쁜 예: "AI 시대, 디자이너의 역할이 바뀌고 있다", "플랫폼 경쟁의 새로운 국면"
 
-리드(lead_num): 위 헤드라인 중 독자가 가장 멈춰 볼 것 하나 — 그 기사 번호(1부터). 중요도가 아니라 **훅의 세기**로 고르세요.
+{lead_block}
 
 인트로(intro) 형식:
 - **첫 문장은 구체적 사건으로 시작** (리드 기사의 사건이면 가장 좋음) — 추상 명제("~하는 시대예요")로 시작하지 마세요
@@ -1984,10 +1994,71 @@ def load_existing_articles():
     return articles
 
 
+_INTRO_RE = re.compile(
+    r'(<section[^>]*data-static-intro[^>]*>.*?<p class="digest-summary">)([^<]*)(</p>)', re.DOTALL)
+_AGIT_DATA_RE = re.compile(
+    r'(<script id="agit-digest-data" type="application/json">)(.*?)(</script>)', re.DOTALL)
+
+
+def _replace_intro(html, new_intro):
+    """화면 인트로 문단 + 아지트 발행 데이터(agit-digest-data)의 intro 를 함께 바꾼다."""
+    html = _INTRO_RE.sub(lambda m: m.group(1) + new_intro + m.group(3), html, count=1)
+
+    def _fix_data(m):
+        data = json.loads(m.group(2))
+        data["intro"] = new_intro
+        return m.group(1) + json.dumps(data, ensure_ascii=False) + m.group(3)
+    return _AGIT_DATA_RE.sub(_fix_data, html, count=1)
+
+
+def refresh_intro():
+    """인트로만 다시 쓰기 — 트리거에서 순서를 바꿔 1번 기사가 달라졌을 때 돈다.
+    인트로 첫 문장과 아지트 글 제목이 둘 다 1번 기사 얘기라, 순서만 옮기면 제목·첫 카드는
+    새 1번인데 인트로는 옛 1번 얘기로 남는다(2026-09-30 발견). 기사·헤드라인·so-what 은
+    순서 조정 때 기사를 따라 이미 옮겨졌으니 그대로 두고, 인트로 문장만 새 1번 기준으로 쓴다."""
+    articles = load_existing_articles()
+    archive_dir = "test" if TEST_MODE else TODAY.strftime("%Y-%m-%d")
+    archive_path = f"{archive_dir}/index.html"
+    with open(archive_path, encoding="utf-8") as f:
+        html = f.read()
+    m = _INTRO_RE.search(html)
+    if not m:
+        print(f"❌ 인트로 블록을 못 찾음: {archive_path}")
+        sys.exit(1)
+    old_intro = m.group(2).strip()
+
+    intro, headlines, _ = generate_intro(articles, lead_fixed=True)
+    if not headlines:  # 생성 실패 — 검수한 인트로를 제네릭 폴백 문장으로 덮지 않는다
+        print("❌ 인트로 생성 실패 — 기존 인트로 유지")
+        sys.exit(1)
+    print(f"\n📝 인트로 다시 쓰기 (1번: {articles[0].get('title_ko', '')[:40]})")
+    print(f"  이전: {old_intro}")
+    print(f"  새로: {intro}")
+
+    with open(archive_path, "w", encoding="utf-8") as f:
+        f.write(_replace_intro(html, intro))
+    print(f"💾 저장: {archive_path}")
+
+    # 루트는 최신 날짜의 미러 — 같은 인트로를 들고 있을 때만(=이 날짜를 비추고 있을 때만) 같이 고친다
+    if not TEST_MODE and os.path.exists("index.html"):
+        with open("index.html", encoding="utf-8") as f:
+            root = f.read()
+        rm = _INTRO_RE.search(root)
+        if rm and rm.group(2).strip() == old_intro:
+            with open("index.html", "w", encoding="utf-8") as f:
+                f.write(_replace_intro(root, intro))
+            print("💾 저장: index.html")
+
+
 def main():
     print("=" * 60)
     print("🚀 트렌드림 기사 큐레이션 자동화 시작")
     print("=" * 60)
+
+    # ── 인트로만 다시 쓰기 (트리거 순서 조정 후속) ──
+    if REFRESH_INTRO:
+        refresh_intro()
+        return
 
     # ── 교체 모드 ──
     if REPLACEMENTS:

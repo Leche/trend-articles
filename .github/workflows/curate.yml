@@ -30,6 +30,10 @@ on:
         description: '강제 실행 (true면 공휴일·중복 체크 무시 — trigger.html 수동 실행용)'
         required: false
         default: 'false'
+      refresh_intro:
+        description: '인트로만 다시 쓰기 (true면 기사는 그대로 두고 1번 기사 기준으로 인트로만 새로 씀 — trigger.html 순서 조정 후속)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -110,7 +114,9 @@ jobs:
       # 어제와 playwright·Chrome 버전이 완전히 동일했으므로 러너 egress IP 쪽 거부였다.
       # 캐시가 맞으면 install 이 CDN 을 아예 안 건드린다. playwright 를 핀하지 않으므로
       # 버전이 올라가면 키가 바뀌어 자동 갱신된다.
+      # 인트로만 다시 쓰기는 기사를 긁지 않으므로 브라우저 설치 3단계를 건너뛴다.
       - name: Resolve Playwright version
+        if: github.event.inputs.refresh_intro != 'true'
         id: pwver
         run: |
           set -e
@@ -119,12 +125,14 @@ jobs:
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
+        if: github.event.inputs.refresh_intro != 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ runner.os }}-${{ steps.pwver.outputs.version }}
 
       - name: Install Playwright browser
+        if: github.event.inputs.refresh_intro != 'true'
         run: playwright install chromium --with-deps
 
       - name: Run curation script
@@ -136,6 +144,7 @@ jobs:
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
           TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
           FOR_TOMORROW: ${{ github.event.inputs.for_tomorrow || 'false' }}
+          REFRESH_INTRO: ${{ github.event.inputs.refresh_intro || 'false' }}
         run: python scripts/curate.py
 
       - name: Inject GNB into generated HTML
@@ -147,6 +156,7 @@ jobs:
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           FOR_TOMORROW: ${{ github.event.inputs.for_tomorrow || 'false' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
+          REFRESH_INTRO: ${{ github.event.inputs.refresh_intro || 'false' }}
           REPLACE_FAILED: ${{ steps.curate.outputs.replace_failed || 'false' }}
           REPLACE_FAILED_SUMMARY: ${{ steps.curate.outputs.replace_failed_summary || '' }}
         run: |
@@ -165,7 +175,9 @@ jobs:
           ")
           # 액션별 commit message — notify.yml 이 첫 글자(이모지)로 라벨 분류한다.
           # 교체 중 일부라도 실패했으면 커밋 메시지에 남겨서 "성공" 알림에 실패가 묻히지 않게 함.
-          if [ -n "${REPLACE_URLS}" ]; then
+          if [ "${REFRESH_INTRO}" = "true" ]; then
+            COMMIT_MSG="📝 ${DATE_LABEL} 인트로 다시 쓰기"
+          elif [ -n "${REPLACE_URLS}" ]; then
             if [ "${REPLACE_FAILED}" = "true" ]; then
               COMMIT_MSG="🔄 ${DATE_LABEL} 기사 교체 (일부 실패: ${REPLACE_FAILED_SUMMARY})"
             else
