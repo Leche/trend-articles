@@ -20,10 +20,19 @@
 <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
 <meta name="application-name" content="트리거">
 
-<!-- iOS: 홈 화면 추가 후 standalone 으로 뜨게 + 상단 status bar 검정 -->
+<!-- iOS: 홈 화면 추가 후 standalone 으로 뜨게 -->
+<!--
+  status-bar-style 은 default(불투명). black-translucent 로 두면 페이지가 status bar
+  밑까지 깔리고, iOS 26+ 가 그 영역에 Liquid Glass 스크롤 엣지 블러를 얹는데
+  iOS 27 에선 블러가 status bar 아래 ~40pt 까지 번져 GNB 를 뿌옇게 덮는다.
+  fixed·불투명 GNB 로는 못 막음(시스템이 웹뷰 위에 그리는 chrome). default 로 두면
+  웹뷰가 status bar 아래에서 시작해 블러가 얹힐 자리가 없다. status bar 색은
+  theme-color(라이트 #F5F5F5 / 다크 #121212)를 따른다.
+  ⚠️ 이 값은 홈 화면 추가 시점에 굳으므로, 바꾸면 아이콘을 지우고 다시 추가해야 반영됨.
+-->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="트리거">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 
