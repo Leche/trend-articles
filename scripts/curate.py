@@ -30,6 +30,8 @@ TEST_MODE = os.environ.get("TEST_MODE", "").strip().lower() == "true"
 FOR_TOMORROW = os.environ.get("FOR_TOMORROW", "").strip().lower() == "true"
 # 인트로만 다시 쓰기 — 트리거에서 순서를 바꿔 1번 기사가 달라졌을 때 true. refresh_intro() 참조.
 REFRESH_INTRO = os.environ.get("REFRESH_INTRO", "").strip().lower() == "true"
+# 인트로 + so-what 다시 쓰기 — 이미 만든 다이제스트에 새 모델 문장을 입힐 때 true (인트로도 함께 다시 씀).
+REFRESH_SO_WHAT = os.environ.get("REFRESH_SO_WHAT", "").strip().lower() == "true"
 KST =datetime.timezone(datetime.timedelta(hours=9))
 
 SURFIT_CATEGORIES = [
@@ -1275,7 +1277,7 @@ INTRO_SCHEMA = {
 }
 
 
-def generate_intro(articles, lead_fixed=False):
+def generate_intro(articles, lead_fixed=False, avoid_so_whats=None):
     """오늘 기사들을 보고 인트로 한 단락 + 기사별 헤드라인 + 리드 기사 번호 생성 (Claude, 호출 1회).
     반환: (intro, headlines, lead_num).
     - headlines 는 기사마다 하나씩(입력 순서). 아지트 글 제목은 **항상 1번 기사의 헤드라인**을 쓴다 —
@@ -1283,6 +1285,8 @@ def generate_intro(articles, lead_fixed=False):
       49건 클랩 분석(2026-09-09): 상위 글은 전부 첫 문장이 '구체적 사건 하나를 단문으로'였다.
     - lead_num 은 훅이 가장 센 기사. 새 큐레이션에서만 generate_html() 이 그 기사를 1번으로 올린다.
     - lead_fixed=True 면 1번을 리드로 못 박는다 — 리체가 순서를 바꿔 고른 1번으로 인트로를 시작하게.
+    - avoid_so_whats: 이미 있는 기사별 so-what. 아지트에선 인트로 바로 아래 붙어서, 같은 문장을 되풀이하면
+      중복으로 읽힌다(2026-09-30 Opus 5.5 테스트에서 1번 so-what 이 인트로를 거의 그대로 반복).
     실패 시 ([], None) — agit-post 가 1번 제목 → 날짜 제목으로 폴백."""
     client = anthropic.Anthropic(max_retries=8)
     article_text = ""
@@ -1303,6 +1307,13 @@ def generate_intro(articles, lead_fixed=False):
             recent_block += f"  {i}. {intro}\n"
         recent_block += "\n"
 
+    so_what_block = ""
+    if avoid_so_whats:
+        so_what_block = "\n[기사별 so-what — 독자가 인트로 바로 아래에서 읽어요. 이 문장·표현·수치를 인트로에서 되풀이하지 마세요]\n"
+        for i, sw in enumerate(avoid_so_whats, 1):
+            so_what_block += f"  {i}. {sw}\n"
+        so_what_block += "\n"
+
     if lead_fixed:
         lead_block = ("리드(lead_num): 편집자가 **1번 기사를 리드로 확정**했어요. lead_num 은 1로 답하고, "
                       "인트로 첫 문장은 반드시 1번 기사의 사건으로 시작하세요.")
@@ -1313,7 +1324,7 @@ def generate_intro(articles, lead_fixed=False):
     prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
 독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
 
-{article_text}{recent_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
+{article_text}{recent_block}{so_what_block}이 기사들을 훑어본 독자가 "아, 지금 이걸 왜 봐야 하는지" 감을 잡게 하는 인트로 한 단락을 써주세요.
 단순히 오늘 뭐가 실렸는지 나열하는 게 아니라, **당신이 {len(articles)}개를 다 읽고 직접 사고한 결과**를 담아야 합니다.
 
 핵심 관점 — "왜 지금 중요한가(so-what)":
@@ -1375,19 +1386,25 @@ def generate_intro(articles, lead_fixed=False):
         return f"오늘 트렌드림이 큐레이션한 {len(articles)}개의 기사를 모았어요.", [], None
 
 
-def generate_so_what(articles):
-    """각 기사별 1~2문장 압축 so-what 훅 생성 (아지트 본문 인라인용).
-    아지트 피드에서 제목 아래 한 줄로 읽히는 게 목적 — one_line(너무 짧음)이나
-    summary_1(너무 김) 대신, '왜 지금 의미 있는지'를 55~90자로 압축.
-    실패·개수 불일치 시 기사별로 one_line→summary_1 순 폴백."""
-    n = len(articles)
-
+def _so_what_fallback(articles):
+    """so-what 생성 실패 시 기사별 폴백: one_line → (너무 짧으면) summary_1."""
     fallback = []
     for art in articles:
         fb = (art.get("one_line") or "").strip()
         if len(fb) < 12:  # 명사형 한 줄이 너무 짧으면 첫 불릿으로
             fb = (art.get("summary_1") or fb).strip()
         fallback.append(fb)
+    return fallback
+
+
+def generate_so_what(articles, intro=""):
+    """각 기사별 1~2문장 압축 so-what 훅 생성 (아지트 본문 인라인용).
+    아지트 피드에서 제목 아래 한 줄로 읽히는 게 목적 — one_line(너무 짧음)이나
+    summary_1(너무 김) 대신, '왜 지금 의미 있는지'를 55~90자로 압축.
+    intro 를 주면 인트로와 같은 문장을 되풀이하지 않게 한다 — 아지트에선 인트로 바로 아래 1번이 붙는다.
+    실패·개수 불일치 시 기사별로 one_line→summary_1 순 폴백."""
+    n = len(articles)
+    fallback = _so_what_fallback(articles)
 
     article_text = ""
     for i, art in enumerate(articles, 1):
@@ -1398,14 +1415,20 @@ def generate_so_what(articles):
                 article_text += f"   - {art[k]}\n"
         article_text += "\n"
 
+    intro_block = ""
+    intro_rule = ""
+    if intro:
+        intro_block = f"[이 다이제스트의 인트로 — 독자가 so-what 보다 먼저 읽어요]\n{intro}\n\n"
+        intro_rule = "\n- 인트로에 이미 나온 문장·표현·수치는 되풀이하지 말 것. 같은 기사를 다뤄도 인트로가 말하지 않은 다른 각도로."
+
     prompt = f"""아래는 트렌드림 다이제스트의 오늘 기사 {n}개예요. 독자는 프로덕트 디자이너·기획자·메이커입니다.
 각 기사마다 아지트 피드에서 제목 바로 아래 한 줄로 보여줄 "so-what 훅"을 써주세요.
 
-{article_text}규칙:
+{article_text}{intro_block}규칙:
 - 각 기사당 1~2문장, 55~90자. 친근한 "~요" 톤(해요체).
 - 사실 나열이 아니라 "그래서 지금 왜 의미 있는지" 관점을 담되, 과장·클리셰("혁명적", "판을 바꾸다" 등) 금지.
 - 첫 문장은 핵심 사실을 짧게, 이어서 그 의미·신호를 붙이는 구조 권장.
-- 제목을 그대로 반복하지 말 것. 제목이 이미 위에 보이므로 훅은 '의미'에 집중.
+- 제목을 그대로 반복하지 말 것. 제목이 이미 위에 보이므로 훅은 '의미'에 집중.{intro_rule}
 
 응답 형식: JSON 배열만 출력. 정확히 {n}개의 문자열. 다른 설명·따옴표·코드펜스 없이.
 예: ["문장1", "문장2"]"""
@@ -1550,7 +1573,7 @@ def generate_html(articles):
     # 아지트 발행용 데이터 블록 — agit-post.yml이 이 JSON만 읽어 본문(v3 포맷)을 조립.
     # base64는 아지트 본문에 못 넣으므로 썸네일은 파일명만 담고, 실제 파일은
     # write_thumbnails()가 날짜 폴더에 저장(GitHub Pages가 서빙).
-    so_whats = generate_so_what(articles)
+    so_whats = generate_so_what(articles, intro=intro_text)
     agit_articles = []
     for idx, art in enumerate(articles):
         num = art["article_num"]
@@ -2017,43 +2040,72 @@ _AGIT_DATA_RE = re.compile(
     r'(<script id="agit-digest-data" type="application/json">)(.*?)(</script>)', re.DOTALL)
 
 
-def _replace_intro(html, new_intro):
-    """화면 인트로 문단 + 아지트 발행 데이터(agit-digest-data)의 intro 를 함께 바꾼다."""
+def _agit_data(html):
+    m = _AGIT_DATA_RE.search(html)
+    return json.loads(m.group(2)) if m else None
+
+
+def _replace_intro(html, new_intro, so_whats=None):
+    """화면 인트로 문단 + 아지트 발행 데이터(agit-digest-data)의 intro 를 함께 바꾼다.
+    so_whats 를 주면 아지트 데이터의 기사별 so_what 도 순서대로 바꾼다(so-what 은 아지트에만 쓰인다)."""
     html = _INTRO_RE.sub(lambda m: m.group(1) + new_intro + m.group(3), html, count=1)
 
     def _fix_data(m):
         data = json.loads(m.group(2))
         data["intro"] = new_intro
+        if so_whats is not None:
+            for art, sw in zip(data.get("articles", []), so_whats):
+                art["so_what"] = sw
         return m.group(1) + json.dumps(data, ensure_ascii=False) + m.group(3)
     return _AGIT_DATA_RE.sub(_fix_data, html, count=1)
 
 
-def refresh_intro():
+def refresh_intro(with_so_what=False):
     """인트로만 다시 쓰기 — 트리거에서 순서를 바꿔 1번 기사가 달라졌을 때 돈다.
     인트로 첫 문장과 아지트 글 제목이 둘 다 1번 기사 얘기라, 순서만 옮기면 제목·첫 카드는
     새 1번인데 인트로는 옛 1번 얘기로 남는다(2026-09-30 발견). 기사·헤드라인·so-what 은
-    순서 조정 때 기사를 따라 이미 옮겨졌으니 그대로 두고, 인트로 문장만 새 1번 기준으로 쓴다."""
+    순서 조정 때 기사를 따라 이미 옮겨졌으니 그대로 두고, 인트로 문장만 새 1번 기준으로 쓴다
+    (검수한 so-what 은 보존하되, 인트로가 그 문장을 되풀이하지 않게 보여준다).
+    with_so_what=True 면 so-what 도 새 인트로 기준으로 다시 쓴다 — 모델을 바꾼 뒤 이미 만든 다이제스트에
+    새 모델 문장을 입힐 때(2026-09-30 5.5 전환). 헤드라인(아지트 제목)은 어느 쪽이든 그대로 둔다."""
     articles = load_existing_articles()
     archive_dir = "test" if TEST_MODE else TODAY.strftime("%Y-%m-%d")
     archive_path = f"{archive_dir}/index.html"
     with open(archive_path, encoding="utf-8") as f:
         html = f.read()
     m = _INTRO_RE.search(html)
-    if not m:
-        print(f"❌ 인트로 블록을 못 찾음: {archive_path}")
+    data = _agit_data(html)
+    if not m or not data:
+        print(f"❌ 인트로·아지트 데이터 블록을 못 찾음: {archive_path}")
+        sys.exit(1)
+    if len(data.get("articles", [])) != len(articles):
+        print(f"❌ 기사 수 불일치 (화면 {len(articles)} vs 아지트 데이터 {len(data.get('articles', []))})")
         sys.exit(1)
     old_intro = m.group(2).strip()
+    old_so_whats = [a.get("so_what") or "" for a in data["articles"]]
 
-    intro, headlines, _ = generate_intro(articles, lead_fixed=True)
+    intro, headlines, _ = generate_intro(
+        articles, lead_fixed=True, avoid_so_whats=None if with_so_what else old_so_whats)
     if not headlines:  # 생성 실패 — 검수한 인트로를 제네릭 폴백 문장으로 덮지 않는다
         print("❌ 인트로 생성 실패 — 기존 인트로 유지")
         sys.exit(1)
-    print(f"\n📝 인트로 다시 쓰기 (1번: {articles[0].get('title_ko', '')[:40]})")
+    so_whats = None
+    if with_so_what:
+        so_whats = generate_so_what(articles, intro=intro)
+        if so_whats == _so_what_fallback(articles):  # 생성 실패 → 폴백(one_line)으로 덮지 않는다
+            print("❌ so-what 생성 실패 — 기존 인트로·so-what 유지")
+            sys.exit(1)
+
+    print(f"\n📝 인트로{'·so-what' if with_so_what else ''} 다시 쓰기 (1번: {articles[0].get('title_ko', '')[:40]})")
     print(f"  이전: {old_intro}")
     print(f"  새로: {intro}")
+    if so_whats:
+        for i, (a, b) in enumerate(zip(old_so_whats, so_whats), 1):
+            print(f"  so-what {i} 이전: {a}")
+            print(f"  so-what {i} 새로: {b}")
 
     with open(archive_path, "w", encoding="utf-8") as f:
-        f.write(_replace_intro(html, intro))
+        f.write(_replace_intro(html, intro, so_whats))
     print(f"💾 저장: {archive_path}")
 
     # 루트는 최신 날짜의 미러 — 같은 인트로를 들고 있을 때만(=이 날짜를 비추고 있을 때만) 같이 고친다
@@ -2063,7 +2115,7 @@ def refresh_intro():
         rm = _INTRO_RE.search(root)
         if rm and rm.group(2).strip() == old_intro:
             with open("index.html", "w", encoding="utf-8") as f:
-                f.write(_replace_intro(root, intro))
+                f.write(_replace_intro(root, intro, so_whats))
             print("💾 저장: index.html")
 
 
@@ -2073,8 +2125,8 @@ def main():
     print("=" * 60)
 
     # ── 인트로만 다시 쓰기 (트리거 순서 조정 후속) ──
-    if REFRESH_INTRO:
-        refresh_intro()
+    if REFRESH_INTRO or REFRESH_SO_WHAT:
+        refresh_intro(with_so_what=REFRESH_SO_WHAT)
         return
 
     # ── 교체 모드 ──
