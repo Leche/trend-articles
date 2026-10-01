@@ -768,5 +768,20 @@
     "url": "https://www.theverge.com/ai-artificial-intelligence/1001838/anthropic-ipo-prospectus-ai-safety-threat",
     "title": "앤트로픽, IPO 서류에서 AI '파국적' 위험 경고",
     "rejected_at": "2026-09-30"
+  },
+  {
+    "url": "https://blog.google/products-and-platforms/products/gemini/automate-tasks-with-skills/",
+    "title": "제미나이 스킬로 반복 작업을 자동화하세요",
+    "rejected_at": "2026-10-02"
+  },
+  {
+    "url": "https://techcrunch.com/2026/09/30/reddit-is-killing-rss-feeds-ending-public-api-access-because-of-ai-bots/",
+    "title": "레딧, AI 봇 탓에 RSS 종료하고 공개 API도 닫는다",
+    "rejected_at": "2026-10-02"
+  },
+  {
+    "url": "https://toss.tech/article/53545",
+    "title": "추천 후보는 많을수록 좋을까? TopK 최적화로 전환율을 높인 방법",
+    "rejected_at": "2026-10-02"
   }
 ]
