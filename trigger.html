@@ -1592,7 +1592,8 @@ function relativeTime(dateStr) {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 function activityIconHtml(run) {
-  if (run.status === 'in_progress' || run.status === 'queued') {
+  // waiting·pending·requested도 진행 중 — Pages 배포가 GitHub 장애로 waiting에 묶이면 회색 아이콘으로 끝난 것처럼 보였음(2026-10-05)
+  if (run.status && run.status !== 'completed') {
     return `<span class="activity-icon progress"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="4"/></svg></span>`;
   }
   if (run.conclusion === 'success') {
