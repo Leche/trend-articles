@@ -165,6 +165,7 @@ jobs:
           REFRESH_SO_WHAT: ${{ github.event.inputs.refresh_so_what || 'false' }}
           REPLACE_FAILED: ${{ steps.curate.outputs.replace_failed || 'false' }}
           REPLACE_FAILED_SUMMARY: ${{ steps.curate.outputs.replace_failed_summary || '' }}
+          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
         run: |
           git config user.name "trend-bot"
           git config user.email "trend-bot@users.noreply.github.com"
@@ -193,6 +194,37 @@ jobs:
             fi
           else
             COMMIT_MSG="✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
+          fi
+          # 밤 큐레이션(for_tomorrow)은 다음날 09:30 발행을 자동 예약한다 (2026-10-11, opt-in → opt-out 전환).
+          # 검수는 이제 선택 — 손 안 대면 그대로 나가고, 빼고 싶으면 트리거에서 예약 취소·미루기.
+          # 큐레이션 결과물과 같은 커밋에 넣어서, 큐레이션이 실패하면 예약도 안 생긴다.
+          # 놀금(그 달 마지막 금요일)은 예약하지 않는다 — 원래 미루기 버튼으로 넘기는 날이라(repurpose.yml 과 같은 판정).
+          # 이미 더 뒤 날짜 예약이 있으면 건드리지 않는다.
+          if [ "${FOR_TOMORROW,,}" = "true" ] && [ "${TEST_MODE,,}" != "true" ] && [ -z "${REPLACE_URLS}" ] \
+             && [ "${REFRESH_INTRO}" != "true" ] && [ "${REFRESH_SO_WHAT}" != "true" ]; then
+            python3 << 'PYEOF'
+          import json, datetime, pathlib
+          kst = datetime.timezone(datetime.timedelta(hours=9))
+          target = datetime.datetime.now(kst).date() + datetime.timedelta(days=1)
+          tgt_s = target.isoformat()
+          if not pathlib.Path(tgt_s, 'index.html').exists():
+              print(f"[auto-schedule] {tgt_s}/index.html 없음 — 예약 안 함"); raise SystemExit
+          if target.weekday() == 4 and (target + datetime.timedelta(days=7)).month != target.month:
+              print(f"[auto-schedule] {tgt_s} 은 놀금 — 예약 안 함 (트리거에서 미루기)"); raise SystemExit
+          p = pathlib.Path('pending-publish.json')
+          try:
+              cur = json.loads(p.read_text(encoding='utf-8') or '{}') if p.exists() else {}
+          except json.JSONDecodeError:
+              cur = {}
+          if (cur.get('date') or '') > tgt_s:
+              print(f"[auto-schedule] 더 뒤 날짜 예약({cur['date']})이 있어 그대로 둠"); raise SystemExit
+          p.write_text(json.dumps({
+              'date': tgt_s, 'test_mode': False,
+              'scheduled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'auto': True,
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f"[auto-schedule] {tgt_s} 09:30 발행 자동 예약")
+          PYEOF
           fi
           git add -A
           git diff --cached --quiet && echo "No changes to commit" && echo "pushed=false" >> $GITHUB_OUTPUT && exit 0

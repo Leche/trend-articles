@@ -161,6 +161,39 @@ jobs:
               title = f"✅ {label} 완료"
               desc = '방금 만든 다이제스트를 확인해 보세요.'
               header_style = "blue"
+              # 밤 큐레이션은 curate.yml 이 다음날 09:30 발행을 자동 예약한다(2026-10-11).
+              # 검수가 선택이 됐으니, 알림만 보고도 '그냥 둘지'를 판단할 수 있게 아지트 제목과 예약 상태를 싣는다.
+              # 카웍 text 블록은 400자 안쪽이 안전선이라 제목 1줄 + 상태 2줄만.
+              if label == '기사 큐레이션' and latest:
+                  try:
+                      pend = json.load(open('pending-publish.json', encoding='utf-8'))
+                  except Exception:
+                      pend = {}
+                  headline = ''
+                  reserve_n = 0
+                  try:
+                      html = open(f'{latest}/index.html', encoding='utf-8').read()
+                      m = re.search(r'<script id="agit-digest-data" type="application/json">(.*?)</script>', html, re.S)
+                      arts = json.loads(m.group(1)).get('articles', []) if m else []
+                      if arts:
+                          headline = arts[0].get('headline') or arts[0].get('title') or ''
+                  except Exception:
+                      pass
+                  try:
+                      reserve_n = len(json.load(open(f'{latest}/reserve.json', encoding='utf-8')).get('reserves', []))
+                  except Exception:
+                      pass
+                  lines = []
+                  if headline:
+                      lines.append(f"아지트 제목: {headline[:60]}")
+                  if pend.get('date') == latest and pend.get('auto'):
+                      mm, dd = latest[5:7].lstrip('0'), latest[8:10].lstrip('0')
+                      lines.append(f"{mm}/{dd} 09:30에 자동 발행돼요. 손댈 게 없으면 그냥 두면 돼요.")
+                      lines.append("빼고 싶으면 트리거에서 예약 취소나 미루기를 눌러주세요.")
+                  if reserve_n:
+                      lines.append(f"예비 기사 {reserve_n}개가 준비돼 있어서 편집 탭에서 바로 바꿀 수 있어요.")
+                  if lines:
+                      desc = "\n".join(lines)
 
           # Block Kit: header + 설명 + CTA 버튼 (다이제스트 페이지로 이동)
           payload = {

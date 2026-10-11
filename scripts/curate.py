@@ -85,7 +85,9 @@ PRIORITY_SITES = [
 ]
 
 # 독자(리체)가 검수 중 직접 골라 실은 기사 제목 — 선정 프롬프트에 톤·깊이의 기준점으로 넣는다.
-# 2026-07-28 ~ 09-08 교체로 들어온 58건에서 고름. 투자 유치·리브랜딩 발표류는 같은 기간 밀려났다.
+# 2026-10-11부터는 picked-articles.json(교체로 들어온 기사, 자동 누적)의 최근분을 쓰고,
+# 이 고정 목록은 그 파일이 비었을 때의 시드로만 남긴다. 고정 목록은 9월 8일에 멈춰 있어서
+# 그 뒤 쌓인 취향을 못 따라갔다.
 READER_PICKED_EXAMPLES = [
     "후발주자가 이기는 방식, 클로드는 어떻게 챗GPT를 따라잡았을까?",
     "고객의 1초를 줄이기 위해, POS 결제 구조를 다시 설계하다",
@@ -100,6 +102,10 @@ READER_PICKED_EXAMPLES = [
     "Claude Fable 5.1 및 Mythos 5.1 공개",
     "'적립'보다 '소멸'이 지갑을 연다 | 포인트 소멸 문구는 잔고를 위협한다",
 ]
+
+# 예비 기사 — 본문 8개 다음 순위 기사를 요약·썸네일·헤드라인·so-what 까지 완성해 {날짜}/reserve.json 에 둔다.
+# 트리거에서 워크플로 없이 즉시 바꿔 끼우기 위함(교체 워크플로는 3~8분 걸렸다, 2026-10-11).
+RESERVE_COUNT = int(os.environ.get("RESERVE_COUNT", "3"))
 
 # ─── 모델 배치 (2026-09-30, 5.5 세대) ────────────────────────
 # 단가(1M 토큰, 2026-09-30 공식 가격 페이지): Sonnet 5.5 $2/$10(Sonnet 5 와 동일), Opus 5.5 $4/$20
@@ -267,6 +273,46 @@ def append_rejected_articles(items):
         print(f"🗑  버려진 기사 {added}건 기록 (총 {len(existing)}건, {REJECTED_PATH})")
 
 
+# ─── 교체로 들어온 기사 (취향 기준점) ──────────────────────
+# rejected-articles.json 의 짝. 리체가 교체·예비 기사로 직접 넣은 기사를 누적해,
+# 선정 프롬프트에 '이런 걸 골랐다'는 기준점으로 넣는다. 트리거의 예비 기사 교체도 이 파일에 쓴다.
+# 2026-10-11 git 히스토리의 교체 커밋 diff 로 170건을 부트스트랩했다.
+PICKED_PATH = "picked-articles.json"
+
+
+def load_picked_articles():
+    if not os.path.exists(PICKED_PATH):
+        return []
+    try:
+        with open(PICKED_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"⚠️  {PICKED_PATH} 로드 실패: {e}")
+        return []
+
+
+def append_picked_articles(items):
+    """교체로 들어온 기사 [{url, title}]를 picked-articles.json 에 append (URL 기준 중복 방지)."""
+    if not items:
+        return
+    existing = load_picked_articles()
+    seen = {r.get("url", "").strip() for r in existing if r.get("url")}
+    added = 0
+    for it in items:
+        url = (it.get("url") or "").strip()
+        if not url or url in seen:
+            continue
+        existing.append({"url": url, "title": (it.get("title") or "").strip(),
+                         "picked_at": TODAY.strftime("%Y-%m-%d")})
+        seen.add(url)
+        added += 1
+    if added:
+        with open(PICKED_PATH, "w", encoding="utf-8") as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        print(f"⭐ 직접 고른 기사 {added}건 기록 (총 {len(existing)}건, {PICKED_PATH})")
+
+
 PAST_ARTICLES = load_past_articles()
 past_titles = [a["title"] for a in PAST_ARTICLES if "title" in a]
 past_links = [a["link"] for a in PAST_ARTICLES if "link" in a]
@@ -297,9 +343,20 @@ def _is_recent(entry):
 # 링크는 넣지 않는다 — 정확 일치는 dedup_articles() 가 전량 잡고, 모델이 링크로 의미 유사성을
 # 판단할 일은 없다. 2026-09-09 이전엔 30일 제목+링크 ≈ 12K 토큰이었다.
 prompt_past_titles = [a["title"] for a in PAST_ARTICLES if "title" in a and _is_recent(a)]
-prompt_past_titles += [r["title"] for r in REJECTED_ARTICLES if r.get("title")]
-print(f"🔍 프롬프트용 과거 목록: 최근 {PROMPT_HISTORY_DAYS}일 + 교체분 "
-      f"→ 제목 {len(prompt_past_titles)}개 (전체 대비 {len(prompt_past_titles)}/{len(past_titles)})")
+print(f"🔍 프롬프트용 과거 목록: 최근 {PROMPT_HISTORY_DAYS}일 → 제목 {len(prompt_past_titles)}개 "
+      f"(전체 {len(past_titles)}개는 정확 일치 중복 차단에 그대로 씀)")
+
+# 취향 신호 — 2026-10-11 전까진 버린 기사가 '과거 기사(중복 제외)' 목록에 섞여 들어가서
+# 모델이 '같은 기사를 또 뽑지 마라'로만 읽고 '이런 결을 고르지 마라'로는 못 읽었다.
+# 그래서 버린 기사 URL 은 안 나와도 같은 결(개인 AI 활용기·리브랜딩·추상 에세이)이 매일 다시 뽑혔다.
+# 이제 버린 기사와 직접 고른 기사를 최근분만 따로 짝지어 보여준다. 전량은 dedup 이 계속 막는다.
+TASTE_REJECTED_N = 40
+TASTE_PICKED_N = 30
+PICKED_ARTICLES = load_picked_articles()
+prompt_rejected_titles = [r["title"] for r in REJECTED_ARTICLES if r.get("title")][-TASTE_REJECTED_N:][::-1]
+prompt_picked_titles = ([r["title"] for r in PICKED_ARTICLES if r.get("title")][-TASTE_PICKED_N:][::-1]
+                        or READER_PICKED_EXAMPLES)
+print(f"🎯 취향 신호: 고른 기사 {len(prompt_picked_titles)}개 · 버린 기사 {len(prompt_rejected_titles)}개")
 
 
 # ─── Playwright 유틸 ──────────────────────────────────────────
@@ -986,8 +1043,8 @@ def curate_with_claude(candidates):
     모델이 기사를 한 번도 읽지 않은 채 요약을 쓰는 구조였고, 후보 절반이 광고·내비 링크였다."""
     client = anthropic.Anthropic(max_retries=8)
 
-    # 중복·차단 도메인으로 빠지는 분을 감안해 여유있게 선정 요청 → 후처리 후 ARTICLE_COUNT개로 맞춤
-    select_count = ARTICLE_COUNT + 4
+    # 본문 + 예비 기사 + 중복·차단 도메인으로 빠지는 분 → 후처리 후 앞에서부터 본문·예비로 나눈다
+    select_count = ARTICLE_COUNT + RESERVE_COUNT + 4
 
     by_url = {}
     candidate_text = ""
@@ -1000,7 +1057,8 @@ def curate_with_claude(candidates):
         candidate_text += f"   URL: {cand['url']}\n\n"
 
     past_text = "\n".join(f"- {t}" for t in prompt_past_titles)
-    liked_text = "\n".join(f"- {t}" for t in READER_PICKED_EXAMPLES)
+    liked_text = "\n".join(f"- {t}" for t in prompt_picked_titles)
+    rejected_text = "\n".join(f"- {t}" for t in prompt_rejected_titles) or "- (아직 없음)"
 
     prompt = f"""당신은 '트렌드림' 뉴스레터의 기사 큐레이터입니다.
 독자는 프로덕트 디자이너·기획자·메이커로, 프로덕트·디자인·테크·비즈니스의 '구체적인 움직임'에 관심이 있습니다.
@@ -1010,20 +1068,32 @@ def curate_with_claude(candidates):
 2. 구성 가이드 (전체 {select_count}개 기준):
    - 빅테크(구글, 애플, 메타, OpenAI, 앤스로픽 등) 신제품/업데이트: 1~2개
    - 나머지는 아래 범주에서 조합:
-     • 국내외 서비스·앱의 구체적인 기능 출시, 전략 전환, 실험 (특히 국내 서비스)
-     • 프로덕트 디자인 / UX 케이스 스터디, 프로덕트 사고에 대한 에세이
-     • AI 서비스·툴의 실무 활용과 트렌드
+     • 국내외 서비스·앱의 구체적인 기능 출시, 전략 전환, 실험, 중단 (특히 국내 서비스) — 이게 중심
+     • 기업이 실제로 내린 프로덕트·UX 결정의 케이스 스터디 (어느 회사가 무엇을 왜 바꿨는지가 있는 글)
+     • AI 회사·서비스의 실제 출시·정책·사고 (개인의 AI 활용기는 해당 안 됨)
      • 프로덕트 그로스 / 비즈니스 인사이트 (마케팅은 그로스 관점인 것만)
-     • 사회적으로 주목할 만한 테크/비즈니스 이슈
-3. 피하기: 투자 유치·펀딩 라운드 소식 (조달 금액·밸류에이션이 핵심인 기사)
+     • 사회적으로 주목할 만한 테크/비즈니스 이슈 (보안 사고, 규제, 업계 인물의 발언)
+     • 프로덕트 사고 에세이는 최대 1개, 그것도 구체 사례가 중심인 것만
+3. 피하기 — 독자가 검수에서 반복해서 빼버린 유형이에요:
+   - 투자 유치·펀딩 라운드 소식 (조달 금액·밸류에이션이 핵심인 기사)
+   - 개인·팀의 'AI로 일해본' 경험담: "N일간 ~해보기", "~ 제작기", "나만의 ~ 만들기", "AI와 함께 ~한 기록", 워크플로우·하네스 구축기, "요즘 디자이너가 AI로 일하는 법"
+   - 작은 회사의 리브랜딩·BI 교체·캐릭터 발표 (빅테크 대표 제품의 디자인 변화는 예외 — 예: 애플 뮤직 워드마크)
+   - "~에 미래가 있을까", "제대로 된 ~은 어떤 모습이어야 할까", "~의 징후 N가지" 같은 추상 전망·체크리스트형 글
+   - 사용법 튜토리얼·팁 ("~로 반복 작업을 자동화하세요")
 4. 같은 뉴스가 여러 후보로 잡히면 공식 발표(뉴스룸·블로그 원문)를 2차 보도보다 우선하고, 하나만 고르세요.
 5. 다양한 관점·주제가 섞이게 — 비슷한 주제끼리 몰리지 않도록.
 6. **반드시 아래 후보 목록 안에서만** 고르세요. 목록에 없는 URL 을 만들어내지 마세요.
 
-## 독자가 실제로 골라 실은 기사 (톤·깊이의 기준점)
+## 독자가 검수에서 직접 골라 넣은 기사 (최근순 — 이런 결을 고르세요)
 {liked_text}
 
-## 최근 {PROMPT_HISTORY_DAYS}일 큐레이션·교체로 제외된 기사 (같은 사건의 다른 매체 보도도 제외)
+## 독자가 검수에서 빼버린 기사 (최근순 — 이런 결은 고르지 마세요. 같은 사건의 다른 매체 보도도 제외)
+{rejected_text}
+
+두 목록을 비교해 보면 경향이 보여요: 회사·서비스가 실제로 한 일(출시·중단·정책·사고·발언)은 넣고, 개인 작업기·작은 브랜드 발표·추상론은 뺐어요.
+빼버린 목록엔 같은 소식을 원문이나 더 나은 보도로 바꾸려고 뺀 것도 섞여 있어요. 개별 제목보다 경향을 보세요.
+
+## 최근 {PROMPT_HISTORY_DAYS}일 이미 실린 기사 (같은 사건의 다른 매체 보도도 제외)
 {past_text}
 
 ## 후보 기사 목록
@@ -1031,7 +1101,8 @@ def curate_with_claude(candidates):
 
 ## 요청
 후보 중에서 서로 다른 기사 {select_count}개를 골라 URL 과 선정 이유(한 문장)를 주세요.
-(후처리 중복 제거·차단 도메인 제외 후 최종 {ARTICLE_COUNT}개로 추려지므로 여유분을 포함한 개수입니다.)
+**독자가 넣을 가능성이 높은 순서대로** 나열하세요 — 앞의 {ARTICLE_COUNT}개가 본문이 되고, 그다음 {RESERVE_COUNT}개는 독자가 본문 기사를 빼고 싶을 때 바로 바꿔 넣는 예비 기사가 됩니다.
+(나머지는 중복 제거·차단 도메인 제외에 대비한 여유분입니다.)
 **출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만 — 이건 상한이지 목표가 아닙니다. 한 출처에서 2개를 채우려 하지 마세요.
 "(via surfit)"는 전달 경로 표시일 뿐이라 출처 상한은 실제 도메인 기준으로 세세요. 서핏 경유 후보는 국내 큐레이션 플랫폼이 이미 골라 올린 글이라 요약이 짧아도 동등하게 고려하세요.
 적합한 기사가 {select_count}개가 안 되면 억지로 채우지 말고 더 적게 주세요."""
@@ -1458,6 +1529,133 @@ def generate_so_what(articles, intro=""):
     except Exception as e:
         print(f"[WARN] so-what generation failed: {e}")
     return fallback
+
+
+RESERVE_EXTRAS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "headline": {"type": "string", "description": "25~40자 구체적 사건 단문"},
+                    "so_what": {"type": "string", "description": "55~90자, 해요체 1~2문장"},
+                },
+                "required": ["headline", "so_what"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["items"],
+    "additionalProperties": False,
+}
+
+
+def generate_reserve_extras(reserves, intro=""):
+    """예비 기사의 헤드라인·so-what 을 미리 쓴다(호출 1회). 트리거가 예비 기사를 본문에 끼울 때
+    워크플로 없이 아지트 데이터까지 바로 채우려면 둘 다 있어야 한다 — 헤드라인은 그 기사가 1번에
+    놓이면 아지트 글 제목이 되고, so-what 은 앞 5개 본문형 기사 아래 한 줄이 된다.
+    규칙은 generate_intro()·generate_so_what() 과 같다. 실패하면 헤드라인은 빈칸(→ 제목 폴백),
+    so-what 은 one_line 폴백."""
+    n = len(reserves)
+    fallback = [("", fb) for fb in _so_what_fallback(reserves)]
+    if not n:
+        return []
+    article_text = ""
+    for i, art in enumerate(reserves, 1):
+        article_text += f"{i}. 제목: {art.get('title_ko','')}\n   한 줄: {art.get('one_line','')}\n"
+        for k in ("summary_1", "summary_2", "summary_3"):
+            if art.get(k):
+                article_text += f"   - {art[k]}\n"
+        article_text += "\n"
+    intro_block = f"[이 다이제스트의 인트로 — 여기 나온 문장·표현은 되풀이하지 마세요]\n{intro}\n\n" if intro else ""
+    prompt = f"""트렌드림 다이제스트(독자: 프로덕트 디자이너·기획자·메이커)의 예비 기사 {n}개예요.
+편집자가 본문 기사 대신 바꿔 넣을 수 있게, 기사마다 헤드라인과 so-what 을 미리 써주세요.
+
+{article_text}{intro_block}headline — 그 기사가 1번에 놓이면 아지트 글 제목이 돼요:
+- 그 기사의 가장 구체적이고 의외인 사건 하나를 25~40자 평서문 단문으로. 회사·제품·행위가 들어가야 함
+- 추상어("시대", "흐름", "경계", "재편") 금지, 물음표·이모지·"오늘의" 금지, 두 사건을 접속사로 잇지 말 것
+- 좋은 예: "메타가 8년 쌓은 디자인 시스템을 버렸다", "오픈AI가 텍스트 대화 제한을 없앴다"
+
+so_what — 아지트 피드에서 제목 바로 아래 한 줄:
+- 1~2문장, 55~90자, 친근한 "~요" 톤(해요체)
+- 사실 나열이 아니라 "그래서 지금 왜 의미 있는지". 과장·클리셰("혁명적", "판을 바꾸다") 금지
+- 제목을 그대로 반복하지 말 것
+
+items 는 정확히 {n}개, 위 기사 순서대로."""
+    try:
+        client = anthropic.Anthropic(max_retries=8)
+        response = _create(
+            client,
+            model=MODEL_HEADLINE,
+            max_tokens=3000,
+            output_config={"format": {"type": "json_schema", "schema": RESERVE_EXTRAS_SCHEMA}, **LOW_EFFORT},
+            messages=[{"role": "user", "content": prompt}],
+        )
+        _log_usage("예비 기사 헤드라인·so-what", response)
+        text = next((b.text for b in response.content if b.type == "text"), "")
+        items = json.loads(text).get("items") or []
+        out = []
+        for i in range(n):
+            it = items[i] if i < len(items) else {}
+            out.append(((it.get("headline") or "").strip(),
+                        (it.get("so_what") or "").strip() or fallback[i][1]))
+        return out
+    except Exception as e:
+        print(f"[WARN] 예비 기사 헤드라인·so-what 생성 실패: {e}")
+        return fallback
+
+
+RESERVE_FILE = "reserve.json"
+
+
+def write_reserves(reserves, out_dir, intro=""):
+    """예비 기사를 {out_dir}/reserve.json + reserve-thumb-K.ext 로 저장한다.
+    트리거(편집 탭 '예비 기사로 바꾸기')가 이 파일만 읽어 카드 HTML·아지트 데이터·썸네일을
+    바로 바꿔 끼운다. 썸네일은 트리거가 같은 blob 을 thumb-N.ext 로 가리키게 해서 복사 없이 옮긴다.
+    다이제스트 HTML 에는 넣지 않는다 — load_past_articles() 가 HTML 제목을 '이미 실린 기사'로
+    읽어서, 안 쓴 예비 기사가 다음 큐레이션에서 막히게 된다."""
+    for old in glob.glob(os.path.join(out_dir, "reserve-thumb-*")):
+        try:
+            os.remove(old)
+        except OSError:
+            pass
+    extras = generate_reserve_extras(reserves, intro) if reserves else []
+    items = []
+    for k, (art, (headline, so_what)) in enumerate(zip(reserves, extras), 1):
+        b64 = art.get("thumbnail_b64")
+        thumb = None
+        ext = _thumb_ext(b64) if b64 and not b64.startswith("data:video/") else None
+        m = re.match(r"data:[^;]+;base64,(.*)$", b64 or "", re.DOTALL)
+        if ext and m:
+            try:
+                data = base64.b64decode(m.group(1))
+                thumb = f"reserve-thumb-{k}.{ext}"
+                with open(os.path.join(out_dir, thumb), "wb") as f:
+                    f.write(data)
+            except Exception as e:
+                print(f"[WARN] 예비 기사 {k} 썸네일 저장 실패: {e}")
+                thumb = None
+        url = art.get("url", "")
+        items.append({
+            "title_ko": art.get("title_ko", ""),
+            "one_line": art.get("one_line", ""),
+            "summary_1": art.get("summary_1", ""),
+            "summary_2": art.get("summary_2", ""),
+            "summary_3": art.get("summary_3", ""),
+            "url": url,
+            "link": art.get("final_url") or url,
+            "source": art.get("source", ""),
+            "select_reason": art.get("select_reason", ""),
+            "headline": headline,
+            "so_what": so_what,
+            "thumb": thumb,
+        })
+        print(f"  🅁 예비 {k}. {art.get('title_ko', '')[:50]}")
+    with open(os.path.join(out_dir, RESERVE_FILE), "w", encoding="utf-8") as f:
+        json.dump({"date": TODAY.isoformat(), "reserves": items}, f, ensure_ascii=False, indent=2)
+    print(f"💾 예비 기사 {len(items)}개 저장: {out_dir}/{RESERVE_FILE}")
 
 
 def _thumb_ext(b64):
@@ -2130,10 +2328,12 @@ def main():
         return
 
     # ── 교체 모드 ──
+    reserves = None  # 일반 모드에서만 채운다. 교체 모드는 기존 reserve.json 을 건드리지 않는다.
     if REPLACEMENTS:
         print("\n🔄 기사 교체 모드 실행")
         existing = load_existing_articles()
         rejected_this_run = []  # 이번 교체로 밀려난 기존 기사 (버려진 기사로 기록)
+        picked_this_run = []    # 이번 교체로 들어온 기사 (직접 고른 기사로 기록 — 선정 프롬프트의 기준점)
         failed_replacements = []  # 실패한 교체 요청 (번호 + 이유) — 조용히 넘기지 않고 알림까지 흘려보냄
 
         # 교체 대상 슬롯은 검사 기준에서 빼둔다 (그 자리는 어차피 덮어써짐).
@@ -2198,14 +2398,16 @@ def main():
             old_url = (old_art.get("url") or "").strip()
             if old_url and old_url != new_url.strip():
                 rejected_this_run.append({"url": old_url, "title": (old_art.get("title_ko") or "").strip()})
+                picked_this_run.append({"url": new_url.strip(), "title": (new_art.get("title_ko") or "").strip()})
 
             new_art["thumbnail_b64"] = thumb_b64
             new_art["article_num"] = num
             existing[idx] = new_art
             print(f"  ✅ 교체 완료: {new_art.get('title_ko', '(제목 없음)')}")
 
-        # 버려진 기사 일괄 기록
+        # 버려진 기사·고른 기사 일괄 기록
         append_rejected_articles(rejected_this_run)
+        append_picked_articles(picked_this_run)
 
         # 번호 재정렬
         for i, art in enumerate(existing, 1):
@@ -2234,11 +2436,13 @@ def main():
         if len(articles) < ARTICLE_COUNT:
             print(f"⚠️  중복 제거 후 {len(articles)}개 — 요청 {ARTICLE_COUNT}개 미달 가능")
 
-        # 3. 각 기사 상세 + 썸네일 (차단 도메인 건너뛰며 ARTICLE_COUNT개 채움)
-        enriched = enrich_articles(articles, ARTICLE_COUNT)
+        # 3. 각 기사 상세 + 썸네일 (차단 도메인 건너뛰며 본문 + 예비 개수만큼 채움)
+        enriched = enrich_articles(articles, ARTICLE_COUNT + RESERVE_COUNT)
 
-        # 4. 본문을 읽고 제목·요약 작성 (선정 단계는 URL·피드 요약만 봤다)
+        # 4. 본문을 읽고 제목·요약 작성 (선정 단계는 URL·피드 요약만 봤다). 예비 기사도 같은 호출로.
         enriched = summarize_articles(enriched)
+        # 선정이 '독자가 넣을 가능성 높은 순'이라 앞 ARTICLE_COUNT개가 본문, 나머지가 예비
+        enriched, reserves = enriched[:ARTICLE_COUNT], enriched[ARTICLE_COUNT:]
 
     # 4. HTML 생성
     html_content = generate_html(enriched)
@@ -2264,6 +2468,9 @@ def main():
             f.write(html_content)
         print(f"🧪 [TEST MODE] 저장 완료: {archive_path} (root index.html 변경 없음)")
         write_thumbnails(enriched, archive_dir)
+        if reserves is not None:
+            _m = _INTRO_RE.search(html_content)
+            write_reserves(reserves, archive_dir, _m.group(2).strip() if _m else "")
     else:
         archive_dir = TODAY.strftime("%Y-%m-%d")
         os.makedirs(archive_dir, exist_ok=True)
@@ -2272,6 +2479,9 @@ def main():
             f.write(html_content)
         print(f"💾 아카이브 저장: {archive_path}")
         write_thumbnails(enriched, archive_dir)
+        if reserves is not None:
+            _m = _INTRO_RE.search(html_content)
+            write_reserves(reserves, archive_dir, _m.group(2).strip() if _m else "")
 
     # 썸네일 실패 기사 목록
     failed = [a["article_num"] for a in enriched if not a.get("thumbnail_b64")]

@@ -450,6 +450,31 @@ input:focus, textarea:focus {
   white-space: nowrap;
 }
 
+/* 예비 기사로 바꾸기 */
+.reserve-card {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.reserve-head { display: flex; gap: 12px; align-items: flex-start; }
+.reserve-thumb {
+  flex-shrink: 0; width: 72px; aspect-ratio: 16 / 10; object-fit: cover;
+  border-radius: 6px; background: var(--border);
+}
+.reserve-body { flex: 1; min-width: 0; }
+.reserve-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.45; word-break: keep-all; }
+.reserve-one { font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.45; }
+.reserve-meta { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+.reserve-meta a { color: var(--accent); text-decoration: none; }
+.reserve-slot {
+  width: 100%; margin-top: 10px; height: 42px; padding: 0 12px;
+  border: 1px solid var(--input-border); border-radius: var(--radius-xs);
+  background: var(--input-bg); color: var(--text-primary);
+  font-family: inherit; font-size: 14px; font-weight: 450;
+}
+
 .add-btn {
   font-size: 15px;
   color: var(--accent);
@@ -1129,7 +1154,7 @@ body.pwd-modal-open .tab-bar {
   <!-- 이번 회차 발행 — 일상 메인 액션 -->
   <div class="card">
     <div class="card-title">이번 회차 발행</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">검수 끝낸 다이제스트를 다음날 아침 09:30(KST)에 자동 발행해요.</p>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">밤 큐레이션이 끝나면 다음날 09:30(KST) 발행이 자동으로 예약돼요. 내보내기 싫은 날만 예약 취소나 미루기를 눌러주세요.</p>
     <!-- 발행 예약 ↔ 예약 취소: 같은 자리에 모드 토글 -->
     <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
     <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;">예약 취소</button>
@@ -1193,10 +1218,20 @@ body.pwd-modal-open .tab-bar {
   <section class="tab-page" id="tab-edit" data-tab="edit">
     <div class="page-intro"><p>기사 교체·썸네일·순서·링크를 직접 손볼 수 있어요.</p></div>
 
+  <!-- 예비 기사로 바꾸기 — 워크플로 없이 즉시 커밋 -->
+  <div class="card">
+    <div class="card-title">예비 기사로 바꾸기</div>
+    <div id="reserveHint" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">큐레이션이 미리 만들어 둔 예비 기사예요. 넣을 자리를 고르면 바로 바뀌어요.</div>
+    <div id="reserveList"></div>
+    <button class="btn btn-primary" id="reserveApplyBtn" onclick="applyReserves()" style="display:none;margin-top:4px;">바꾸기</button>
+    <button class="btn btn-primary" id="reserveLoadBtn" onclick="loadReserves()">예비 기사 불러오기</button>
+    <div class="status" id="reserveStatus"></div>
+  </div>
+
   <!-- 기사 교체 -->
   <div class="card">
-    <div class="card-title">기사 교체</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">교체할 기사 번호와 새 URL을 입력하세요</p>
+    <div class="card-title">URL로 기사 교체</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">예비 기사에 맞는 게 없을 때 — 번호와 새 URL을 넣으면 워크플로가 돌아요(3~8분)</p>
     <div id="replaceList">
       <div class="replace-item">
         <input class="num" type="number" placeholder="#" min="1" max="12">
@@ -1955,6 +1990,9 @@ function resetInputs() {
   const thumbList = document.getElementById('thumbList');
   thumbList.innerHTML = `<div class="thumb-item"><input class="num" type="number" placeholder="#" min="1" max="12"><div class="file-input-wrapper" onclick="triggerFileInput(this)"><span class="file-name-text">선택된 파일 없음</span><button type="button" class="file-select-btn" onclick="event.stopPropagation();triggerFileInput(this.closest('.file-input-wrapper'))">파일 선택</button><input type="file" accept="image/*,video/mp4" style="display:none" onchange="onThumbFileChange(this)"></div></div>`;
 
+  // 예비 기사 — 목록 비우고 불러오기 버튼으로
+  resetReserveUI();
+
   // 기사 순서 조정 — 목록 비우고 적용 버튼 숨김
   document.getElementById('reorderList').innerHTML = '';
   document.getElementById('reorderBtn').style.display = 'none';
@@ -2418,6 +2456,222 @@ async function reorderArticles() {
     document.getElementById('reorderHint').style.display = '';
   } catch(e) {
     showStatus('reorderStatus', 'error', '오류: ' + e.message);
+  }
+}
+
+// ── 예비 기사로 바꾸기 ──
+// curate.py 가 본문 8개 다음 순위 기사를 요약·썸네일·헤드라인·so-what 까지 완성해 {날짜}/reserve.json 에
+// 둔다. 여기서는 그걸 읽어 카드 HTML·아지트 데이터·썸네일을 바로 바꿔 끼우고 한 커밋으로 push 한다 —
+// URL 교체는 큐레이션 워크플로를 통째로 돌려 3~8분 걸렸다(2026-10-11). 인트로는 빠진 기사를 언급했을 수
+// 있어서 커밋 뒤 refresh_intro 워크플로를 백그라운드로 돌린다(기다릴 필요 없음).
+const ARTICLE_BLOCK_RE = /<article\s+(?:id="article-\d+"\s+)?class="article-item">[\s\S]*?<\/article>/g;
+let reserveState = null;  // { date, reserves, current: [{title, url}] }
+
+function _htmlText(v) { return String(v || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function _htmlAttr(v) { return String(v || '').replace(/"/g, '&quot;'); }
+
+function resetReserveUI() {
+  reserveState = null;
+  document.getElementById('reserveList').innerHTML = '';
+  document.getElementById('reserveApplyBtn').style.display = 'none';
+  document.getElementById('reserveLoadBtn').style.display = '';
+  document.getElementById('reserveHint').style.display = '';
+}
+
+function _parseArticles(html) {
+  return (html.match(ARTICLE_BLOCK_RE) || []).map(b => {
+    const t = b.match(/class="article-title"[^>]*>([^<]+)/);
+    const u = b.match(/class="article-link"[^>]*href="([^"]+)"/);
+    return { block: b, title: t ? t[1].trim() : '', url: u ? u[1].trim() : '' };
+  });
+}
+
+async function _readJsonList(path) {
+  try {
+    const v = JSON.parse(await ghGetRaw(path));
+    return Array.isArray(v) ? v : [];
+  } catch (_) { return []; }
+}
+
+async function loadReserves() {
+  if (!checkSettings()) return;
+  const dateVal = checkActiveCurationDate('reserveStatus');
+  if (!dateVal) return;
+  showStatus('reserveStatus', 'loading', '예비 기사 불러오는 중...');
+  try {
+    const html = await ghGetRaw(`${dateVal}/index.html`);
+    let data;
+    try {
+      data = JSON.parse(await ghGetRaw(`${dateVal}/reserve.json`));
+    } catch (_) {
+      throw new Error('이 다이제스트엔 예비 기사가 없어요. 예비 기사 기능 전에 만든 거라면 URL로 교체를 써주세요.');
+    }
+    const reserves = data.reserves || [];
+    if (reserves.length === 0) throw new Error('남은 예비 기사가 없어요. URL로 교체를 써주세요.');
+    const current = _parseArticles(html).map(a => ({ title: a.title, url: a.url }));
+    reserveState = { date: dateVal, reserves, current };
+
+    const list = document.getElementById('reserveList');
+    list.innerHTML = '';
+    reserves.forEach((r, i) => {
+      const card = document.createElement('div');
+      card.className = 'reserve-card';
+      const thumb = r.thumb ? `<img class="reserve-thumb" src="${_htmlAttr(dateVal + '/' + r.thumb)}" alt="">` : '';
+      const opts = ['<option value="">넣지 않음</option>']
+        .concat(current.map((c, j) => `<option value="${j + 1}">${j + 1}번 자리 — ${_htmlText(c.title.slice(0, 28))}</option>`))
+        .join('');
+      card.innerHTML =
+        `<div class="reserve-head">${thumb}<div class="reserve-body">` +
+        `<div class="reserve-title">${_htmlText(r.title_ko)}</div>` +
+        `<div class="reserve-one">${_htmlText(r.so_what || r.one_line)}</div>` +
+        `<div class="reserve-meta"><a href="${_htmlAttr(r.link || r.url)}" target="_blank" rel="noopener">원문 보기</a></div>` +
+        `</div></div>` +
+        `<select class="reserve-slot" data-idx="${i}">${opts}</select>`;
+      list.appendChild(card);
+    });
+    document.getElementById('reserveApplyBtn').style.display = '';
+    document.getElementById('reserveLoadBtn').style.display = 'none';
+    document.getElementById('reserveHint').style.display = 'none';
+    showStatus('reserveStatus', 'success', `예비 기사 ${reserves.length}개를 불러왔어요. 넣을 자리를 고르고 바꾸기를 눌러주세요.`);
+  } catch (e) {
+    showStatus('reserveStatus', 'error', '오류: ' + e.message);
+  }
+}
+
+// curate.py generate_html() 의 카드 마크업과 같은 모양. openTag 는 기존 블록의 것(inject_gnb 가 붙인 id 포함)을 그대로 쓴다.
+function _buildArticleCard(openTag, num, r, imgSrc) {
+  const nn = String(num).padStart(2, '0');
+  const img = imgSrc
+    ? `<div class="image-frame"><img class="article-image" src="${_htmlAttr(imgSrc)}" alt="썸네일"></div>`
+    : '<div class="image-frame"><div class="no-thumb">썸네일 없음</div></div>';
+  return `${openTag}
+<div class="article-label">ARTICLE ${nn}</div>
+<h2 class="article-title">${_htmlText(r.title_ko)}</h2>
+<p class="article-summary">${_htmlText(r.one_line)}</p>
+${img}
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">${_htmlText(r.summary_1)}</li>
+<li class="bullet-item">${_htmlText(r.summary_2)}</li>
+<li class="bullet-item">${_htmlText(r.summary_3)}</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="${_htmlAttr(r.url)}" target="_blank">${_htmlText(r.url)}</a></div>
+</article>`;
+}
+
+// slot(1부터) 자리의 기사 블록을 새 카드로 바꾼다. expectUrl 을 주면 그 자리가 같은 기사일 때만 바꾼다(루트 미러 보호).
+function _swapArticleBlock(html, slot, r, imgSrc, expectUrl) {
+  const arts = _parseArticles(html);
+  const old = arts[slot - 1];
+  if (!old) throw new Error(`${slot}번 기사 블록을 찾을 수 없어요.`);
+  if (expectUrl !== undefined && old.url !== expectUrl) return null;
+  const openTag = old.block.match(/^<article[^>]*>/)[0];
+  const idx = html.indexOf(old.block);
+  return html.slice(0, idx) + _buildArticleCard(openTag, slot, r, imgSrc) + html.slice(idx + old.block.length);
+}
+
+async function applyReserves() {
+  if (!checkSettings()) return;
+  if (!reserveState) { showStatus('reserveStatus', 'error', '먼저 예비 기사를 불러와 주세요.'); return; }
+  const picks = [...document.querySelectorAll('#reserveList .reserve-slot')]
+    .filter(sel => sel.value)
+    .map(sel => ({ idx: parseInt(sel.dataset.idx), slot: parseInt(sel.value) }));
+  if (picks.length === 0) { showStatus('reserveStatus', 'error', '넣을 자리를 하나 이상 골라주세요.'); return; }
+  const slots = picks.map(p => p.slot);
+  if (new Set(slots).size !== slots.length) { showStatus('reserveStatus', 'error', '같은 자리에 예비 기사 두 개를 넣을 순 없어요.'); return; }
+
+  const dateVal = checkActiveCurationDate('reserveStatus');
+  if (!dateVal) return;
+  if (dateVal !== reserveState.date) { showStatus('reserveStatus', 'error', '불러온 뒤 대상 날짜가 바뀌었어요. 다시 불러와 주세요.'); return; }
+
+  const btn = document.getElementById('reserveApplyBtn');
+  setBtnLoading(btn, true);
+  showStatus('reserveStatus', 'loading', '바꿔 끼우는 중...');
+  try {
+    // 최신 상태로 다시 읽는다 — 불러온 뒤 다른 편집이 커밋됐을 수 있다
+    let daily = await ghGetRaw(`${dateVal}/index.html`);
+    const reserveData = JSON.parse(await ghGetRaw(`${dateVal}/reserve.json`));
+    const reserves = reserveData.reserves || [];
+    const entries = await ghListDir(dateVal);
+    const shaOf = name => (entries.find(e => e.type === 'file' && e.name === name) || {}).sha;
+    const dailyArts = _parseArticles(daily);
+    if (dailyArts.length !== reserveState.current.length) throw new Error('불러온 뒤 기사 수가 바뀌었어요. 다시 불러와 주세요.');
+
+    let root = null;
+    try { root = await ghGetRaw('index.html'); } catch (_) {}
+
+    const files = [];
+    const rejected = [], picked = [];
+    const usedIdx = new Set();
+    for (const p of picks) {
+      const r = reserves[p.idx];
+      if (!r || r.url !== reserveState.reserves[p.idx].url) throw new Error('예비 기사 목록이 바뀌었어요. 다시 불러와 주세요.');
+      const old = dailyArts[p.slot - 1];
+      if (old.url !== reserveState.current[p.slot - 1].url) throw new Error(`${p.slot}번 기사가 불러온 뒤 바뀌었어요. 다시 불러와 주세요.`);
+
+      // 썸네일: 예비 썸네일 blob 을 thumb-{slot}.{ext} 경로로 가리키고, 같은 번호의 다른 파일은 지운다
+      const ext = r.thumb ? r.thumb.split('.').pop() : null;
+      const blobSha = r.thumb ? shaOf(r.thumb) : null;
+      const thumbName = blobSha ? `thumb-${p.slot}.${ext}` : null;
+      if (thumbName) files.push({ path: `${dateVal}/${thumbName}`, sha: blobSha });
+      const re = new RegExp(`^thumb-${p.slot}\\.`);
+      for (const e of entries) {
+        if (e.type === 'file' && re.test(e.name) && e.name !== thumbName) files.push({ path: `${dateVal}/${e.name}`, delete: true });
+      }
+      if (r.thumb && shaOf(r.thumb)) files.push({ path: `${dateVal}/${r.thumb}`, delete: true });
+
+      daily = _swapArticleBlock(daily, p.slot, r, thumbName);
+      daily = patchAgitData(daily, data => {
+        const arts = data.articles || [];
+        if (!arts[p.slot - 1]) return null;
+        arts[p.slot - 1] = { num: p.slot, title: r.title_ko, headline: r.headline || '', so_what: r.so_what || r.one_line || '', link: r.link || r.url, thumb: thumbName };
+        return data;
+      });
+      if (root) {
+        const next = _swapArticleBlock(root, p.slot, r, thumbName ? `${dateVal}/${thumbName}` : null, old.url);
+        if (next) root = next;
+      }
+      rejected.push({ url: old.url, title: old.title, rejected_at: dateVal });
+      picked.push({ url: r.url, title: r.title_ko, picked_at: dateVal });
+      usedIdx.add(p.idx);
+    }
+
+    files.push({ path: `${dateVal}/index.html`, content: daily });
+    if (root) files.push({ path: 'index.html', content: root });
+    reserveData.reserves = reserves.filter((_, i) => !usedIdx.has(i));
+    files.push({ path: `${dateVal}/reserve.json`, content: JSON.stringify(reserveData, null, 2) });
+
+    // 취향 기록 — 다음 큐레이션 선정 프롬프트가 이 두 파일의 최근분을 '고른 기사 / 뺀 기사'로 읽는다
+    const rejList = await _readJsonList('rejected-articles.json');
+    const rejSeen = new Set(rejList.map(x => x.url));
+    rejected.forEach(x => { if (x.url && !rejSeen.has(x.url)) rejList.push(x); });
+    files.push({ path: 'rejected-articles.json', content: JSON.stringify(rejList, null, 2) });
+    const pickList = await _readJsonList('picked-articles.json');
+    const pickSeen = new Set(pickList.map(x => x.url));
+    picked.forEach(x => { if (x.url && !pickSeen.has(x.url)) pickList.push(x); });
+    files.push({ path: 'picked-articles.json', content: JSON.stringify(pickList, null, 2) });
+
+    const yymmdd = dateVal.slice(2).replace(/-/g, '');
+    showStatus('reserveStatus', 'loading', 'commit 진행 중...');
+    await ghMultiFileCommit({ message: `🔄 ${yymmdd} 예비 기사로 교체 (${slots.sort((a, b) => a - b).join(', ')}번)`, files });
+
+    let introMsg = ' 인트로는 새 기사 기준으로 다시 쓰는 중이에요(1~2분, 기다릴 필요 없어요).';
+    try {
+      const res = await triggerWorkflow({ custom_date: dateVal, refresh_intro: 'true' });
+      if (res.status !== 204) introMsg = ' 다만 인트로 다시 쓰기 요청이 실패했어요 — 인트로가 빠진 기사를 언급하는지 확인해 주세요.';
+    } catch (_) {
+      introMsg = ' 다만 인트로 다시 쓰기 요청이 실패했어요 — 인트로가 빠진 기사를 언급하는지 확인해 주세요.';
+    }
+    setBtnComplete(btn);
+    resetReserveUI();
+    showStatus('reserveStatus', 'success', `${slots.join(', ')}번을 예비 기사로 바꿨어요. 1~2분 후 페이지에 반영돼요.` + introMsg);
+    setTimeout(loadActivityLog, 3000);
+  } catch (e) {
+    showStatus('reserveStatus', 'error', '오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
   }
 }
 
@@ -2938,6 +3192,8 @@ async function ghMultiFileCommit({ message, files }) {
   const blobs = [];
   for (const f of files) {
     if (f.delete) { blobs.push({ path: f.path, sha: null }); continue; }
+    // 이미 레포에 있는 blob 을 다른 경로로 가리키기 — 예비 썸네일을 thumb-N 으로 옮길 때 내려받지 않는다
+    if (f.sha) { blobs.push({ path: f.path, sha: f.sha }); continue; }
     const content = f.encoding === 'base64' ? f.content : _b64encUtf8(f.content);
     const blobRes = await fetch(`${base}/git/blobs`, {
       method: 'POST',
