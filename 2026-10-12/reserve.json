@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-12",
+  "reserves": [
+    {
+      "title_ko": "X, 스포츠 허브 '게임타임'을 NFL 너머로 확장…MLB 먼저",
+      "one_line": "NFL 넘어 연중 스포츠 허브로.",
+      "summary_1": "X가 NFL 중심이던 게임타임을 모든 프로 스포츠를 다루는 연중 서비스로 넓힌다고 밝혔어요. 아직 전면 확장은 아니고, 두 번째 리그 파트너로 MLB가 먼저 이번 달 들어와요.",
+      "summary_2": "MLB 경험에서는 포스트시즌 토론에 참여하고 점수, 통계, 팀 콘텐츠, 뉴스, 크리에이터 콘텐츠를 볼 수 있어요. NBA 등 다른 리그 콘텐츠도 곧 추가될 예정이에요.",
+      "summary_3": "이 확장은 광고주를 되찾으려는 노력의 일환이에요. X는 6주 만에 주요 광고주의 강한 수요를 얻었다고 했고, 7월 WFA와 소송 합의 이후 나온 움직임이에요.",
+      "url": "https://techcrunch.com/2026/10/07/x-expands-its-gametime-sports-hub-beyond-the-nfl-starting-with-mlb/",
+      "link": "https://techcrunch.com/2026/10/07/x-expands-its-gametime-sports-hub-beyond-the-nfl-starting-with-mlb/",
+      "source": "techcrunch.com",
+      "select_reason": "X가 NFL 중심 Gametime을 연중 스포츠 허브로 확장하는 서비스 전략 변화입니다.",
+      "headline": "X가 스포츠 허브 게임타임에 MLB를 두 번째 리그로 들였다",
+      "so_what": "시즌 한정 이벤트 페이지를 연중 허브로 바꾸는 건 광고주에게 꾸준한 체류 시간을 보여주려는 거예요. 콘텐츠 구조가 수익 모델을 따라간다는 사례예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "무료 제미나이 사용자 '자동' 모델로 전환, 앱에 사고 수준 추가",
+      "one_line": "무료는 자동 모델, 전원 노력 수준 선택.",
+      "summary_1": "무료 요금제 제미나이 사용자는 더 이상 모델을 직접 고를 수 없어요. 선택지는 'Gemini 3 모델'의 '자동' 하나뿐이고, 대부분의 프롬프트는 가장 빠른 Flash-Lite로 가요.",
+      "summary_2": "더 깊은 추론이 필요한 프롬프트는 Flash나 Pro로 갈 수 있어요. 스마트 모델 선택을 끄면 플랜 없는 사용자는 모든 답변에 Flash-Lite를 써요. 변경은 빠르게 적용 중이에요.",
+      "summary_3": "기존 '확장' 옵션 대신 낮음·중간·높음의 노력 수준이 모든 구독자에게 순차 제공돼요. 곧 구글 AI 플러스 사용자는 Flash-Lite와 Flash로만 제한돼요.",
+      "url": "https://9to5google.com/2026/10/09/gemini-auto-free-users/",
+      "link": "https://9to5google.com/2026/10/09/gemini-auto-free-users/",
+      "source": "9to5google.com",
+      "select_reason": "무료 Gemini 사용자를 Auto 모델로 전환하고 사고 수준을 추가한 앱 경험 변화입니다.",
+      "headline": "구글이 무료 제미나이 사용자의 모델 선택권을 없앴다",
+      "so_what": "선택지를 자동 라우팅 하나로 줄이면 비용은 회사가 통제하고, 사용자는 어떤 모델이 답했는지 알기 어려워져요. 투명성 설계가 더 중요해졌어요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "a16z의 2026년 소비자 AI 앱 Top 100",
+      "one_line": "소비자 AI 지출은 소수에 집중.",
+      "summary_1": "일곱 번째 a16z 보고서에서 ChatGPT가 웹·모바일 이용량과 미국 소비자 지출 모두 1위예요. Claude는 웹 3위로 올라 DeepSeek와 Perplexity를 앞섰고 신규 진입은 11개로 역대 최소예요.",
+      "summary_2": "처음 추가된 지출 분석에서 상위 1%의 월평균 AI 지출은 903달러로, 유료 이용자 중앙값 25달러와 큰 차이가 나요. 지출 상위 50개 중 29개는 이용량 순위에 없어요.",
+      "summary_3": "고액 지출은 코딩, 자동화, 생산성, 창작 도구에 몰렸어요. 다음 과제는 업무용 고액 이용자를 넘어 일상으로 확장하는 거예요. 구독 외에 광고와 거래 수수료가 새 수익원이 될 수 있어요.",
+      "url": "https://surfit.io/link/EAjYZ",
+      "link": "https://news.hada.io/topic?id=34980&ref=surfit.io",
+      "source": "news.hada.io (via surfit)",
+      "select_reason": "a16z의 소비자 AI 앱 Top 100으로 시장 흐름과 그로스 인사이트를 볼 수 있습니다.",
+      "headline": "a16z 조사에서 상위 1%가 AI에 월 903달러를 쓴다",
+      "so_what": "지출 상위 앱 절반 이상이 이용량 순위 밖이라, 사용자 수보다 업무 가치가 돈을 만든다는 뜻이에요. 가격 설계를 다시 볼 이유가 생겼어요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
