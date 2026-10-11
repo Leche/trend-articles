@@ -468,11 +468,21 @@ input:focus, textarea:focus {
 .reserve-one { font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.45; }
 .reserve-meta { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
 .reserve-meta a { color: var(--accent); text-decoration: none; }
+/* 브라우저 기본 화살표를 끄고(Safari 는 위아래 이중 화살표를 다크모드 무시한 색으로 그린다)
+   .date-icon 과 같은 방식으로 currentColor 셰브론을 얹는다 — 두 브라우저 모양·위치·색 통일 */
+.reserve-slot-wrap { position: relative; margin-top: 10px; }
 .reserve-slot {
-  width: 100%; margin-top: 10px; height: 42px; padding: 0 12px;
+  display: block; width: 100%; height: 42px; padding: 0 40px 0 12px;
   border: 1px solid var(--input-border); border-radius: var(--radius-xs);
   background: var(--input-bg); color: var(--text-primary);
   font-family: inherit; font-size: 14px; font-weight: 450;
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+}
+.reserve-slot:focus { outline: none; border-color: var(--input-border); }
+.reserve-slot-icon {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  display: flex; color: var(--text-primary); pointer-events: none;
 }
 
 .add-btn {
@@ -2526,7 +2536,8 @@ async function loadReserves() {
         `<div class="reserve-one">${_htmlText(r.so_what || r.one_line)}</div>` +
         `<div class="reserve-meta"><a href="${_htmlAttr(r.link || r.url)}" target="_blank" rel="noopener">원문 보기</a></div>` +
         `</div></div>` +
-        `<select class="reserve-slot" data-idx="${i}">${opts}</select>`;
+        `<div class="reserve-slot-wrap"><select class="reserve-slot" data-idx="${i}">${opts}</select>` +
+        `<span class="reserve-slot-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>`;
       list.appendChild(card);
     });
     document.getElementById('reserveApplyBtn').style.display = '';
