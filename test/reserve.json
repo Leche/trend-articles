@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-12",
+  "reserves": [
+    {
+      "title_ko": "Claude Haiku 5.5 출시: 평균 실행 비용 75% 절감, Max·Team에 API 크레딧 제공",
+      "one_line": "더 싸고 빠른 Haiku 5.5.",
+      "summary_1": "Anthropic이 요약, 분류, DB 질의처럼 반복이 많은 작업에 맞춘 소형 모델 Haiku 5.5를 냈어요. 10만 토큰 이하 가격이 Haiku 4.5보다 90% 낮고, 평균 실행 비용은 약 75% 줄어요.",
+      "summary_2": "Haiku 계열 최초로 추론 노력 수준을 조절할 수 있어요. OSWorld 2.1은 72.4%, Terminal-Bench 4.0은 39.2%로 Haiku 4.5보다 크게 올랐고, Sonnet 5.5 캐시 읽기 가격도 절반으로 내렸어요.",
+      "summary_3": "Max 5x는 월 100달러, Max 20x는 월 200달러의 API 크레딧을 받고, Team은 공동 사용 최대 500달러예요. AWS·Google Cloud·Azure에서 쓸 수 있고 SDK에 컴퓨터·브라우저 사용 지원이 베타로 추가됐어요.",
+      "url": "https://surfit.io/link/rrd4Z",
+      "link": "https://news.hada.io/topic?id=34958&ref=surfit.io",
+      "source": "news.hada.io (via surfit)",
+      "select_reason": "앤스로픽의 Claude Haiku 5.5 출시로 비용 절감 등 구체 내용이 있는 AI 회사 출시입니다.",
+      "headline": "Anthropic이 Haiku 5.5 실행 비용을 75% 줄였다",
+      "so_what": "요약·분류처럼 반복 많은 기능을 제품에 붙일 때 비용 부담이 확 줄어요. 추론 수준 조절로 속도와 품질을 직접 고를 수 있다는 점도 설계에 쓸모 있어요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "Anthropic 2026 이용 정책 업데이트",
+      "one_line": "Claude 이용 정책 개정.",
+      "summary_1": "Anthropic이 해마다 하는 이용 정책 개정을 발표했고, 11월 12일부터 적용돼요. 대부분 기존 규칙을 명확히 하는 내용이에요. 더 길고 자율적인 작업을 하게 된 Claude의 새 기능에 맞춘 예시가 추가됐어요.",
+      "summary_2": "영향력 공작, 무기 개발, 감시에서 새로 관찰된 악용 패턴을 반영했어요. 건강·금융 같은 고위험 사용 요건을 명확히 하고, 물리적 행동을 자율 수행할 때의 통제와 모델에 대한 학대 행위 대응도 담겼어요.",
+      "summary_3": "흩어져 있던 가짜 계정·조작 캠페인 규정을 '기만적 캠페인 및 인위적 활동 금지' 섹션으로 통합했어요. 선거 섹션은 유권자 기만과 선거 방해에 집중하고, 개인화된 투표 타기팅 전면 금지는 없앴어요.",
+      "url": "https://www.anthropic.com/news/2026-usage-policy-update",
+      "link": "https://www.anthropic.com/news/2026-usage-policy-update",
+      "source": "https://www.anthropic.com/news",
+      "select_reason": "앤스로픽이 2026 이용 정책을 개정한 AI 회사의 실제 정책 변화입니다.",
+      "headline": "Anthropic이 개인화 투표 타기팅 전면 금지를 없앴다",
+      "so_what": "Claude가 길고 자율적인 작업을 맡게 되면서 규칙도 그 쓰임에 맞춰졌어요. 건강·금융 기능을 만든다면 11월 12일 전에 요건을 꼭 확인해 두세요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "OpenAI, AI를 활용한 '허위 전면' 영향력 공작 차단",
+      "one_line": "OpenAI, 러·이란 공작 차단.",
+      "summary_1": "OpenAI가 러시아와 이란발 영향력 공작 두 건을 차단했어요. 둘 다 모델을 전통 기법과 함께 써서 허위 전면 조직을 꾸리고, 지정학·분쟁 관련 메시지를 대상 독자에게 퍼뜨리려 했어요.",
+      "summary_2": "이란 쪽은 가짜 기자 7명으로 전 세계 중소 매체에 장문 기사를 투고하고 미·이란 전쟁 관련 댓글도 만들었어요. 러시아 쪽은 중남미의 무심코 동원된 사람들로 싱크탱크를 운영하고 가짜 유출 문서도 만들었어요.",
+      "summary_3": "OpenAI는 이들이 AI 이전 시대의 복잡한 공작과 닮았고 AI는 일부 작업만 쉽게 했다고 봤어요. 러시아 쪽은 IO Breakout Scale 5단계로, 보고를 시작한 이래 처음 차단한 5단계 사례예요.",
+      "url": "https://openai.com/index/disrupting-ai-enabled-false-front-operations",
+      "link": "https://openai.com/index/disrupting-ai-enabled-false-front-operations",
+      "source": "openai.com",
+      "select_reason": "OpenAI가 AI를 이용한 위장 영향력 공작을 차단한 실제 사고·정책 사례입니다.",
+      "headline": "OpenAI가 가짜 기자 7명을 둔 이란 공작을 차단했다",
+      "so_what": "AI가 공작을 새로 만든 게 아니라 옛 수법의 일부를 쉽게 했다는 분석이에요. 콘텐츠 플랫폼이라면 진짜 같은 가짜 조직을 걸러낼 장치를 고민할 때예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
