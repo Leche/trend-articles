@@ -34,12 +34,18 @@ REFRESH_INTRO = os.environ.get("REFRESH_INTRO", "").strip().lower() == "true"
 REFRESH_SO_WHAT = os.environ.get("REFRESH_SO_WHAT", "").strip().lower() == "true"
 KST =datetime.timezone(datetime.timedelta(hours=9))
 
-SURFIT_CATEGORIES = [
-    "https://www.surfit.io/explore/startup/new-product",
-    "https://www.surfit.io/explore/startup/ai",
-    "https://www.surfit.io/explore/design/ui-ux",
-    "https://www.surfit.io/explore/startup/business-trend",
+# 서핏 스캔 페이지 — (URL, 스크롤 횟수, 최대 후보 수).
+# 2026-10-12: 리체가 마음에 안 드는 날 직접 뒤지는 건 '홈 피드'인데, 큐레이션은 카테고리 4개의 첫 화면에서
+# 5개씩(72개 중 20개)만 보고 있었다. 뺀 기사 173건 중 88건이 서핏 경유 = 얕은 풀에서 고른 게 가장 많이 버려졌다.
+# 홈은 스크롤마다 18장씩 더 불러온다(실측 3회 → 72장). 카테고리는 첫 화면 18장을 전부 쓴다.
+SURFIT_PAGES = [
+    ("https://www.surfit.io/", 3, 60),
+    ("https://www.surfit.io/explore/startup/new-product", 0, 18),
+    ("https://www.surfit.io/explore/startup/ai", 0, 18),
+    ("https://www.surfit.io/explore/design/ui-ux", 0, 18),
+    ("https://www.surfit.io/explore/startup/business-trend", 0, 18),
 ]
+SURFIT_MAX_PER_DOMAIN = 8   # 긱뉴스(hada) 하나가 서핏 자리를 다 먹지 않게 (2026-10-12 실측: 서핏 20개 중 9개)
 
 # ─── RSS/Atom 피드 (후보 수집의 1차 소스) ─────────────────────
 # 피드는 제목·발행일·요약을 공짜로 준다. 홈 HTML 의 링크를 긁던 방식은 광고·소셜·내비 링크가
@@ -71,7 +77,7 @@ FEEDS = [
 ]
 MAX_PER_FEED = 6          # 피드당 최신 N개
 FEED_WINDOW_DAYS = 14     # 선정 기준 '발행 2주 이내'와 동일
-MAX_PROMPT_CANDIDATES = 160  # 출처 22곳 기준 ~150개. 상한에 걸리면 FEEDS 뒤쪽(국내)이 잘리므로 여유 있게
+MAX_PROMPT_CANDIDATES = 260  # 서핏 ~100 + 피드·사이트 ~95 (2026-10-12). 상한에 걸리면 FEEDS 뒤쪽(국내)이 잘리므로 여유 있게
 
 # 피드가 없는 사이트만 HTML 링크 스캔 (surfit.io는 Playwright로 별도 스캔)
 PRIORITY_SITES = [
@@ -676,87 +682,94 @@ def download_image_as_base64(img_url, referer=None):
 
 
 # ─── 서핏 Playwright 스캔 ────────────────────────────────────
-def scan_surfit_categories():
-    """Playwright로 서핏 카테고리 페이지에서 기사 수집 (JS 렌더링 필요)"""
+def _parse_surfit_cards(html):
+    """서핏 페이지 HTML → 후보 카드 목록. 홈·카테고리 페이지가 같은 카드 마크업을 쓴다(2026-10-12 실측)."""
     import re as _re
+    soup = BeautifulSoup(html, "lxml")
+    cards = []
+    seen_urls = set()
+    for article in soup.find_all("article"):
+        variant = article.get("data-variant") or ""
+        # 광고 카드 제외 — data-variant="fullImage" 이고 링크에 ?material= 이 붙는다
+        # (2026-09-09 실측: 카테고리 첫 카드가 광고라 5개 슬롯 중 하나를 매번 먹고 있었다)
+        # "default" 는 홈 피드의 스타트업 갤러리(툴 소개) 카드 — 기사가 아니라 제외 (2026-10-12).
+        if variant in ("fullImage", "default"):
+            continue
+        link_tag = article.find("a", href=lambda h: h and "surfit.io/link/" in h)
+        if not link_tag or "material=" in link_tag["href"]:
+            continue
+        url = link_tag["href"]
+        if not url.startswith("http"):
+            url = "https://surfit.io" + url
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+
+        heading = article.find(["h1", "h2", "h3", "h4"])
+        title_hint = heading.get_text(strip=True)[:100] if heading else ""
+
+        # 날짜: <time datetime="2026-09-07T02:56:50+09:00"> 우선, 없으면 YYYY.MM.DD 텍스트. 홈 피드 카드엔 둘 다 없다
+        # (최신순 피드라 '날짜 미상'으로 두고 모델이 요약·문맥으로 판단).
+        date_hint = ""
+        time_tag = article.find("time")
+        if time_tag and (time_tag.get("datetime") or "")[:10].count("-") == 2:
+            date_hint = time_tag["datetime"][:10]
+        else:
+            for text_node in article.find_all(string=_re.compile(r"\d{4}\.\d{2}\.\d{2}")):
+                m = _re.search(r"(\d{4})\.(\d{2})\.(\d{2})", text_node)
+                if m:
+                    date_hint = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+                    break
+
+        # 부제(a.content-desc) → 요약 힌트. 피드 후보는 요약이 있는데 서핏 후보만 제목뿐이라
+        # 선정에서 밀렸다(2026-09-09 두 번 연속 서핏 0건). 부제가 없으면 뒤에서 og:description 을 붙인다.
+        desc_tag = article.find("a", class_="content-desc")
+        summary_hint = desc_tag.get_text(strip=True)[:220] if desc_tag else ""
+
+        cards.append({
+            "url": url,
+            "title_hint": title_hint,
+            "summary_hint": summary_hint,
+            "source": "https://www.surfit.io",
+            "date_hint": date_hint,
+        })
+    return cards
+
+
+def scan_surfit_categories():
+    """Playwright로 서핏 홈·카테고리 페이지에서 기사 수집 (JS 렌더링 필요). 페이지 간 중복은 먼저 본 쪽이 가진다."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         print("  ⚠️  playwright 미설치 — 서핏 스킵")
         return []
 
-    MAX_PER_CAT = 5
     candidates = []
+    seen = set()
     print("\n🎭 Playwright로 서핏 스캔 시작...")
 
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
-            context = browser.new_context(user_agent=HEADERS["User-Agent"])
+            context = browser.new_context(user_agent=HEADERS["User-Agent"], viewport={"width": 1280, "height": 900})
             page = context.new_page()
 
-            for cat_url in SURFIT_CATEGORIES:
-                print(f"\n🌐 서핏 스캔 중: {cat_url}")
+            for page_url, scrolls, max_cards in SURFIT_PAGES:
+                print(f"\n🌐 서핏 스캔 중: {page_url}")
                 try:
-                    page.goto(cat_url, wait_until="networkidle", timeout=30000)
-                    html = page.content()
-                    soup = BeautifulSoup(html, "lxml")
-
-                    site_candidates = []
-                    seen_urls = set()
-
-                    for article in soup.find_all("article"):
-                        # 광고 카드 제외 — data-variant="fullImage" 이고 링크에 ?material= 이 붙는다
-                        # (2026-09-09 실측: 카테고리 첫 카드가 광고라 5개 슬롯 중 하나를 매번 먹고 있었다)
-                        if (article.get("data-variant") or "") == "fullImage":
-                            continue
-                        # surfit.io/link/XXXXX 형태 링크 추출
-                        link_tag = article.find(
-                            "a", href=lambda h: h and "surfit.io/link/" in h
-                        )
-                        if not link_tag or "material=" in link_tag["href"]:
-                            continue
-                        url = link_tag["href"]
-                        if not url.startswith("http"):
-                            url = "https://surfit.io" + url
-                        if url in seen_urls:
-                            continue
-                        seen_urls.add(url)
-
-                        # 제목 추출
-                        heading = article.find(["h1", "h2", "h3", "h4"])
-                        title_hint = heading.get_text(strip=True)[:100] if heading else ""
-
-                        # 날짜: <time datetime="2026-09-07T02:56:50+09:00"> 우선, 없으면 YYYY.MM.DD 텍스트
-                        date_hint = ""
-                        time_tag = article.find("time")
-                        if time_tag and (time_tag.get("datetime") or "")[:10].count("-") == 2:
-                            date_hint = time_tag["datetime"][:10]
-                        else:
-                            for text_node in article.find_all(string=_re.compile(r"\d{4}\.\d{2}\.\d{2}")):
-                                m = _re.search(r"(\d{4})\.(\d{2})\.(\d{2})", text_node)
-                                if m:
-                                    date_hint = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
-                                    break
-
-                        # 부제(a.content-desc) → 요약 힌트. 피드 후보는 요약이 있는데 서핏 후보만 제목뿐이라
-                        # 선정에서 밀렸다(2026-09-09 두 번 연속 서핏 0건). 부제가 없으면 뒤에서 og:description 을 붙인다.
-                        desc_tag = article.find("a", class_="content-desc")
-                        summary_hint = desc_tag.get_text(strip=True)[:220] if desc_tag else ""
-
-                        site_candidates.append({
-                            "url": url,
-                            "title_hint": title_hint,
-                            "summary_hint": summary_hint,
-                            "source": "https://www.surfit.io",
-                            "date_hint": date_hint,
-                        })
-
-                    candidates.extend(site_candidates[:MAX_PER_CAT])
-                    print(f"  → {len(site_candidates)}개 발견, {min(len(site_candidates), MAX_PER_CAT)}개 선택")
-
+                    page.goto(page_url, wait_until="networkidle", timeout=30000)
+                    for _ in range(scrolls):
+                        page.mouse.wheel(0, 4000)
+                        page.wait_for_timeout(1800)
+                    cards = _parse_surfit_cards(page.content())
+                    new_cards = [c for c in cards if c["url"] not in seen]
+                    fresh = new_cards[:max_cards]
+                    for c in fresh:
+                        seen.add(c["url"])
+                    candidates.extend(fresh)
+                    print(f"  → {len(cards)}개 발견, {len(fresh)}개 선택 (다른 페이지와 겹친 {len(cards) - len(new_cards)}개 제외)")
                 except Exception as e:
-                    print(f"  ❌ {cat_url} 스캔 실패: {e}")
+                    print(f"  ❌ {page_url} 스캔 실패: {e}")
 
             browser.close()
 
@@ -882,12 +895,17 @@ def scan_priority_sites():
     # 서핏 링크는 리다이렉트라 모델이 실제 출처를 볼 수 없다 → 최종 URL 을 미리 풀어 출처를
     # 보여주고, 차단 도메인(ditoday 등)은 선정 전에 걸러 여유분을 낭비하지 않는다.
     candidates = []
+    surfit_per_domain = {}
     for cand in scan_surfit_categories():
         final = resolve_final_url(cand["url"])
         netloc = urlparse(final).netloc.lower()
         if any(b in netloc for b in BLOCKED_DOMAINS):
             print(f"  ⛔ 차단 도메인 후보 제외(서핏): {final[:90]}")
             continue
+        domain = netloc.replace("www.", "")
+        if surfit_per_domain.get(domain, 0) >= SURFIT_MAX_PER_DOMAIN:
+            continue
+        surfit_per_domain[domain] = surfit_per_domain.get(domain, 0) + 1
         cand["final_url"] = final
         cand["source"] = f"{netloc.replace('www.', '')} (via surfit)"
         if not cand.get("summary_hint"):
