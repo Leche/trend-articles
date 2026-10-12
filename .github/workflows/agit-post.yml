@@ -1,7 +1,7 @@
 name: Agit 게시
 
 # 발행 경로 두 가지:
-#  (A) 외부 cron이 09:30 KST에 input 없이 호출 → pending-publish.json 확인 후 발행
+#  (A) 외부 cron이 10:00 KST에 input 없이 호출 → pending-publish.json 확인 후 발행
 #  (B) trigger.html "즉시 게시" / "테스트 게시" → skip_wait=true 로 호출 → pending 무시하고 바로 발행
 on:
   workflow_dispatch:
@@ -106,7 +106,7 @@ jobs:
             --arg pending "${{ steps.params.outputs.pending_date }}" \
             --arg today "${{ steps.params.outputs.today_s }}" \
             --arg stale "${{ steps.params.outputs.is_stale }}" \
-            '{text: ("⚠️ Agit 자동 발행 SKIP — date_mismatch\n예약 날짜: " + $pending + "\n오늘 KST: " + $today + "\nstale(과거 예약): " + $stale + "\n\n과거 예약이면 자동 정리됩니다. 미래 예약이면 해당 날짜 09:30에 다시 시도합니다.")}')
+            '{text: ("⚠️ Agit 자동 발행 SKIP — date_mismatch\n예약 날짜: " + $pending + "\n오늘 KST: " + $today + "\nstale(과거 예약): " + $stale + "\n\n과거 예약이면 자동 정리됩니다. 미래 예약이면 해당 날짜 10:00에 다시 시도합니다.")}')
           resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" -d "$payload")
           # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.

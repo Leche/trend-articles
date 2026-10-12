@@ -1164,9 +1164,9 @@ body.pwd-modal-open .tab-bar {
   <!-- 이번 회차 발행 — 일상 메인 액션 -->
   <div class="card">
     <div class="card-title">이번 회차 발행</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">밤 큐레이션이 끝나면 다음날 09:30(KST) 발행이 자동으로 예약돼요. 내보내기 싫은 날만 예약 취소나 미루기를 눌러주세요.</p>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;font-weight:450;">밤 큐레이션이 끝나면 다음날 10:00(KST) 발행이 자동으로 예약돼요. 내보내기 싫은 날만 예약 취소나 미루기를 눌러주세요.</p>
     <!-- 발행 예약 ↔ 예약 취소: 같은 자리에 모드 토글 -->
-    <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 09:30 발행 예약</button>
+    <button class="btn btn-primary" id="agitBtn" onclick="schedulePublish(false)">내일 아침 10:00 발행 예약</button>
     <button class="btn-cancel" id="scheduleCancelBtn" onclick="cancelScheduledPublish()" style="display:none;">예약 취소</button>
     <!-- 다음 영업일로 미루기: 큐레이션 폴더 재배치 액션 — 예약 유무와 무관하게 항상 노출 -->
     <button class="btn btn-secondary" id="postponeBtn" onclick="postponeToNextBusinessDay()" style="margin-top:12px;">다음 영업일로 미루기</button>
@@ -1505,30 +1505,30 @@ function renderDashboard(state) {
     cur.innerHTML = '<span class="dash-dot gray"></span><span>오늘 큐레이션 미생성</span>';
   }
 
-  // Agit 게시 상태 — 09:30 KST 발행 예약 모델 기준
-  const past0930 = getCurrentKSTMinutes() >= 9 * 60 + 30;
-  // 09:30 이후에 예약하면 _nextPublishDateKST()가 '내일'을 박으므로, 예약 날짜는
-  // today 일 수도 미래(내일)일 수도 있다. UI가 today 예약만 인식하면 09:30 이후
+  // Agit 게시 상태 — 10:00 KST 발행 예약 모델 기준
+  const past1000 = getCurrentKSTMinutes() >= 10 * 60;  // 2026-10-12 발행 09:30 → 10:00 (출근길 검수 창 확보)
+  // 10:00 이후에 예약하면 _nextPublishDateKST()가 '내일'을 박으므로, 예약 날짜는
+  // today 일 수도 미래(내일)일 수도 있다. UI가 today 예약만 인식하면 10:00 이후
   // 예약 시 대시보드 리프레시에서 취소 버튼이 사라지는 버그가 생긴다 → 미래 예약도 인식.
   const pendingDate   = state.pending && state.pending.date;       // 'YYYY-MM-DD' | null
   const pendingToday  = pendingDate === today;
   const pendingFuture = pendingDate && pendingDate > today;        // 내일 등 아직 안 지난 예약
-  // 아직 발사 전인 유효 예약 = (오늘자 & 09:30 전) 또는 (미래자). 취소 버튼 노출 기준.
-  const pendingActive = (pendingToday && !past0930) || pendingFuture;
+  // 아직 발사 전인 유효 예약 = (오늘자 & 10:00 전) 또는 (미래자). 취소 버튼 노출 기준.
+  const pendingActive = (pendingToday && !past1000) || pendingFuture;
   if (state.agitStatus === 'posted' && state.agitTime) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
     agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
   } else if (weekend) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 게시 없음)</span>';
-  } else if (pendingToday && !past0930) {
-    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 09:30 예정</span>';
-  } else if (pendingToday && past0930) {
+  } else if (pendingToday && !past1000) {
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 10:00 예정</span>';
+  } else if (pendingToday && past1000) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>발행 대기 중 (cron 호출 전)</span>';
   } else if (pendingFuture) {
     const [, fm, fd] = pendingDate.split('-');
-    agit.innerHTML = `<span class="dash-dot yellow"></span><span>${fm}/${fd} 09:30 예정</span>`;
-  } else if (!past0930) {
+    agit.innerHTML = `<span class="dash-dot yellow"></span><span>${fm}/${fd} 10:00 예정</span>`;
+  } else if (!past1000) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>예약 없음</span>';
   } else {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>오늘 미게시</span>';
@@ -3155,18 +3155,18 @@ async function _checkAgitPassword() {
 // ── 발행 예약 (pending-publish.json commit) ──
 const PENDING_PATH = 'pending-publish.json';
 
-// 다음 09:30 KST 까지 남은 발사일을 반환.
-//  - 현재 KST 시각이 09:30 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
-//  - 09:30 이후 → 내일
-// 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 09:30 발사' 가 자연스러움.
+// 다음 10:00 KST 까지 남은 발사일을 반환.
+//  - 현재 KST 시각이 10:00 이전 → 오늘 (아직 안 지났으니 오늘 발사 가능)
+//  - 10:00 이후 → 내일
+// 검수가 자정을 넘겨 새벽에 끝나는 경우(예: 새벽 1시) '오늘 10:00 발사' 가 자연스러움.
 // 시스템 timezone 과 무관하게 동작하도록 UTC + 9h 한 뒤 getUTC* 로 KST 값 추출.
 // (이전 (9*60 - getTimezoneOffset()) 식은 브라우저가 KST 일 때 이중 보정으로 +18h 가 되어
 //  자정 직후 누르면 다음날(잘못)로 박히던 버그가 있었음.)
 function _nextPublishDateKST() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  const past0930 = kst.getUTCHours() > 9 || (kst.getUTCHours() === 9 && kst.getUTCMinutes() >= 30);
-  if (past0930) kst.setUTCDate(kst.getUTCDate() + 1);
+  const past1000 = kst.getUTCHours() >= 10;
+  if (past1000) kst.setUTCDate(kst.getUTCDate() + 1);
   return kst.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
@@ -3300,7 +3300,7 @@ function showScheduleCancel(date) {
   if (cancel) {
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
       const [, m, d] = date.split('-');
-      cancel.textContent = `${m}/${d} 09:30 발행 예정 취소`;
+      cancel.textContent = `${m}/${d} 10:00 발행 예정 취소`;
     } else {
       cancel.textContent = '예약 취소';
     }
@@ -3324,9 +3324,9 @@ async function schedulePublish(testMode) {
     await _putContent(
       PENDING_PATH,
       { date, test_mode: !!testMode, scheduled_at: new Date().toISOString() },
-      `chore(publish): ${date} 09:30 발행 예약`,
+      `chore(publish): ${date} 10:00 발행 예약`,
     );
-    showStatus('scheduleStatus', 'success', `${date} 09:30 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
+    showStatus('scheduleStatus', 'success', `${date} 10:00 KST 발행 예약 완료! 다음날 아침에 자동 발사돼요.`);
     showScheduleCancel(date);
     setTimeout(() => { loadDashboard(); loadActivityLog(); }, 3000);
   } catch(e) {

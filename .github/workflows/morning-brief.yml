@@ -94,15 +94,15 @@ jobs:
           link = f'https://leche.github.io/trend-articles/{target}/'
           blocks = [
               {"type": "header", "text": "오늘 발행", "style": "blue"},
-              {"type": "text", "text": f"{mm}/{dd} 09:30 아지트에 나가요.",
-               "inlines": [{"type": "styled", "text": f"{mm}/{dd} 09:30 아지트에 나가요.", "bold": True}]},
+              {"type": "text", "text": f"{mm}/{dd} 10:00 아지트에 나가요.",
+               "inlines": [{"type": "styled", "text": f"{mm}/{dd} 10:00 아지트에 나가요.", "bold": True}]},
               {"type": "text", "text": f"제목: {headline}" if headline else "제목: (헤드라인 없음)"},
               {"type": "text", "text": text},
               {"type": "text", "text": "고칠 게 있으면 트리거에서 예비 기사 교체·순서·취소·미루기. 없으면 그냥 두면 돼요."},
               {"type": "button", "text": "다이제스트 보기 →", "style": "default",
                "action_type": "open_system_browser", "value": link},
           ]
-          payload = {"text": f"오늘 발행 {mm}/{dd} 09:30\n{headline}\n{link}", "blocks": blocks}
+          payload = {"text": f"오늘 발행 {mm}/{dd} 10:00\n{headline}\n{link}", "blocks": blocks}
 
           webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
           if not webhook:

@@ -195,7 +195,7 @@ jobs:
           else
             COMMIT_MSG="✨ ${DATE_LABEL} 트렌드림 기사 큐레이션"
           fi
-          # 밤 큐레이션(for_tomorrow)은 다음날 09:30 발행을 자동 예약한다 (2026-10-11, opt-in → opt-out 전환).
+          # 밤 큐레이션(for_tomorrow)은 다음날 10:00 발행을 자동 예약한다 (2026-10-11, opt-in → opt-out 전환).
           # 검수는 이제 선택 — 손 안 대면 그대로 나가고, 빼고 싶으면 트리거에서 예약 취소·미루기.
           # 큐레이션 결과물과 같은 커밋에 넣어서, 큐레이션이 실패하면 예약도 안 생긴다.
           # 놀금(그 달 마지막 금요일)은 예약하지 않는다 — 원래 미루기 버튼으로 넘기는 날이라(repurpose.yml 과 같은 판정).
@@ -223,7 +223,7 @@ jobs:
               'scheduled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
               'auto': True,
           }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          print(f"[auto-schedule] {tgt_s} 09:30 발행 자동 예약")
+          print(f"[auto-schedule] {tgt_s} 10:00 발행 자동 예약")
           PYEOF
           fi
           git add -A

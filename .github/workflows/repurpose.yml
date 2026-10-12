@@ -166,7 +166,7 @@ jobs:
               f"| 타겟 | `{tgt_dir}/` ({tgt_label}) |",
               f"| 옮겨진 파일 | {len(moved)}개 — {', '.join(moved)} |",
               f"| 타겟 폴더 실제 내용 | {', '.join(sorted(os.listdir(tgt_dir)))} |",
-              f"| 발행 예약 | {tgt_dir} 09:30 KST |",
+              f"| 발행 예약 | {tgt_dir} 10:00 KST |",
           ]
           dry = os.environ.get('DRY_RUN','').lower() == 'true'
           summary = ("## 🧪 리허설 (dry_run) — 커밋·발행예약·알림 없음\n\n"
@@ -211,7 +211,7 @@ jobs:
             --arg src "${{ steps.run.outputs.source_label }}" \
             --arg tgt "${{ steps.run.outputs.target_label }}" \
             --arg date "${{ steps.run.outputs.target_date }}" \
-            '{text: ("📦 다이제스트 재배치 완료\n" + $src + " → " + $tgt + "\n\n" + $date + " 09:30 KST 에 자동 발사돼요.")}')
+            '{text: ("📦 다이제스트 재배치 완료\n" + $src + " → " + $tgt + "\n\n" + $date + " 10:00 KST 에 자동 발사돼요.")}')
           resp=$(curl -sS -X POST "${{ secrets.KAKAOWORK_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" -d "$payload")
           # 카웍은 메시지를 거부해도 HTTP 200 을 준다. 정상 응답은 {"code": "ok"}.
