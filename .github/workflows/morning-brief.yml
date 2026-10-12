@@ -1,0 +1,132 @@
+name: 아침 발행 브리핑
+
+# 출근길 마지막 확인용 카웍 카드 (2026-10-12 신설).
+# 외부 cron(cron-job.org)이 평일 08:50 KST 에 workflow_dispatch 로 깨운다. 리체는 9시 전후 지하철에서
+# 이 카드로 오늘 나갈 8개를 훑고, 손댈 게 있으면 트리거(홈 화면 웹클립)에서 예비 기사 교체·순서·취소·미루기를 한다.
+#
+# 보내는 조건은 하나 — pending-publish.json 에 '오늘' 예약이 있을 것. 이 조건 하나로 쉬는 날이 다 걸러진다:
+#   · 공휴일·주말: 전날 큐레이션이 guard 에서 건너뛰어 폴더도 예약도 없다
+#   · 놀금(그 달 마지막 금요일): 밤 큐레이션이 자동 예약을 걸지 않는다 (curate.yml)
+#   · 휴가: cron-job.org 에서 22:00 큐레이션 잡을 꺼두면 예약이 안 생겨 발행·브리핑 모두 조용하다
+#   · 이미 즉시 게시했거나 예약을 취소한 날: 예약이 비어 있다
+#   · 미룬 다이제스트: 다음 영업일로 예약이 옮겨져 그날 아침에 온다
+# 테스트 예약(test_mode)은 개인 아지트용이라 보내지 않는다.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '예약·요일 가드 무시하고 최신 다이제스트로 보내기 (true/false) — 카드 모양 확인용'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Build and send KakaoWork card
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          FORCE: ${{ github.event.inputs.force || 'false' }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, json, datetime, pathlib, urllib.request, urllib.error
+
+          force = os.environ.get('FORCE', '').strip().lower() == 'true'
+          kst = datetime.timezone(datetime.timedelta(hours=9))
+          now = datetime.datetime.now(kst)
+          today = now.date().isoformat()
+
+          # ── 보낼 날인지 ──
+          try:
+              pending = json.loads(pathlib.Path('pending-publish.json').read_text(encoding='utf-8') or '{}')
+          except Exception:
+              pending = {}
+          target = (pending.get('date') or '').strip()
+          if not force:
+              if now.weekday() >= 5:
+                  print(f"[SKIP] 주말 ({today})"); raise SystemExit
+              if target != today:
+                  print(f"[SKIP] 오늘 예약 없음 (pending={target or '없음'}, today={today}) — 공휴일·놀금·휴가·취소·이미 게시"); raise SystemExit
+              if pending.get('test_mode'):
+                  print("[SKIP] 테스트 예약 (개인 아지트)"); raise SystemExit
+          else:
+              folders = sorted(d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d))
+              target = target if pathlib.Path(target, 'index.html').exists() else folders[-1]
+              print(f"[FORCE] {target} 다이제스트로 보냄")
+
+          html_path = pathlib.Path(target, 'index.html')
+          if not html_path.exists():
+              print(f"[SKIP] {html_path} 없음"); raise SystemExit
+
+          # ── 카드 내용: 아지트 제목 + 기사 제목 8개 + 예비 기사 수 ──
+          html = html_path.read_text(encoding='utf-8')
+          m = re.search(r'<script id="agit-digest-data" type="application/json">(.*?)</script>', html, re.S)
+          data = json.loads(m.group(1)) if m else {}
+          arts = data.get('articles') or []
+          headline = (arts[0].get('headline') or arts[0].get('title') or '') if arts else ''
+          try:
+              reserve_n = len(json.load(open(pathlib.Path(target, 'reserve.json'), encoding='utf-8')).get('reserves', []))
+          except Exception:
+              reserve_n = 0
+
+          # 카웍 text 블록은 400자 안쪽이 안전선(2026-08-24 실측: 700자 400 에러). 제목을 줄여가며 맞춘다.
+          def body(maxlen):
+              lines = []
+              for a in arts:
+                  t = (a.get('title') or '').strip()
+                  t = t if len(t) <= maxlen else t[:maxlen - 1] + '…'
+                  lines.append(f"{a.get('num')}. {t}")
+              tail = f"\n예비 기사 {reserve_n}개 준비됨" if reserve_n else ""
+              return "\n".join(lines) + tail
+          text = next((b for b in (body(n) for n in (40, 32, 26, 20)) if len(b) <= 380), body(16))
+
+          mm, dd = target[5:7].lstrip('0'), target[8:10].lstrip('0')
+          link = f'https://leche.github.io/trend-articles/{target}/'
+          blocks = [
+              {"type": "header", "text": "오늘 발행", "style": "blue"},
+              {"type": "text", "text": f"{mm}/{dd} 09:30 아지트에 나가요.",
+               "inlines": [{"type": "styled", "text": f"{mm}/{dd} 09:30 아지트에 나가요.", "bold": True}]},
+              {"type": "text", "text": f"제목: {headline}" if headline else "제목: (헤드라인 없음)"},
+              {"type": "text", "text": text},
+              {"type": "text", "text": "고칠 게 있으면 트리거에서 예비 기사 교체·순서·취소·미루기. 없으면 그냥 두면 돼요."},
+              {"type": "button", "text": "다이제스트 보기 →", "style": "default",
+               "action_type": "open_system_browser", "value": link},
+          ]
+          payload = {"text": f"오늘 발행 {mm}/{dd} 09:30\n{headline}\n{link}", "blocks": blocks}
+
+          webhook = os.environ.get('KAKAOWORK_WEBHOOK_URL', '').strip()
+          if not webhook:
+              print("[ERROR] KAKAOWORK_WEBHOOK_URL 비어있음"); raise SystemExit(1)
+
+          def send(p):
+              req = urllib.request.Request(webhook, data=json.dumps(p).encode('utf-8'),
+                                           headers={"Content-Type": "application/json"}, method="POST")
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as resp:
+                      b = resp.read().decode('utf-8', errors='replace')
+              except urllib.error.HTTPError as e:
+                  b = e.read().decode('utf-8', errors='replace')
+                  print(f"[HTTPError] {e.code} body={b}")
+              print(f"[RESULT] body={b}")
+              try:
+                  parsed = json.loads(b or '{}')
+              except json.JSONDecodeError:
+                  return False
+              return parsed.get('code') == 'ok' or parsed.get('success') is True
+
+          # 카웍은 거부해도 HTTP 200 을 줄 수 있어 body 로 판정한다. 긴 본문이 막히면 제목만 남겨 한 번 더.
+          if not send(payload):
+              print("[WARN] 거부됨 — 기사 목록 없이 재전송")
+              payload["blocks"] = [blocks[0], blocks[1], blocks[2], blocks[4], blocks[5]]
+              if not send(payload):
+                  print("[ERROR] 카웍이 메시지를 거부했습니다"); raise SystemExit(1)
+          print(f"[OK] 아침 브리핑 발송 ({target}, 본문 {len(text)}자)")
+          PYEOF
