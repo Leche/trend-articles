@@ -59,7 +59,9 @@ jobs:
                   print("[SKIP] 테스트 예약 (개인 아지트)"); raise SystemExit
           else:
               folders = sorted(d for d in os.listdir('.') if re.match(r'^\d{4}-\d{2}-\d{2}$', d))
-              target = target if pathlib.Path(target, 'index.html').exists() else folders[-1]
+              # target 이 비면 Path('', 'index.html') 이 루트 미러를 가리켜 날짜 없는 카드가 나갔다(2026-10-12 첫 발송).
+              if not (re.match(r'^\d{4}-\d{2}-\d{2}$', target) and pathlib.Path(target, 'index.html').exists()):
+                  target = folders[-1]
               print(f"[FORCE] {target} 다이제스트로 보냄")
 
           html_path = pathlib.Path(target, 'index.html')
