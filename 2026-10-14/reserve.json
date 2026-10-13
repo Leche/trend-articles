@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-14",
+  "reserves": [
+    {
+      "title_ko": "Anthropic, 스타트업에 Claude Team 1년 무료와 1,000달러 크레딧 제공",
+      "one_line": "Anthropic의 스타트업 지원 확대.",
+      "summary_1": "Anthropic이 Claude for Startups 프로그램을 확대했어요. 자격이 되는 기업에 Claude Team 1년 무료(프리미엄 좌석 최대 5개)와 API 크레딧 1,000달러를 줘요.",
+      "summary_2": "Claude Marketplace에서 플러그인을 만들 수 있고, Applied AI 팀과 가상 오피스아워도 예약할 수 있어요. 설립 5년 이내이거나 최근 2년 안에 투자를 받은 기업이 지원할 수 있어요.",
+      "summary_3": "Anthropic은 AI의 혜택이 모델 자체보다 모델 위에서 만드는 기업들을 통해 전달된다고 밝혔어요. 창업자·개발자와의 긴밀한 협력을 핵심으로 삼은 거예요.",
+      "url": "https://techcrunch.com/2026/10/06/anthropic-gives-startups-a-free-year-of-enterprise-service-and-1000-in-token-credits/",
+      "link": "https://techcrunch.com/2026/10/06/anthropic-gives-startups-a-free-year-of-enterprise-service-and-1000-in-token-credits/",
+      "source": "techcrunch.com (web)",
+      "select_reason": "Anthropic이 스타트업에 Claude Team 1년 무료와 크레딧을 주는 프로그램을 내놓은, AI 회사의 실제 유통·그로스 정책이에요.",
+      "headline": "Anthropic이 스타트업에 Claude Team을 1년 무료로 준다",
+      "so_what": "설립 5년 이내 팀이라면 좌석 5개와 API 크레딧으로 AI 프로토타입 비용을 크게 줄일 수 있어요. 지금 자격부터 확인해 보세요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "과기정통부, 정부 구축 AI 학습데이터 공유 의무화 추진",
+      "one_line": "AI 학습데이터 공유 의무화 개정안.",
+      "summary_1": "AI기본법과 데이터산업법 개정안이 국무회의를 통과했어요. 정부사업으로 구축한 AI 학습용데이터를 AI허브에 연계·제공하도록 의무화해, 대학과 중소기업이 쓰기 어려운 데이터를 공유하게 해요.",
+      "summary_2": "영업비밀, 개인정보·저작권 침해, 국가안보 등 사유가 있으면 제공을 거부할 수 있어요. 구체적 기준과 절차는 시행령에서 정해요. AI허브는 2025년 말 기준 학습용데이터 945종을 개방했어요.",
+      "summary_3": "데이터산업법 개정안은 공공·민간 데이터 소재 정보를 모으는 '원-윈도우' 연계를 넓혀요. 현재 88개 플랫폼이 연계돼 있어요. 두 법은 공포 6개월 뒤인 2027년 4월 시행될 예정이에요.",
+      "url": "https://byline.network/2026/10/1013-14/",
+      "link": "https://byline.network/2026/10/1013-14/",
+      "source": "byline.network",
+      "select_reason": "과기정통부가 정부 사업으로 구축한 AI 학습데이터의 공유를 의무화하려는, 국내 AI 업계에 직접 영향을 주는 규제 움직임이에요.",
+      "headline": "과기정통부가 정부 예산으로 만든 AI 학습데이터 공유를 의무화한다",
+      "so_what": "작은 팀도 그동안 구하기 어려웠던 국내 학습데이터를 쓸 수 있게 돼요. 2027년 4월 시행 전에 AI허브 945종부터 살펴보면 좋아요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "메타, 에이전트용 프런티어 모델 '뮤즈 원더'와 '뮤즈 원더 풀' 공개",
+      "one_line": "메타의 에이전트용 신규 모델.",
+      "summary_1": "메타가 가장 뛰어난 모델이라며 Muse Wonder와 Muse Wonder Full을 공개했어요. 개인·업무용 에이전트 작업에서 최고 수준 성능을 내도록 만들었고, 보험 청구나 임대차 계약 이해, 앱 제작 같은 일을 예로 들었어요.",
+      "summary_2": "새 모델에는 대화 간에 중요한 내용을 이어 가는 Active Memory가 있어요. 작업이 어려워져도 다른 방법을 시도하고 오류에서 회복하는 Active Focus도 갖췄어요. 필요하면 되묻고 중요한 일은 먼저 확인해요.",
+      "summary_3": "Muse Wonder는 Meta Model API와 Muse Code로, Muse Wonder Full은 Muse Code 구독자에게 오늘부터 제공돼요. Muse Wonder는 곧 Muse 서비스에도 적용되며 구독자부터 시작해요.",
+      "url": "https://about.fb.com/news/2026/10/introducing-muse-wonder-models/",
+      "link": "https://about.fb.com/news/2026/10/introducing-muse-wonder-models/",
+      "source": "about.fb.com",
+      "select_reason": "메타가 에이전트용 프런티어 모델 Muse Wonder를 공식 발표했으며, Muse 앱을 다룬 기존 기사와 달리 모델 차원의 소식이에요.",
+      "headline": "메타가 되묻고 먼저 확인하는 에이전트 모델 뮤즈 원더를 냈다",
+      "so_what": "기억을 이어 가고 실패해도 다시 시도하는 에이전트가 기본값이 되고 있어요. 확인·되묻기 순간을 어떻게 디자인할지 고민할 때예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}

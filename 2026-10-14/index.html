@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)"><title>2026. 10. 14 수요일 Trend Article Digest</title><style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
+  --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
+  --img-bg:#fff; --cta-bg:#191919; --cta-text:#fff; --gnb-bg:rgba(255,255,255,0.85); --label-bg:#f5f5f5; --label-text:#999; --label-border:transparent;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --line:#2a2a2a; --text:#e8e8e8; --text2:#ccc; --text3:#aaa; --text4:#888; --text5:#777;
+    --surface:#1a1a1a; --page:#111; --link-bg:rgba(60,140,240,0.12); --link-border:rgba(60,140,240,0.15); --link-text:#6ab0ff;
+    --img-bg:#1a1a1a; --cta-bg:#e8e8e8; --cta-text:#111; --gnb-bg:rgba(26,26,26,0.85); --label-bg:#2a2a2a; --label-text:#777; --label-border:transparent;
+  }
+}
+html,body { width:100%; background:var(--surface); }
+body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:var(--text); }
+.page { width:100%; background:#fff; }
+.card { width:100%; max-width:100%; background:var(--surface); border-radius:8px; }
+.header { padding:28px 20px 24px; border-bottom:1px solid var(--line); }
+.header h1 { font-size:clamp(24px,3vw,30px); font-weight:600; line-height:1.2; letter-spacing:-0.02em; }
+.header-meta { margin-top:14px; font-size:16px; color:var(--text4); font-weight:500; line-height:1.6; }
+.article-wrap { padding:0 20px 0; }
+.article-item { padding:24px 0 28px; border-bottom:1px solid var(--line); }
+.article-item:last-of-type { border-bottom:0; padding-bottom:20px; }
+.article-label { display:inline-block; margin-bottom:14px; padding:7px 10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }
+.article-title { font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }
+.article-summary { font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }
+.image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--img-bg); }
+.article-image { width:100%; height:auto; display:block; background:var(--img-bg); border:0; border-radius:8px; object-fit:contain; object-position:center center; }
+.no-thumb { width:100%; aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; background:var(--page); color:var(--text5); font-size:14px; }
+.summary-label, .link-label { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text5); margin-bottom:10px; }
+.bullet-list { list-style:none; display:grid; gap:10px; margin-bottom:18px; }
+.bullet-item { font-size:clamp(14px,1.8vw,16px); line-height:1.72; color:var(--text2); padding-left:16px; position:relative; word-break:keep-all; }
+.bullet-item::before { content:'·'; position:absolute; left:0; top:0; color:var(--text4); font-weight:700; }
+.link-box { display:block; padding:14px 16px; border:1px solid var(--link-border); border-radius:8px; background:var(--link-bg); }
+.article-link { display:block; font-size:14px; line-height:1.75; color:var(--link-text); text-decoration:none; word-break:break-all; }
+.article-link:hover { text-decoration:underline; }
+@media (max-width:767px) { .article-summary,.bullet-item{font-size:17px;} }
+@media (min-width:768px) {
+  html,body{background:var(--page);} .page{background:var(--page);padding:28px;}
+  .card{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}
+  .header{padding:40px 32px 32px;} .article-wrap{padding:0 32px 0;} .article-item{padding:28px 0 32px;}
+  .article-item:last-of-type{padding-bottom:40px;}
+}
+@media (min-width:1200px) {
+  .page{padding:36px;}
+  .card{max-width:1320px;}
+  .header{padding:48px 40px 36px;}
+  .article-wrap{
+    padding:0 40px 40px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap: 40px;
+  }
+  .article-item{ padding:28px 0 32px; }
+  /* 데스크탑에서 인트로가 카드 전체 폭으로 늘어나 한 줄이 지나치게 길어지는 것 방지.
+     텍스트(.digest-summary)에만 폭을 제한해 행 길이를 읽기 좋게 줄인다.
+     컨테이너(.digest-intro)와 하단 디바이더(border-bottom)는 전체 폭을 유지해
+     아래 기사 행과 정렬되게 한다. */
+  .digest-summary{ max-width:900px; }
+}
+@media (min-width: 1200px) {
+  .image-frame { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 8px; background: var(--img-bg); }
+  .image-frame .article-image { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center center; }
+}
+@media (max-width: 1199px) {
+  .image-frame { aspect-ratio: auto; }
+  .image-frame .article-image { width: 100%; height: auto; display: block; object-fit: contain; object-position: center center; }
+}
+@media (min-width: 1200px) {
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+@media (min-width: 1600px) {
+  .card { max-width: 1800px; }
+  .article-wrap { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+  .article-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--line) !important; padding-bottom: 32px !important; margin-bottom: 0 !important; }
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+.link-box a, .link-url, .article-link, .url-text {
+  display: block !important; width: 100% !important; min-width: 0 !important;
+  overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
+}
+.agit-cta { margin: 0 20px; border-top: 1px solid var(--line); padding: 20px 0 28px; text-align: center; }
+.agit-cta-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: var(--cta-bg); color: var(--cta-text) !important; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+.agit-cta-btn:hover { opacity: 0.8; }
+@media (min-width: 768px) { .agit-cta { margin: 0 40px; padding: 40px 0 32px; } .agit-cta-btn { display: inline-flex; width: auto; padding: 0 24px; } }
+@media (min-width: 1200px) { .agit-cta { padding: 40px 0 36px; } }
+/*GNB-CSS-START*/html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}body{padding-top:var(--gnb-h,55px);}:root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}.gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:55px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}.gnb-inner{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}.gnb-brand{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}.gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}.gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}.gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}.gnb-toc-btn:active{opacity:0.75;}.gnb-toc-label{font-weight:500;font-size:13px;}.gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}.gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}body.toc-open{overflow:hidden;}.toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}.toc-panel.open{visibility:visible;pointer-events:auto;}.toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}.toc-panel.open .toc-overlay{opacity:1;}.toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}.toc-panel.open .toc-drawer{transform:translateY(0);}.toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}.toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}.toc-close{background:transparent;border:0;font-size:28px;cursor:pointer;color:var(--text2);padding:0 6px;line-height:1;font-family:inherit;}.toc-close:hover{color:var(--text);}.toc-list{list-style:none;padding:4px 12px 32px;margin:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}.toc-list li{margin:0;}.toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}.toc-panel.open .toc-item{opacity:1;transform:translateY(0);}.toc-item:hover{background:var(--page);}.toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}.toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}.toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}.article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}.link-box{padding:8px 12px;}.agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}.back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}}.back-to-top:active,.agit-cta-btn:active{opacity:0.75;}.back-to-top:focus,.agit-cta-btn:focus{outline:none;}.back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}@media (min-width:768px){html,body{background:var(--surface);}.card{border:0;border-radius:0;}}@media (min-width:768px){.gnb-inner{padding:14px 32px;}.toc-drawer{left:auto;width:420px;max-width:92vw;transform:translateX(100%);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,0.12);}.toc-panel.open .toc-drawer{transform:translateX(0);}.toc-item{transform:translateX(30px);}.toc-panel.open .toc-item{transform:translateX(0);}.toc-header{padding:22px 24px 16px;}.toc-title{font-size:20px;}.toc-list{padding:4px 16px 40px;}.agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}.back-to-top,.agit-cta-btn{height:48px;font-size:14px;}}.digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}.digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}.digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}.pc-fabs{display:none;}@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}.pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}.pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}.pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}.pc-fab svg{flex-shrink:0;display:block;}.pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}.pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}.digest-intro{grid-column:1 / -1;padding:36px 0 40px;}.article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}.article-item > *{min-width:0;}}@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}.article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}:root{--gnb-flash-bg:rgba(0,0,0,0.08);}@media (prefers-color-scheme:dark){:root{--gnb-flash-bg:rgba(255,255,255,0.08);}}@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}@media (min-width:1200px){.article-item{position:relative;isolation:isolate;}.article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}}/*GNB-CSS-END*/</style></head><body><!--GNB-HTML-START--><nav class="gnb"><div class="gnb-inner"><a href="#top" class="gnb-brand" data-gnb-top><span class="gnb-brand-name">트렌드림</span><span class="gnb-date"></span></a><button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel"><span class="gnb-toc-label">목차</span><span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span></button></div><div class="gnb-progress-fill"></div></nav><aside id="toc-panel" class="toc-panel" aria-hidden="true"><div class="toc-overlay"></div><div class="toc-drawer"><div class="toc-header"><span class="toc-title">목차</span><button type="button" class="toc-close" aria-label="목차 닫기">×</button></div><ol class="toc-list"></ol></div></aside><!--GNB-HTML-END--><div class="card"><main class="article-wrap article-list">
+<section class="digest-intro" data-static-intro><div class="digest-meta"><span>8개 기사</span><span>·</span><span>약 4분 읽기</span></div><p class="digest-summary">구글과 27억 달러 라이선스 계약까지 맺었던 Character.AI가 연이은 소송을 못 버티고 파산보호를 신청했어요. 같은 시장에서 후발주자 위프는 BL 한 장르만 파고들어 출시 1년 2개월 만에 월 매출 56억 원을 냈어요. 덩치를 키우는 것보다 한 취향의 몰입을 깨지 않는 디테일이 AI 서비스의 생존을 가른다는 신호예요.</p></section>
+<script id="agit-digest-data" type="application/json">{"intro": "구글과 27억 달러 라이선스 계약까지 맺었던 Character.AI가 연이은 소송을 못 버티고 파산보호를 신청했어요. 같은 시장에서 후발주자 위프는 BL 한 장르만 파고들어 출시 1년 2개월 만에 월 매출 56억 원을 냈어요. 덩치를 키우는 것보다 한 취향의 몰입을 깨지 않는 디테일이 AI 서비스의 생존을 가른다는 신호예요.", "articles": [{"num": 1, "title": "출시 5년 만에 Character.AI, 파산보호 신청", "headline": "Character.AI가 출시 5년 만에 파산보호를 신청했다", "so_what": "디즈니가 2천만 달러에 기술 라이선스를 가져가요. 사용자 커뮤니티보다 모델 기술이 먼저 값이 매겨진 셈이에요.", "link": "https://techcrunch.com/2026/10/13/just-5-years-in-interactive-chatbot-platform-character-ai-files-for-bankruptcy/", "thumb": "thumb-1.webp"}, {"num": 2, "title": "\"생수 떨어졌네\" 대화 읽고 주문까지, 카톡에 AI 비서 '카나나 스페이스' 탑재", "headline": "카카오가 카톡 대화를 읽고 생수를 주문하는 AI 비서를 공개했다", "so_what": "대화 맥락을 읽고 결제까지 이어가는 구조예요. 메신저가 여러 앱 대신 할 일을 처리하는 창구가 되려는 흐름이에요.", "link": "https://www.fnnews.com/news/202610131825544005", "thumb": "thumb-2.webp"}, {"num": 3, "title": "애플 홈뷰 공개, 엔터테인먼트와 스마트홈을 한 화면에", "headline": "애플이 얼굴을 알아보는 7인치 스마트홈 화면 홈뷰를 내놨다", "so_what": "얼굴을 인식해 한 화면을 가족 각자에게 다르게 보여줘요. 여럿이 함께 쓰는 기기의 개인화 설계에 참고할 만해요.", "link": "https://www.apple.com/newsroom/2026/10/meet-apple-homeview-a-new-way-to-enjoy-entertainment-and-manage-the-home/", "thumb": "thumb-3.webp"}, {"num": 4, "title": "당근, 동네를 넘어 전국으로: 지역 기반 서비스 확장 시험대", "headline": "당근이 택배 거래 바로구매를 전국으로 넓혔다", "so_what": "동네 매물은 홈에, 전국 상품은 검색에 배치했어요. 서비스 정체성을 지키면서 범위를 넓히는 정보 구조 사례예요.", "link": "https://newsway.co.kr/news/view?ud=2026101216401212029", "thumb": "thumb-4.webp"}, {"num": 5, "title": "화장품도 배달앱으로, 배민 '오프뷰티' 입점으로 뷰티 영토 확장", "headline": "배민이 화장품 4,000여 종을 즉시 배송하기 시작했다", "so_what": "배달앱이 배송 속도를 무기로 뷰티 유통에 들어왔어요. 이미 쌓인 앱 사용 습관이 카테고리 확장에서 강점이 돼요.", "link": "https://cosinkorea.com/news/article.html?no=58481", "thumb": "thumb-5.webp"}, {"num": 6, "title": "캐릭터챗 후발주자 위프는 어떻게 마니아 시장을 파고들었나", "headline": "캐릭터챗 위프가 BL 하나로 월 매출 56억 원을 냈다", "so_what": "AI가 사용자 페르소나의 성별을 틀리는 작은 어긋남에서 출발했어요. 사용자 불만 하나가 제품 방향이 된 사례예요.", "link": "https://byline.network/2026/10/83492804328940/", "thumb": "thumb-6.webp"}, {"num": 7, "title": "네이버 웨일, 'AI 챗' 정식 출시로 AI 브라우저 영역 확대", "headline": "네이버 웨일이 보던 탭을 읽고 일정까지 등록하는 AI 챗을 출시했다", "so_what": "보던 페이지를 복사 없이 바로 묻고, 일정 등록 전엔 확인을 거쳐요. 에이전트를 믿고 쓰게 하는 확인 단계 설계예요.", "link": "https://www.newspim.com/news/view/20261001000753", "thumb": "thumb-7.webp"}, {"num": 8, "title": "제미나이 '태스크' 개편, 스파크를 메인 채팅 앱에 통합", "headline": "구글이 제미나이 앱에서 스파크 메뉴를 없애고 태스크 버튼으로 바꿨다", "so_what": "에이전트를 별도 브랜드 대신 채팅 옆 '태스크' 버튼으로 녹였어요. 기능 이름보다 사용자가 할 일을 앞세운 결정이에요.", "link": "https://9to5google.com/2026/10/12/gemini-spark-task-redesign/", "thumb": "thumb-8.webp"}]}</script>
+<article id="article-1" class="article-item">
+<div class="article-label">ARTICLE 01</div>
+<h2 class="article-title">출시 5년 만에 Character.AI, 파산보호 신청</h2>
+<p class="article-summary">Character.AI의 파산보호 신청.</p>
+<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">AI 캐릭터와 대화하는 플랫폼 Character.AI가 연이은 소송과 서비스 확장의 어려움 끝에 챕터 11 파산보호를 신청했어요. 자산과 부채는 각각 5천만~1억 달러 규모라고 밝혔어요.</li>
+<li class="bullet-item">일부 자산은 디즈니에 2천만 달러에 매각하고 기술의 비독점 영구 라이선스도 넘기기로 했어요. 아직 입찰자는 없고, 적절한 제안이 없으면 플랫폼은 종료될 수 있다고 CEO가 밝혔어요.</li>
+<li class="bullet-item">2022년 9월 1억 5천만 달러 투자로 유니콘이 됐고, 2024년 8월에는 구글이 27억 달러에 모델 라이선스 계약을 맺었어요. 인기 있던 서비스도 법적·운영 부담을 견디지 못한 사례예요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://techcrunch.com/2026/10/13/just-5-years-in-interactive-chatbot-platform-character-ai-files-for-bankruptcy/" target="_blank">https://techcrunch.com/2026/10/13/just-5-years-in-interactive-chatbot-platform-character-ai-files-for-bankruptcy/</a></div>
+</article>
+<article id="article-2" class="article-item">
+<div class="article-label">ARTICLE 02</div>
+<h2 class="article-title">"생수 떨어졌네" 대화 읽고 주문까지, 카톡에 AI 비서 '카나나 스페이스' 탑재</h2>
+<p class="article-summary">카톡 안으로 들어온 AI 비서.</p>
+<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">카카오가 if(kakao)26에서 카카오톡 화면을 두 손가락으로 쓸면 라이언이 나타나는 AI 비서 '카나나 스페이스'를 공개했어요. 메시지 전송, 일정, 웹 검색, 설정 변경을 처리해요.</li>
+<li class="bullet-item">앞으로 주문·선물·예약·송금까지 넓힐 계획이에요. 생수가 떨어졌다는 대화를 읽고 과거 주문 중 가장 저렴한 제품을 골라 결제까지 하는 식이에요. 12월부터 사전 신청자 대상 CBT를 해요.</li>
+<li class="bullet-item">PC용 '칸바스'에서는 이용자가 직접 에이전트를 만들고 공유할 수 있어요. 카카오 디자인 리더는 새로운 사용법을 배우지 않아도 되는 경험, 해야 할 일 중심의 화면을 지향한다고 밝혔어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.fnnews.com/news/202610131825544005" target="_blank">https://www.fnnews.com/news/202610131825544005</a></div>
+</article>
+<article id="article-3" class="article-item">
+<div class="article-label">ARTICLE 03</div>
+<h2 class="article-title">애플 홈뷰 공개, 엔터테인먼트와 스마트홈을 한 화면에</h2>
+<p class="article-summary">애플의 7인치 스마트홈 디스플레이.</p>
+<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">애플이 7인치 Liquid Retina 디스플레이를 단 '홈뷰'를 공개했어요. 음악 재생, FaceTime 통화, 홈 모니터링, 음성 자동화를 한곳에서 쓸 수 있어요. 사전 주문은 오늘부터, 출시는 11월 13일이에요.</li>
+<li class="bullet-item">홈뷰는 얼굴을 인식해 사용자별로 메시지, 캘린더, 미리 알림 같은 개인 콘텐츠를 보여줘요. 가족이 함께 쓰는 화면이면서 각자에게 개인화된 경험을 주는 게 핵심이에요.</li>
+<li class="bullet-item">더 똑똑해진 Siri AI가 기반이고, Apple Intelligence 기기와 짝지으면 캘린더·메시지 같은 개인 맥락도 활용해요. 탁상에 두거나 벽에 걸 수 있고, 프라이버시와 보안을 앞세웠어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.apple.com/newsroom/2026/10/meet-apple-homeview-a-new-way-to-enjoy-entertainment-and-manage-the-home/" target="_blank">https://www.apple.com/newsroom/2026/10/meet-apple-homeview-a-new-way-to-enjoy-entertainment-and-manage-the-home/</a></div>
+</article>
+<article id="article-4" class="article-item">
+<div class="article-label">ARTICLE 04</div>
+<h2 class="article-title">당근, 동네를 넘어 전국으로: 지역 기반 서비스 확장 시험대</h2>
+<p class="article-summary">동네 정체성과 전국 확장 사이.</p>
+<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">당근이 택배 거래 '바로구매'를 전국으로 넓혔어요. 지난 10일 첫 '당근절'에서는 배송비 0원 혜택이 9시간 만에 조기 종료됐고, 중고거래 건수는 행사 전 토요일보다 141% 늘었어요.</li>
+<li class="bullet-item">UI는 동네 매물을 홈 화면에 먼저 보이고 전국 바로구매 상품은 검색으로 찾게 설계했어요. 지역 커뮤니티라는 정체성을 지키면서 거래 범위를 넓히려는 방식이에요.</li>
+<li class="bullet-item">바로구매는 구매자에게 안심결제 수수료 3.3%를 받아요. 지금은 오픈 한정 2.2%를 적용하고, 판매자는 부담하지 않아요. 택배 거래가 늘수록 결제 수익화 기반도 넓어질 수 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://newsway.co.kr/news/view?ud=2026101216401212029" target="_blank">https://newsway.co.kr/news/view?ud=2026101216401212029</a></div>
+</article>
+<article id="article-5" class="article-item">
+<div class="article-label">ARTICLE 05</div>
+<h2 class="article-title">화장품도 배달앱으로, 배민 '오프뷰티' 입점으로 뷰티 영토 확장</h2>
+<p class="article-summary">배민의 뷰티 퀵커머스 확대.</p>
+<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">배민이 지난 8일 할인형 뷰티 아웃렛 '오프뷰티'를 '장보기·쇼핑'에 입점시켰어요. 서울, 부산 등 직영점 30곳에서 화장품 4,000여 종을 즉시 배송해요.</li>
+<li class="bullet-item">쿠팡이츠도 시코르 등을 입점시키며 비식품군을 넓히고 있어요. 올리브영은 '오늘드림'으로 맞서고 있고, 올해 상반기 배송 건수는 1,166만 건으로 전체의 48.7%를 차지했어요.</li>
+<li class="bullet-item">음식 배달 플랫폼이 생활 상품 전반으로 넓어지면서, 화장품 유통에서는 원하는 상품을 얼마나 빨리 전달하느냐가 차별점으로 떠오르고 있어요. 배민은 기존 앱 이용자 기반을 강점으로 봐요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://cosinkorea.com/news/article.html?no=58481" target="_blank">https://cosinkorea.com/news/article.html?no=58481</a></div>
+</article>
+<article id="article-6" class="article-item">
+<div class="article-label">ARTICLE 06</div>
+<h2 class="article-title">캐릭터챗 후발주자 위프는 어떻게 마니아 시장을 파고들었나</h2>
+<p class="article-summary">BL로 승부한 캐릭터챗 위프.</p>
+<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">캐릭터챗 후발주자 위프가 출시 1년 2개월 만에 9월 기준 월 매출 56억 원을 기록했어요. 제타, 크랙이 이끄는 시장에서 BL이라는 마이너 장르에 집중한 게 비결이에요.</li>
+<li class="bullet-item">CPO는 남성 페르소나인데도 AI가 '그녀'라 부르는 등 몰입이 깨지는 경험에서 출발했어요. 이성애 로맨스 중심 학습 탓이라고 보고, BL 클리셰와 세분화된 취향 태그를 서비스에 반영했어요.</li>
+<li class="bullet-item">BL은 마니아층이 두텁고 지출이 큰 편이에요. 결제 이용자의 하루 평균 체류 시간은 3시간 37분이에요. 지금은 여성향 전반으로 콘텐츠를 넓히고 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://byline.network/2026/10/83492804328940/" target="_blank">https://byline.network/2026/10/83492804328940/</a></div>
+</article>
+<article id="article-7" class="article-item">
+<div class="article-label">ARTICLE 07</div>
+<h2 class="article-title">네이버 웨일, 'AI 챗' 정식 출시로 AI 브라우저 영역 확대</h2>
+<p class="article-summary">웨일 브라우저의 AI 챗 정식 출시.</p>
+<div class="image-frame"><img class="article-image" src="thumb-7.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">네이버가 웨일 브라우저에 'AI 챗'을 정식 출시했어요. 보고 있는 웹페이지나 지정한 탭을 바탕으로 질문, 요약, 번역을 요청할 수 있고, 주소나 본문을 복사하지 않아도 사이드바에서 바로 물어요.</li>
+<li class="bullet-item">답변은 '스크랩북'에 저장할 수 있어요. 기존 퀵서치와도 연계돼서 문장을 드래그한 뒤 AI 챗을 선택하면 그 내용으로 바로 대화를 시작해요.</li>
+<li class="bullet-item">정보 탐색을 넘어 작업 실행도 지원해요. 열린 탭을 정리하고 네이버 캘린더에서 일정을 조회·등록·수정해요. 일정 등록 같은 일부 작업은 실행 전에 이용자 확인 단계를 거쳐요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.newspim.com/news/view/20261001000753" target="_blank">https://www.newspim.com/news/view/20261001000753</a></div>
+</article>
+<article id="article-8" class="article-item">
+<div class="article-label">ARTICLE 08</div>
+<h2 class="article-title">제미나이 '태스크' 개편, 스파크를 메인 채팅 앱에 통합</h2>
+<p class="article-summary">제미나이 채팅과 스파크의 통합.</p>
+<div class="image-frame"><img class="article-image" src="thumb-8.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">구글이 제미나이 앱 프롬프트 입력창 위에 '채팅'과 '태스크' 버튼을 추가했어요. '태스크'가 개인 에이전트 제미나이 스파크로, 어디서든 새 작업을 시작하고 대화 안에서 추적할 수 있어요.</li>
+<li class="bullet-item">내비게이션 서랍에서 '스파크'가 사라지고 '예약됨' 페이지가 생겼어요. 진행 중·일시중지·완료·추천 순으로 정리되고, 대화 기록도 채팅과 작업을 합친 하나의 목록이 됐어요. 필터로 상태별 정렬도 가능해요.</li>
+<li class="bullet-item">설정 메뉴 이름이 '태스크 설정'으로 바뀌는 등 스파크 브랜드는 덜 강조돼요. 안드로이드에 서버 측 업데이트로 배포 중이고, 스파크는 AI Pro 또는 Ultra 구독이 필요해요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://9to5google.com/2026/10/12/gemini-spark-task-redesign/" target="_blank">https://9to5google.com/2026/10/12/gemini-spark-task-redesign/</a></div>
+</article>
+
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트</a></div></div><!--GNB-JS-START--><script>(function(){
+// Naver-style trick: set theme-color content to empty so iOS Safari renders
+// status bar transparent over page content (instead of solid theme-color tint).
+var tcs=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<tcs.length;i++)tcs[i].setAttribute('content','');
+if(!tcs.length){
+var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content','');document.head.appendChild(m);
+}
+var arts=document.querySelectorAll('.article-item');
+if(!arts.length)return;
+// PC FAB: 우하단 floating "맨위로" + "아지트로 →" (1200+ only, scroll-to-show)
+if(!document.querySelector('.pc-fabs')){
+var agitBtn=document.querySelector('.agit-cta-btn');
+var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
+var fabs=document.createElement('div');
+fabs.className='pc-fabs';
+fabs.setAttribute('aria-hidden','true');
+var upSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1V15M13 6L8 1L3 6"/></svg>';
+var returnSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 5L6 8"/><path d="M3 5H10C10.7956 5 11.5587 5.31607 12.1213 5.87868C12.6839 6.44129 13 7.20435 13 8V14"/></svg>';
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top>'+upSvg+'<span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'">'+returnSvg+'<span>아지트로</span></a>';
+document.body.appendChild(fabs);
+var pcTop=fabs.querySelector('[data-pc-top]');
+if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
+function checkPcScroll(){if(window.scrollY>200){fabs.classList.add('visible');}else{fabs.classList.remove('visible');}}
+window.addEventListener('scroll',checkPcScroll,{passive:true});
+checkPcScroll();
+}
+// Insert digest intro at top of article-wrap (count + reading time)
+var artWrap=document.querySelector('.article-wrap');
+if(artWrap&&!document.querySelector('.digest-intro')){
+var totalChars=0;
+for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
+var readMins=Math.max(1,Math.round(totalChars/700));
+var titles=[];
+for(var ti=0;ti<Math.min(arts.length,3);ti++){var tt=arts[ti].querySelector('.article-title');if(tt)titles.push(tt.textContent.trim());}
+var summaryText=titles.length>0?titles.join(', ')+' 등 '+arts.length+'개의 이야기를 담았어요.':'오늘의 '+arts.length+'개 기사를 확인해보세요.';
+var intro=document.createElement('section');
+intro.className='digest-intro';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">'+summaryText+'</p>';
+artWrap.insertBefore(intro,artWrap.firstElementChild);
+}
+var gnb=document.querySelector('.gnb');
+var tocList=document.querySelector('.toc-list');
+var tocBtn=document.querySelector('.gnb-toc-btn');
+var tocPanel=document.getElementById('toc-panel');
+var tocClose=document.querySelector('.toc-close');
+var tocOverlay=document.querySelector('.toc-overlay');
+var curEl=document.querySelector('.gnb-toc-progress .cur');
+var totEl=document.querySelector('.gnb-toc-progress .tot');
+var brand=document.querySelector('[data-gnb-top]');
+var dateEl=document.querySelector('.gnb-date');
+var DAYS=['일','월','화','수','목','금','토'];
+var pm=location.pathname.match(/(\d{4})-(\d{2})-(\d{2})/);
+if(pm&&dateEl){
+var y=parseInt(pm[1],10),mo=parseInt(pm[2],10),d=parseInt(pm[3],10);
+var dow=DAYS[new Date(y,mo-1,d).getDay()];
+dateEl.textContent=(y%100)+'.'+mo+'.'+d+' ('+dow+')';
+}
+function updateGnbH(){var g=document.querySelector('.gnb');if(g){document.documentElement.style.setProperty('--gnb-h',g.offsetHeight+'px');}}
+updateGnbH();
+window.addEventListener('resize',updateGnbH);
+var progressFill=document.querySelector('.gnb-progress-fill');
+function updateProgress(){
+if(!progressFill)return;
+var d=document.documentElement;
+var total=d.scrollHeight-window.innerHeight;
+var cur=window.scrollY||d.scrollTop;
+var pct=total>0?Math.min(100,(cur/total)*100):0;
+progressFill.style.width=pct+'%';
+}
+updateProgress();
+window.addEventListener('scroll',updateProgress,{passive:true});
+window.addEventListener('resize',updateProgress);
+arts.forEach(function(art,i){
+art.id='article-'+(i+1);
+var num='#'+(i+1);
+var lbl=art.querySelector('.article-label');
+if(lbl)lbl.textContent=num;
+var t=art.querySelector('.article-title');
+var title=t?t.textContent.trim():'Article '+(i+1);
+var li=document.createElement('li');
+var a=document.createElement('a');
+a.href='#article-'+(i+1);a.className='toc-item';
+var ns=document.createElement('span');ns.className='toc-num';ns.textContent=num;
+var ts=document.createElement('span');ts.className='toc-text';ts.textContent=title;
+a.appendChild(ns);a.appendChild(ts);li.appendChild(a);tocList.appendChild(li);
+// 제목/썸네일/요약 영역도 원문 링크로 이동
+var lk=art.querySelector('.article-link');
+var url=lk?lk.getAttribute('href'):'';
+if(url){
+var targets=['.article-title','.article-summary','.image-frame','.bullet-list'];
+for(var ti2=0;ti2<targets.length;ti2++){
+var el=art.querySelector(targets[ti2]);
+if(!el)continue;
+el.classList.add('clickable-link');
+el.addEventListener('click',function(u){return function(e){
+if(window.getSelection&&window.getSelection().toString().length>0)return;
+window.open(u,'_blank','noopener');
+};}(url));
+}
+}
+});
+totEl.textContent=arts.length;
+// 외부 hash 진입 / 페이지 내 목차 클릭 모두에서 타깃 카드 flash
+function flashTarget(){if(!location.hash)return;var t=document.querySelector(location.hash);if(!t||!t.classList||!t.classList.contains('article-item'))return;t.classList.remove('flash-target');void t.offsetWidth;t.classList.add('flash-target');}
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();flashTarget();},0);}
+window.addEventListener('hashchange',function(){setTimeout(flashTarget,50);});
+var items=document.querySelectorAll('.toc-item');
+function setOpen(o){
+if(o){
+items.forEach(function(it,i){var d=(0.06+i*0.045)+'s';it.style.transitionDelay=d+','+d+',0s,0s';});
+}else{
+items.forEach(function(it){it.style.transitionDelay='0s';});
+}
+tocPanel.classList.toggle('open',o);
+tocPanel.setAttribute('aria-hidden',!o);
+tocBtn.setAttribute('aria-expanded',o);
+document.body.classList.toggle('toc-open',o);
+}
+tocBtn.addEventListener('click',function(){setOpen(!tocPanel.classList.contains('open'));tocBtn.blur();});
+if(tocClose)tocClose.addEventListener('click',function(){setOpen(false);});
+if(tocOverlay)tocOverlay.addEventListener('click',function(){setOpen(false);});
+tocPanel.addEventListener('click',function(e){if(e.target.closest('a.toc-item'))setOpen(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&tocPanel.classList.contains('open'))setOpen(false);});
+if(brand){brand.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});brand.blur();});}
+function setActive(idx){
+curEl.textContent=idx+1;
+items.forEach(function(it,i){it.classList.toggle('active',i===idx);});
+}
+if('IntersectionObserver' in window){
+var io=new IntersectionObserver(function(entries){
+var vis=entries.filter(function(e){return e.isIntersecting;});
+if(vis.length){
+vis.sort(function(a,b){return a.target.getBoundingClientRect().top-b.target.getBoundingClientRect().top;});
+var idx=Array.prototype.indexOf.call(arts,vis[0].target);
+setActive(idx);
+}
+},{rootMargin:'-30% 0px -55% 0px',threshold:0});
+arts.forEach(function(a){io.observe(a);});
+}
+var cta=document.querySelector('.agit-cta');
+if(cta){
+var bt=document.createElement('button');
+bt.type='button';
+bt.className='back-to-top';
+bt.textContent='맨 위로';
+bt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});bt.blur();});
+cta.insertBefore(bt,cta.firstChild);
+var agitBtn=cta.querySelector('.agit-cta-btn');
+if(agitBtn)agitBtn.addEventListener('click',function(){agitBtn.blur();});
+}
+})();</script><!--GNB-JS-END--></body></html>
