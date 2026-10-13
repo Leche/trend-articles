@@ -2133,12 +2133,32 @@ function normalizeThumb(dataUrl) {
     const img = new Image();
     img.onload = () => {
       try {
-        let sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
-        if (sw / sh > THUMB_RATIO) { const nw = Math.round(sh * THUMB_RATIO); sx = Math.floor((sw - nw) / 2); sw = nw; }
-        else if (sw / sh < THUMB_RATIO) { const nh = Math.round(sw / THUMB_RATIO); sy = Math.floor((sh - nh) / 2); sh = nh; }
-        const w = Math.min(sw, THUMB_MAX_WIDTH), h = Math.round(w / THUMB_RATIO);
-        const c = document.createElement('canvas'); c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+        // curate.py _fit_thumb 과 같은 규칙: 잘라낼 양이 25% 이하면 센터 크롭, 넘으면 통째로 여백(테두리 평균색) 위에.
+        // 3.6:1 로고 띠를 크롭해 글자만 남은 사고(2026-10-14) 방지. 레터박스는 확대하지 않는다.
+        const W0 = img.naturalWidth, H0 = img.naturalHeight, r = W0 / H0;
+        const cut = 1 - (r > THUMB_RATIO ? THUMB_RATIO / r : r / THUMB_RATIO);
+        let c;
+        if (cut <= 0.25) {
+          let sw = W0, sh = H0, sx = 0, sy = 0;
+          if (r > THUMB_RATIO) { const nw = Math.round(sh * THUMB_RATIO); sx = Math.floor((sw - nw) / 2); sw = nw; }
+          else if (r < THUMB_RATIO) { const nh = Math.round(sw / THUMB_RATIO); sy = Math.floor((sh - nh) / 2); sh = nh; }
+          const w = Math.min(sw, THUMB_MAX_WIDTH), h = Math.round(w / THUMB_RATIO);
+          c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+        } else {
+          const cw = Math.min(Math.max(W0, Math.round(H0 * THUMB_RATIO)), THUMB_MAX_WIDTH), ch = Math.round(cw / THUMB_RATIO);
+          const s = Math.min(cw / W0, ch / H0, 1), nw = Math.round(W0 * s), nh = Math.round(H0 * s);
+          const probe = document.createElement('canvas'); probe.width = W0; probe.height = H0;
+          const pc = probe.getContext('2d'); pc.drawImage(img, 0, 0);
+          const px = [...pc.getImageData(0, 0, W0, 1).data, ...pc.getImageData(0, H0 - 1, W0, 1).data];
+          let R = 0, G = 0, B = 0, N = 0;
+          for (let i = 0; i < px.length; i += 4) { R += px[i]; G += px[i + 1]; B += px[i + 2]; N++; }
+          c = document.createElement('canvas'); c.width = cw; c.height = ch;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = `rgb(${Math.round(R / N)},${Math.round(G / N)},${Math.round(B / N)})`;
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, Math.floor((cw - nw) / 2), Math.floor((ch - nh) / 2), nw, nh);
+        }
         let out = c.toDataURL('image/webp', 0.85);
         if (!/^data:image\/webp/i.test(out)) out = c.toDataURL('image/jpeg', 0.85);  // Safari 구버전 폴백
         resolve(out);

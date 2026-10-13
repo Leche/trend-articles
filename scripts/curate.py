@@ -654,6 +654,45 @@ def _center_crop(img, ratio):
     return img
 
 
+# 크롭이 긴 쪽을 이만큼 넘게 잘라내면 크롭 대신 레터박스(여백)로 16:10 을 맞춘다 (2026-10-14).
+# 3.6:1 로고 띠(이니스프리 BI 기사)를 16:10 으로 센터 크롭해 "nisfr" 만 남은 사고. 사진형 og 이미지
+# (1.91:1·4:3·16:9)는 25% 안쪽이라 지금처럼 크롭되고, 로고·배너·정사각형처럼 많이 다른 것만 여백을 둔다.
+THUMB_MAX_CROP = 0.25
+
+
+def _edge_color(img):
+    """테두리 픽셀 평균색 — 레터박스 여백색 (로고가 흰 배경이면 흰색)."""
+    from PIL import ImageStat
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    strips = [rgb.crop((0, 0, w, 1)), rgb.crop((0, h - 1, w, h)), rgb.crop((0, 0, 1, h)), rgb.crop((w - 1, 0, w, h))]
+    means = [ImageStat.Stat(st).mean for st in strips]
+    return tuple(int(sum(m[i] for m in means) / len(means)) for i in range(3))
+
+
+def _fit_thumb(img, ratio):
+    """16:10 맞추기. 잘라낼 양이 THUMB_MAX_CROP 이하면 센터 크롭, 넘으면 원본을 통째로 여백 위에 놓는다.
+    레터박스는 확대하지 않는다 — 작은 원본(300px 로고)을 키우면 흐려지기만 한다."""
+    from PIL import Image
+    w, h = img.size
+    r = w / h
+    cut = 1 - (ratio / r if r > ratio else r / ratio)
+    if cut <= THUMB_MAX_CROP:
+        return _center_crop(img, ratio)
+    cw = max(w, round(h * ratio))
+    cw = min(cw, THUMB_MAX_WIDTH) if cw > THUMB_MAX_WIDTH else cw
+    ch = round(cw / ratio)
+    scale = min(cw / w, ch / h, 1.0)
+    nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
+    if scale < 1.0:
+        img = img.resize((nw, nh), Image.LANCZOS)
+    bg = _edge_color(img)
+    canvas = Image.new("RGBA" if img.mode == "RGBA" else "RGB", (cw, ch), bg + ((255,) if img.mode == "RGBA" else ()))
+    canvas.paste(img, ((cw - nw) // 2, (ch - nh) // 2), img if img.mode == "RGBA" else None)
+    print(f"   🖼️  비율 {r:.2f} → 크롭 대신 여백 ({w}x{h} → {cw}x{ch})")
+    return canvas
+
+
 def _normalize_image(img_data, content_type):
     """다운받은 이미지를 썸네일 규격으로 정규화 — WebP, 폭 ≤ THUMB_MAX_WIDTH.
     16:10(THUMB_RATIO) 으로 센터 크롭 — 페이지 카드(object-fit: cover)와 아지트 글이 같은 프레임을 갖게.
@@ -669,7 +708,7 @@ def _normalize_image(img_data, content_type):
         has_alpha = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
         if img.mode not in ("RGB", "RGBA"):
             img = img.convert("RGBA" if has_alpha else "RGB")
-        img = _center_crop(img, THUMB_RATIO)
+        img = _fit_thumb(img, THUMB_RATIO)
         if img.width > THUMB_MAX_WIDTH:
             ratio = THUMB_MAX_WIDTH / img.width
             img = img.resize((THUMB_MAX_WIDTH, max(1, round(img.height * ratio))), Image.LANCZOS)
@@ -878,6 +917,25 @@ def _medium_feed_image(url):
         if key and key in item:
             im = re.search(r'<img[^>]+src="(https?://[^"]+)"', item)
             return im.group(1) if im else None
+    return None
+
+
+def page_published_date(html):
+    """기사 HTML 의 발행일 — article:published_time · datePublished(JSON-LD) · <time datetime> 순. 없으면 None."""
+    if not html:
+        return None
+    pats = [r'property="article:published_time"\s+content="(\d{4}-\d{2}-\d{2})',
+            r'content="(\d{4}-\d{2}-\d{2})[^"]*"\s+property="article:published_time"',
+            r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})',
+            r'itemprop="datePublished"[^>]*content="(\d{4}-\d{2}-\d{2})',
+            r'<time[^>]+datetime="(\d{4}-\d{2}-\d{2})']
+    for pat in pats:
+        m = re.search(pat, html)
+        if m:
+            try:
+                return datetime.date.fromisoformat(m.group(1))
+            except ValueError:
+                continue
     return None
 
 
@@ -1558,6 +1616,12 @@ def enrich_articles(articles, target_count=None):
 
         # 페이지 접근 시도
         html = fetch_page(url)
+        # 발행일 검증 — 웹 발굴이 "날짜 미상"으로 가져온 옛 기사를 막는다 (2026-10-14: 2018년 이니스프리 BI 기사가
+        # 본문 예비로 들어와 리체가 교체로 넣을 뻔했다). 페이지에 발행일이 있고 2주보다 오래됐으면 건너뛴다.
+        pub = page_published_date(html)
+        if pub and pub < TODAY - datetime.timedelta(days=FEED_WINDOW_DAYS):
+            print(f"\n⛔ 오래된 기사 제외 (발행 {pub}): {art.get('title_ko', '')[:50]} — {url[:80]}")
+            continue
         # og:image 추출·다운로드는 실제 기사 URL(final_url) 기준. 못 얻으면 피드 이미지 → Medium 피드 폴백.
         thumb_b64 = find_thumbnail(url, html, referer=final_url, image_hint=art.get("image_hint", ""))
 
