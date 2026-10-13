@@ -162,6 +162,32 @@ HEADERS = {
 # 큐레이션에서 제외할 도메인 (서핏 등 리다이렉트 링크는 최종 목적지 기준)
 BLOCKED_DOMAINS = ["ditoday.com"]
 
+# 카카오 관련 소식 제외 (2026-10-14 리체 지시: "카카오 관련 소식을 앞으로도 제외").
+# 다이제스트가 카카오 사내 아지트에 올라가 독자 대부분이 카카오 크루 — 자사 소식은 큐레이션 대상이 아니다.
+# 프롬프트로 부탁만 하면 새어 들어오므로(2026-10-14 실전: 카톡 '카나나 스페이스' 기사가 2번에 실림)
+# 후보 단계와 요약 후 단계에서 코드로 거른다. 브런치(카카오 소유 플랫폼)의 외부 작가 글은 자사 소식이 아니라 막지 않는다.
+KAKAO_DOMAINS = ["kakaocorp.com", "kakao.com", "kakaobank.com", "kakaopay.com", "kakaomobility.com",
+                 "kakaoent.com", "kakaogames.com", "kakao.vc", "kakaobrain.com", "kakaoenterprise.com",
+                 "kakaostyle.com", "tech.kakao.com", "tech.kakaopay.com", "tech.kakaoenterprise.com"]
+KAKAO_KEYWORDS = ["카카오", "카톡", "kakao", "카나나", "kanana", "다음 포털"]  # "daum" 은 다음 뉴스에 실린 타사 기사까지 막아서 뺌
+
+
+def is_kakao_related(*texts):
+    """URL·제목·요약 중 하나라도 카카오 계열이면 True."""
+    for t in texts:
+        if not t:
+            continue
+        low = t.lower()
+        try:
+            netloc = urlparse(t).netloc.lower() if t.startswith("http") else ""
+        except Exception:
+            netloc = ""
+        if netloc and any(netloc == d or netloc.endswith("." + d) for d in KAKAO_DOMAINS):
+            return True
+        if any(k in low for k in KAKAO_KEYWORDS):
+            return True
+    return False
+
 # ─── 날짜 계산 ───────────────────────────────────────────────
 if CUSTOM_DATE:
     TODAY = datetime.datetime.strptime(CUSTOM_DATE, "%Y-%m-%d").date()
@@ -1099,15 +1125,16 @@ def discover_web_candidates():
 
 WebSearch 도구로 **{since} 이후** 발행된 기사를 직접 찾아 후보 {WEB_DISCOVERY_TARGET}개 안팎을 돌려주세요.
 검색은 **최대 {WEB_DISCOVERY_SEARCHES}번**(그 안에서 끝내세요), 아래 축을 고루 섞어서 (한국어·영어 모두):
-- 국내 서비스(카카오·네이버·토스·당근·배민·쿠팡·무신사·올리브영·삼성·은행·통신 등)의 기능 출시·전략 전환·중단·실험·사고
+- 국내 서비스(네이버·토스·당근·배민·쿠팡·무신사·올리브영·삼성·은행·통신 등)의 기능 출시·전략 전환·중단·실험·사고
 - 빅테크(구글·애플·메타·OpenAI·앤스로픽·MS·X·틱톡 등)의 신제품·정책·발표 — 공식 뉴스룸·블로그 원문 우선
 - 기업이 실제로 내린 프로덕트·UX 결정의 케이스 스터디 (어느 회사가 무엇을 왜 바꿨는지)
 - AI 회사·서비스의 실제 출시·정책·사고 (개인의 AI 활용기는 제외)
 - 프로덕트 그로스·비즈니스 인사이트, 규제·보안·업계 인물의 발언
-예시 검색어: "토스 새 기능 출시 2026년 10월", "카카오톡 업데이트 10월", "네이버 서비스 출시 이번주", "product launch this week",
+예시 검색어: "토스 새 기능 출시 2026년 10월", "당근 새 기능 10월", "네이버 서비스 출시 이번주", "product launch this week",
 "OpenAI announcement October 2026", "Apple newsroom October 2026", "site:byline.network", "site:brunch.co.kr 프로덕트 디자인",
 "design case study redesign 2026", "startup shut down feature 2026" — 날짜를 바꿔가며 최신 것을 노리세요.
 
+**카카오 관련 소식은 절대 제외**(카카오·카카오톡·카카오뱅크·카카오페이·카나나·다음 등 카카오 계열 전부 — 독자가 카카오 크루라 자사 소식은 다루지 않음). 검색어에도 쓰지 마세요.
 피하기(독자가 반복해서 뺀 유형): 투자 유치·펀딩, 개인·팀의 'AI로 일해본' 경험담·제작기·하네스 구축기, 작은 회사 리브랜딩·캐릭터,
 "~에 미래가 있을까"류 추상 전망·체크리스트, 사용법 튜토리얼, 2주보다 오래된 기사, 같은 사건의 중복 보도(원문 하나만).
 
@@ -1222,6 +1249,7 @@ def curate_with_claude(candidates):
      • 사회적으로 주목할 만한 테크/비즈니스 이슈 (보안 사고, 규제, 업계 인물의 발언)
      • 프로덕트 사고 에세이는 최대 1개, 그것도 구체 사례가 중심인 것만
 3. 피하기 — 독자가 검수에서 반복해서 빼버린 유형이에요:
+   - **카카오 관련 소식 전부** (카카오·카카오톡·카카오뱅크·카카오페이·카나나·다음 등 카카오 계열). 독자가 카카오 크루라 자사 소식은 다루지 않아요
    - 투자 유치·펀딩 라운드 소식 (조달 금액·밸류에이션이 핵심인 기사)
    - 개인·팀의 'AI로 일해본' 경험담: "N일간 ~해보기", "~ 제작기", "나만의 ~ 만들기", "AI와 함께 ~한 기록", 워크플로우·하네스 구축기, "요즘 디자이너가 AI로 일하는 법"
    - 작은 회사의 리브랜딩·BI 교체·캐릭터 발표 (빅테크 대표 제품의 디자인 변화는 예외 — 예: 애플 뮤직 워드마크)
@@ -2578,6 +2606,11 @@ def main():
         # 1. 웹 리서치 발굴(1순위) + 피드·서핏 스캔(보조) → 합산
         web_candidates = discover_web_candidates()
         candidates = merge_candidates(web_candidates, scan_priority_sites())
+        before = len(candidates)
+        candidates = [c for c in candidates
+                      if not is_kakao_related(c.get("url"), c.get("final_url"), c.get("title_hint"), c.get("summary_hint"))]
+        if before != len(candidates):
+            print(f"  ⛔ 카카오 관련 후보 {before - len(candidates)}개 제외 (2026-10-14 리체 지시)")
         print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
         # 2. Claude API로 기사 선정 + 요약
         articles = curate_with_claude(candidates)
@@ -2591,6 +2624,14 @@ def main():
 
         # 4. 본문을 읽고 제목·요약 작성 (선정 단계는 URL·피드 요약만 봤다). 예비 기사도 같은 호출로.
         enriched = summarize_articles(enriched)
+        kept = [a for a in enriched if not is_kakao_related(
+            a.get("url"), a.get("final_url"), a.get("title_ko"), a.get("one_line"), a.get("summary_1"))]
+        if len(kept) != len(enriched):
+            dropped = [a.get("title_ko", "")[:40] for a in enriched if a not in kept]
+            print(f"  ⛔ 요약 후 카카오 관련 {len(dropped)}개 제외: {dropped}")
+            for i, a in enumerate(kept, 1):
+                a["article_num"] = i
+        enriched = kept
         # 선정이 '독자가 넣을 가능성 높은 순'이라 앞 ARTICLE_COUNT개가 본문, 나머지가 예비
         enriched, reserves = enriched[:ARTICLE_COUNT], enriched[ARTICLE_COUNT:]
 
