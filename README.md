@@ -61,9 +61,9 @@
 
 ### 모델 호출 경로 (2026-10-13부터 팀플랜)
 
-모든 모델 호출(`curate.py`·`command.py`)은 공용 모듈 `scripts/llm.py`를 거치고, `LLM_BACKEND` 레포 변수로 경로를 고릅니다. `cli`(현재 기본)면 러너에 Claude Code를 설치하고 `claude -p --json-schema --model --effort --tools ""`로 호출하며, 인증은 `claude setup-token`으로 만든 1년짜리 구독 토큰(`CLAUDE_CODE_OAUTH_TOKEN` 시크릿)입니다. 공식 문서대로 OAuth 토큰이면 API 과금 대신 구독(리체 팀플랜 자리)을 씁니다. `api`면 예전처럼 `ANTHROPIC_API_KEY`로 과금됩니다. 워크플로 입력 `llm_backend`로 한 번만 바꿔 돌릴 수도 있습니다. 토큰은 1년 뒤(2027-10) 만료되니 그 전에 다시 발급해 시크릿을 갈아야 합니다. 만료·차단 등으로 실패하면 `gh variable set LLM_BACKEND --body api` 한 줄로 API 경로로 되돌립니다.
+모든 모델 호출(`curate.py`·`command.py`)은 공용 모듈 `scripts/llm.py`를 거치고, `LLM_BACKEND` 레포 변수로 경로를 고릅니다. `cli`(현재 기본)면 러너에 Claude Code를 설치하고 `claude -p --json-schema --model --effort --tools ""`로 호출하며, 인증은 `claude setup-token`으로 만든 1년짜리 구독 토큰(`CLAUDE_CODE_OAUTH_TOKEN` 시크릿)입니다. 공식 문서대로 OAuth 토큰이면 API 과금 대신 구독(리체 팀플랜 자리)을 씁니다. `api`면 예전처럼 `ANTHROPIC_API_KEY`로 과금됩니다. 워크플로 입력 `llm_backend`로 한 번만 바꿔 돌릴 수도 있습니다. 토큰은 1년 뒤(2027-10) 만료되니 그 전에 다시 발급해 시크릿을 갈아야 합니다. 만료·차단 등으로 실패할 때 API 경로로 되돌리려면, 콘솔(개인 조직)에서 키를 새로 만들어 레포 시크릿 `ANTHROPIC_API_KEY`에 넣고 `gh variable set LLM_BACKEND --body api`를 실행합니다. **2026-10-13부터 이 시크릿은 레포에 없습니다** — 과금 경로를 원천 차단하려고 지웠습니다. 코드 쪽 api 경로는 롤백용으로 남겨 두었습니다.
 
-**과금 가드.** cli 모드에서 `ANTHROPIC_API_KEY`가 환경에 있으면 키가 OAuth 토큰보다 우선돼 API로 과금됩니다. 그래서 워크플로는 키를 `API_KEY_FOR_API_MODE`라는 다른 이름으로 받아 api 모드일 때만 bash에서 export하고, `llm.py`는 cli 자식 프로세스 환경에서 키를 한 번 더 지운 뒤 `🔒 과금 가드` 로그를 남깁니다. 2026-10-13 첫 cli 테스트에서 GitHub 표현식 `cond && '' || secret`이 빈 문자열을 거짓으로 보고 시크릿으로 떨어져 키가 들어간 사고(약 $0.35)가 있었습니다. **워크플로 표현식 삼항에 빈 문자열을 쓰지 마세요.**
+**과금 가드.** cli 모드에서 `ANTHROPIC_API_KEY`가 환경에 있으면 키가 OAuth 토큰보다 우선돼 API로 과금됩니다. 그래서 워크플로는 키를 `API_KEY_FOR_API_MODE`라는 다른 이름으로 받아 api 모드일 때만 bash에서 export하고, `llm.py`는 cli 자식 프로세스 환경에서 키를 한 번 더 지운 뒤 `🔒 과금 가드` 로그를 남깁니다. 2026-10-13 cli 테스트 두 번(그중 하나는 웹 발굴 도중 취소)에서 GitHub 표현식 `cond && '' || secret`이 빈 문자열을 거짓으로 보고 시크릿으로 떨어져 키가 들어간 사고가 있었습니다. 취소한 실행도 취소 전까지의 호출(웹 검색 17회, Haiku 5.5 검색 처리 포함)은 전부 과금됩니다. **워크플로 표현식 삼항에 빈 문자열을 쓰지 마세요.**
 
 **사용량 감각** (2026-10-13 러너 실측, API로 환산했다면): 웹 리서치 발굴 $0.44 + 선정 $0.32 + 요약 $0.13 + 인트로·so-what·예비 $0.23 ≈ 회당 $1.1, 실행 8분. 팀플랜 자리 한도에서 빠지며 실제 결제는 없습니다. Anthropic 콘솔(개인 조직 "리체's Individual Org")의 결제 페이지 '지출 한도' 사용액이 늘지 않으면 정상입니다. 자동 충전은 꺼 두었고 잔액은 롤백용으로 남겨 둡니다.
 
