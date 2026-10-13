@@ -1,6 +1,6 @@
 # 트렌드림 (Trend Dream)
 
-매일 아침, 프로덕트·기술 아티클을 자동으로 큐레이션해 다이제스트로 만들어 발행하는 개인 운영 파이프라인입니다. GitHub Actions·GitHub Pages·Claude API·외부 cron·KakaoWork 봇을 조합해, **"전날 밤 초안 자동 생성 → 모바일에서 검수 → 다음날 아침 자동 발행"** 흐름을 무인에 가깝게 운영합니다.
+매일 아침, 프로덕트·기술 아티클을 자동으로 큐레이션해 다이제스트로 만들어 발행하는 개인 운영 파이프라인입니다. GitHub Actions·GitHub Pages·Claude(팀플랜 구독, Claude Code CLI)·외부 cron·KakaoWork 봇을 조합해, **"전날 밤 초안 자동 생성 → 모바일에서 검수 → 다음날 아침 자동 발행"** 흐름을 무인에 가깝게 운영합니다.
 
 - **결과물**: https://leche.github.io/trend-articles/
 - **운영 대시보드**: `trigger.html` (모바일에서 검수·수정·발행을 조작하는 컨트롤 패널)
@@ -28,8 +28,9 @@
 
 ```
                     ┌───────────────────┐
-   외부 cron ─────▶ │  curate.yml       │  기사 선정·요약·썸네일·HTML 생성 (내일 KST 폴더)
- (전날 22:00 KST)   │  (Claude API)     │  → YYYY-MM-DD/index.html + index.html 커밋
+   외부 cron ─────▶ │  curate.yml       │  웹 리서치·피드·서핏 → 선정·요약·썸네일·HTML (내일 KST 폴더)
+ (전날 22:00 KST)   │  (Claude Code CLI │  → YYYY-MM-DD/index.html + reserve.json + 다음날 발행 자동 예약 커밋
+                    │   + 팀플랜 토큰)   │
    for_tomorrow=true└─────────┬─────────┘
                               │ push
                               ▼
@@ -40,7 +41,11 @@
                               ▼
    trigger.html ───▶ 검수·교체(workflow_dispatch) / 순서·썸네일·링크(contents API 직접 커밋)
    (모바일 대시보드)          │
-                              │ 발행 예약 (pending-publish.json 직접 커밋)
+                              │ (선택) 예비 기사 교체·예약 취소·미루기
+                              ▼
+                    ┌───────────────────┐
+   외부 cron ─────▶ │  morning-brief.yml│  오늘 예약이 있으면 KakaoWork 카드 (출근길 확인용)
+ (08:50 KST)        └─────────┬─────────┘
                               ▼
                     ┌───────────────────┐
    외부 cron ─────▶ │  agit-post.yml    │  pending 확인 → 데이터 검증 → 그룹 채널 게시
@@ -56,7 +61,11 @@
 
 ### 모델 호출 경로 (2026-10-13부터 팀플랜)
 
-`curate.py`의 모델 호출 다섯 개는 `LLM_BACKEND` 레포 변수로 경로를 고릅니다. `cli`(현재 기본)면 러너에 Claude Code를 설치하고 `claude -p --json-schema --model --effort --tools ""`로 호출하며, 인증은 `claude setup-token`으로 만든 1년짜리 구독 토큰(`CLAUDE_CODE_OAUTH_TOKEN` 시크릿)입니다. 공식 문서대로 OAuth 토큰이면 API 과금 대신 구독(리체 팀플랜 자리)을 씁니다. `api`면 예전처럼 `ANTHROPIC_API_KEY`로 과금됩니다. 워크플로 입력 `llm_backend`로 한 번만 바꿔 돌릴 수도 있습니다. 토큰은 1년 뒤 만료되니 그 전에 다시 발급해 시크릿을 갈아야 합니다. `command.yml`(AI 명령)은 아직 API 키입니다.
+모든 모델 호출(`curate.py`·`command.py`)은 공용 모듈 `scripts/llm.py`를 거치고, `LLM_BACKEND` 레포 변수로 경로를 고릅니다. `cli`(현재 기본)면 러너에 Claude Code를 설치하고 `claude -p --json-schema --model --effort --tools ""`로 호출하며, 인증은 `claude setup-token`으로 만든 1년짜리 구독 토큰(`CLAUDE_CODE_OAUTH_TOKEN` 시크릿)입니다. 공식 문서대로 OAuth 토큰이면 API 과금 대신 구독(리체 팀플랜 자리)을 씁니다. `api`면 예전처럼 `ANTHROPIC_API_KEY`로 과금됩니다. 워크플로 입력 `llm_backend`로 한 번만 바꿔 돌릴 수도 있습니다. 토큰은 1년 뒤(2027-10) 만료되니 그 전에 다시 발급해 시크릿을 갈아야 합니다. 만료·차단 등으로 실패하면 `gh variable set LLM_BACKEND --body api` 한 줄로 API 경로로 되돌립니다.
+
+**과금 가드.** cli 모드에서 `ANTHROPIC_API_KEY`가 환경에 있으면 키가 OAuth 토큰보다 우선돼 API로 과금됩니다. 그래서 워크플로는 키를 `API_KEY_FOR_API_MODE`라는 다른 이름으로 받아 api 모드일 때만 bash에서 export하고, `llm.py`는 cli 자식 프로세스 환경에서 키를 한 번 더 지운 뒤 `🔒 과금 가드` 로그를 남깁니다. 2026-10-13 첫 cli 테스트에서 GitHub 표현식 `cond && '' || secret`이 빈 문자열을 거짓으로 보고 시크릿으로 떨어져 키가 들어간 사고(약 $0.35)가 있었습니다. **워크플로 표현식 삼항에 빈 문자열을 쓰지 마세요.**
+
+**사용량 감각** (2026-10-13 러너 실측, API로 환산했다면): 웹 리서치 발굴 $0.44 + 선정 $0.32 + 요약 $0.13 + 인트로·so-what·예비 $0.23 ≈ 회당 $1.1, 실행 8분. 팀플랜 자리 한도에서 빠지며 실제 결제는 없습니다. Anthropic 콘솔(개인 조직 "리체's Individual Org")의 결제 페이지 '지출 한도' 사용액이 늘지 않으면 정상입니다. 자동 충전은 꺼 두었고 잔액은 롤백용으로 남겨 둡니다.
 
 ### 휴가 스위치
 
@@ -83,8 +92,9 @@ GitHub Actions의 `schedule:` 트리거는 인덱싱이 비결정적이라 정�
 
 ### 스크립트 (`scripts/`)
 
-- **`curate.py`** — 큐레이션 엔진. 우선 사이트 스캔 → Claude API로 기사 선정·요약 → 썸네일 다운로드 → 인트로 생성 → HTML 조립. 기사 교체(replace) 모드, 다음날 폴더로 생성하는 `for_tomorrow` 모드도 포함.
+- **`curate.py`** — 큐레이션 엔진. 웹 리서치 발굴 + 피드·사이트·서핏 스캔 → 기사 선정 → 본문 읽고 요약 → 썸네일 → 인트로·헤드라인·so-what → HTML·예비 기사 조립. 기사 교체(replace) 모드, 인트로 다시 쓰기 모드, 다음날 폴더로 생성하는 `for_tomorrow` 모드도 포함.
 - **`command.py`** — 자연어 명령 해석기. "N번 기사 링크 교체", "제목 수정" 등을 Claude로 파싱해 HTML을 수정.
+- **`llm.py`** — 모델 호출 공용 모듈. `LLM_BACKEND=cli`면 `claude -p`(팀플랜 토큰), `api`면 Anthropic API. 응답을 같은 모양으로 감싸 호출부는 경로를 모릅니다. 과금 가드도 여기 있습니다.
 - **`inject_gnb.py`** — 생성된 HTML에 공통 내비게이션(GNB)·앵커 링크를 주입.
 
 ### 데이터 파일 (저장소 루트)
@@ -156,7 +166,7 @@ GitHub Actions의 `schedule:` 트리거는 인덱싱이 비결정적이라 정�
 
 - **자동화**: GitHub Actions (`workflow_dispatch` 중심) + 외부 cron(cron-job.org) + GitHub contents API(브라우저에서 직접 파일 커밋)
 - **호스팅**: GitHub Pages
-- **AI**: Claude API (기사 선정·요약·인트로·자연어 명령)
+- **AI**: Claude Code CLI(`claude -p`) + 팀플랜 구독 토큰 — 웹 리서치 발굴(Sonnet 5.5)·선정(Opus 5.5)·요약(Sonnet 5.5)·인트로·헤드라인·so-what(Opus 5.5)·자연어 명령(Sonnet 5.5). 롤백용으로 Anthropic API 경로 유지
 - **스크래핑**: requests / Playwright / 검색 크롤러 UA 폴백
 - **알림**: KakaoWork Incoming Webhook (Block Kit)
 - **런타임**: Python 3.11
