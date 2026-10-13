@@ -116,6 +116,10 @@ READER_PICKED_EXAMPLES = [
 # 트리거에서 워크플로 없이 즉시 바꿔 끼우기 위함(교체 워크플로는 3~8분 걸렸다, 2026-10-11).
 RESERVE_COUNT = int(os.environ.get("RESERVE_COUNT", "3"))
 
+# 디자인 슬롯 (2026-10-14 리체 지시: "8개 중 2개 정도는 디자인 관련 기사나 좋은 글") — 선정이 기사마다 design 을 표시하고
+# 코드가 본문 ARTICLE_COUNT 개 안에 최소 DESIGN_MIN 개를 보장한다(모자라면 뒤 순위의 디자인 글을 끌어올림).
+DESIGN_MIN = int(os.environ.get("DESIGN_MIN", "2"))
+
 # 웹 리서치 발굴 (2026-10-13) — 모델이 웹 검색 도구로 직접 후보를 찾는다. 1순위 후보이고 RSS·서핏 수집은 보조.
 # 2026-09 에 API 웹서치(회당 $7)로 접었던 걸, 팀플랜 CLI 백엔드에선 검색이 구독에 포함이라 되살렸다.
 # "auto" = cli 백엔드일 때만 켬 (api 백엔드는 검색 과금이 있어 안 켬). "true"/"false" 로 강제.
@@ -1066,8 +1070,9 @@ SELECT_SCHEMA = {
                 "properties": {
                     "url": {"type": "string", "description": "후보 목록에 있는 URL 그대로"},
                     "reason": {"type": "string", "description": "선정 이유 한 문장"},
+                    "design": {"type": "boolean", "description": "디자인 슬롯 기사면 true (선정 기준의 '디자인 슬롯' 정의)"},
                 },
-                "required": ["url", "reason"],
+                "required": ["url", "reason", "design"],
                 "additionalProperties": False,
             },
         }
@@ -1128,6 +1133,9 @@ WebSearch 도구로 **{since} 이후** 발행된 기사를 직접 찾아 후보 
 - 국내 서비스(네이버·토스·당근·배민·쿠팡·무신사·올리브영·삼성·은행·통신 등)의 기능 출시·전략 전환·중단·실험·사고
 - 빅테크(구글·애플·메타·OpenAI·앤스로픽·MS·X·틱톡 등)의 신제품·정책·발표 — 공식 뉴스룸·블로그 원문 우선
 - 기업이 실제로 내린 프로덕트·UX 결정의 케이스 스터디 (어느 회사가 무엇을 왜 바꿨는지)
+- **디자인 (후보 중 6개 이상)**: 브랜드·BI·서체·아이콘·UI 리디자인 공개, 디자인 시스템, 디자이너가 쓴 구체 사례 중심의 좋은 글
+  (예: "site:designcompass.org", "brand identity redesign October 2026", "new logo unveiled 2026", "UX case study redesign",
+   "site:brunch.co.kr 디자이너 디자인", "디자인 리뉴얼 공개 10월") — 개인의 AI 디자인 작업기·체크리스트·추상 전망은 제외
 - AI 회사·서비스의 실제 출시·정책·사고 (개인의 AI 활용기는 제외)
 - 프로덕트 그로스·비즈니스 인사이트, 규제·보안·업계 인물의 발언
 예시 검색어: "토스 새 기능 출시 2026년 10월", "당근 새 기능 10월", "네이버 서비스 출시 이번주", "product launch this week",
@@ -1247,7 +1255,12 @@ def curate_with_claude(candidates):
      • AI 회사·서비스의 실제 출시·정책·사고 (개인의 AI 활용기는 해당 안 됨)
      • 프로덕트 그로스 / 비즈니스 인사이트 (마케팅은 그로스 관점인 것만)
      • 사회적으로 주목할 만한 테크/비즈니스 이슈 (보안 사고, 규제, 업계 인물의 발언)
-     • 프로덕트 사고 에세이는 최대 1개, 그것도 구체 사례가 중심인 것만
+   - **디자인 슬롯: 본문 {ARTICLE_COUNT}개 중 {DESIGN_MIN}개는 디자인 기사나 좋은 글** (design: true 로 표시). 여기에 해당하는 것:
+     • 실제 디자인 결과물·결정 — 브랜드·BI·서체·아이콘·워드마크·UI 리디자인, 디자인 시스템 공개, 패키지·공간·인쇄물 디자인 (빅테크·국내외 브랜드 모두)
+     • 기업의 UX 개선 케이스 스터디 (무엇을 왜 어떻게 바꿨고 결과가 어땠는지)
+     • 디자이너·메이커가 쓴 좋은 글 — 구체 사례가 중심인 디자인·프로덕트 에세이 (예: "디자인은 타협이다", "바이브 코딩 시대, 미감은 왜 더 비싸졌을까")
+     • 해당 안 됨: 개인의 'AI로 디자인해본' 작업기·하네스 구축기, "~의 징후 N가지" 체크리스트, "디자인에 미래가 있을까"류 추상 전망
+     • 독자가 직접 넣은 디자인 글 예: 29CM 서체, 애플 뮤직 워드마크, MS 코파일럿 아이콘, 미국 새 여권 디자인
 3. 피하기 — 독자가 검수에서 반복해서 빼버린 유형이에요:
    - **카카오 관련 소식 전부** (카카오·카카오톡·카카오뱅크·카카오페이·카나나·다음 등 카카오 계열). 독자가 카카오 크루라 자사 소식은 다루지 않아요
    - 투자 유치·펀딩 라운드 소식 (조달 금액·밸류에이션이 핵심인 기사)
@@ -1256,6 +1269,7 @@ def curate_with_claude(candidates):
    - "~에 미래가 있을까", "제대로 된 ~은 어떤 모습이어야 할까", "~의 징후 N가지" 같은 추상 전망·체크리스트형 글
    - 사용법 튜토리얼·팁 ("~로 반복 작업을 자동화하세요")
 4. 같은 뉴스가 여러 후보로 잡히면 공식 발표(뉴스룸·블로그 원문)를 2차 보도보다 우선하고, 하나만 고르세요.
+   디자인 슬롯 후보는 designcompass.org·uxdesign.cc·brunch.co.kr·서핏(UI/UX) 쪽에 많아요.
 5. 다양한 관점·주제가 섞이게 — 비슷한 주제끼리 몰리지 않도록.
 6. **반드시 아래 후보 목록 안에서만** 고르세요. 목록에 없는 URL 을 만들어내지 마세요.
 7. 출처에 "(web)" 이 붙은 후보는 웹 리서치로 직접 찾은 1순위 후보예요. 같은 값이면 이쪽을 먼저 쓰고,
@@ -1279,6 +1293,7 @@ def curate_with_claude(candidates):
 ## 요청
 후보 중에서 서로 다른 기사 {select_count}개를 골라 URL 과 선정 이유(한 문장)를 주세요.
 **독자가 넣을 가능성이 높은 순서대로** 나열하세요 — 앞의 {ARTICLE_COUNT}개가 본문이 되고, 그다음 {RESERVE_COUNT}개는 독자가 본문 기사를 빼고 싶을 때 바로 바꿔 넣는 예비 기사가 됩니다.
+앞 {ARTICLE_COUNT}개 안에 design: true 가 {DESIGN_MIN}개 들어가게 하고, 예비 쪽에도 디자인 글 하나를 두면 좋아요.
 (나머지는 중복 제거·차단 도메인 제외에 대비한 여유분입니다.)
 **출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만 — 이건 상한이지 목표가 아닙니다. 한 출처에서 2개를 채우려 하지 마세요.
 "(via surfit)"는 전달 경로 표시일 뿐이라 출처 상한은 실제 도메인 기준으로 세세요. 서핏 경유 후보는 국내 큐레이션 플랫폼이 이미 골라 올린 글이라 요약이 짧아도 동등하게 고려하세요.
@@ -1321,6 +1336,7 @@ def curate_with_claude(candidates):
             "date_hint": cand.get("date_hint", ""),
             "source": cand.get("source", ""),
             "select_reason": p.get("reason", ""),
+            "design": bool(p.get("design")),
         })
 
     print(f"✅ {len(articles)}개 기사 1차 선정")
@@ -1329,7 +1345,33 @@ def curate_with_claude(candidates):
     articles = dedup_articles(articles)
     print(f"✅ 중복 제거 후 {len(articles)}개")
 
-    return articles
+    return ensure_design_slots(articles, "선정 직후")
+
+
+def ensure_design_slots(articles, stage=""):
+    """본문 범위(앞 ARTICLE_COUNT 개) 안에 design 기사가 DESIGN_MIN 개 이상 오도록 순서를 고친다.
+    모자라면 뒤 순위의 가장 높은 디자인 기사를, 본문 범위의 가장 낮은 비디자인 기사 자리로 끌어올린다
+    (밀려난 기사는 바로 뒤 = 예비 맨 앞으로). 디자인 기사가 아예 부족하면 있는 만큼만."""
+    n = ARTICLE_COUNT
+    arts = list(articles)
+    have = sum(1 for a in arts[:n] if a.get("design"))
+    moved = 0
+    while have < DESIGN_MIN:
+        donor = next((i for i in range(n, len(arts)) if arts[i].get("design")), None)
+        slot = next((i for i in range(min(n, len(arts)) - 1, -1, -1) if not arts[i].get("design")), None)
+        if donor is None or slot is None:
+            break
+        d = arts.pop(donor)
+        bumped = arts.pop(slot)
+        arts.insert(slot, d)
+        arts.insert(n, bumped)
+        have += 1
+        moved += 1
+    total = sum(1 for a in arts if a.get("design"))
+    print(f"🎨 디자인 슬롯({stage}): 본문 {have}/{DESIGN_MIN}개"
+          + (f" — 뒤 순위에서 {moved}개 끌어올림" if moved else "")
+          + (f" ⚠️ 후보 중 디자인 기사가 {total}개뿐" if have < DESIGN_MIN else ""))
+    return arts
 
 
 # ─── URL 정규화·중복 제거 헬퍼 ────────────────────────────────
@@ -2631,7 +2673,9 @@ def main():
             print(f"  ⛔ 요약 후 카카오 관련 {len(dropped)}개 제외: {dropped}")
             for i, a in enumerate(kept, 1):
                 a["article_num"] = i
-        enriched = kept
+        enriched = ensure_design_slots(kept, "요약 후")
+        for i, a in enumerate(enriched, 1):
+            a["article_num"] = i
         # 선정이 '독자가 넣을 가능성 높은 순'이라 앞 ARTICLE_COUNT개가 본문, 나머지가 예비
         enriched, reserves = enriched[:ARTICLE_COUNT], enriched[ARTICLE_COUNT:]
 
