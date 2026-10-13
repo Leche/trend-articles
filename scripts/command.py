@@ -11,7 +11,7 @@ import re
 import sys
 import json
 import datetime
-import anthropic
+import llm  # 모델 호출 백엔드 (api / cli) — scripts/llm.py
 import requests
 from bs4 import BeautifulSoup
 
@@ -38,10 +38,11 @@ print(f"📝 명령: {COMMAND_PROMPT}")
 
 # ─── Claude로 명령 해석 ───────────────────────────────────────
 def interpret_command(prompt: str) -> dict:
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=512,
+    response = llm.create(
+        llm.client(),
+        model="claude-sonnet-5-5",
+        max_tokens=2000,  # 2026-10-13 Haiku 4.5 → Sonnet 5.5 (cli 백엔드 공용, thinking 포함)
+        output_config={"effort": "low"},
         system="""당신은 트렌드림 기사 큐레이션 관리 도구의 명령 해석기입니다.
 사용자의 자연어 요청을 분석하여 아래 JSON 형식 중 하나로만 응답하세요.
 
@@ -72,7 +73,7 @@ def interpret_command(prompt: str) -> dict:
 JSON만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.""",
         messages=[{"role": "user", "content": prompt}],
     )
-    raw = response.content[0].text.strip()
+    raw = next((b.text for b in response.content if getattr(b, "type", None) == "text"), "").strip()
     m = re.search(r'\{[\s\S]*?\}', raw)
     if not m:
         raise ValueError(f"Claude 응답 파싱 실패: {raw}")
@@ -88,10 +89,11 @@ JSON만 출력하세요. 다른 텍스트는 절대 포함하지 마세요.""",
 # ─── AI 변경 식별 ─────────────────────────────────────────────
 def ai_identify_changes(context_html: str, instruction: str) -> list:
     """HTML 섹션과 지시를 받아 [{old, new}] 변경 쌍 반환"""
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
+    response = llm.create(
+        llm.client(),
+        model="claude-sonnet-5-5",
+        max_tokens=3000,
+        output_config={"effort": "low"},
         system="""당신은 HTML 텍스트 편집 도우미입니다.
 주어진 HTML에서 지시에 따라 변경할 텍스트를 찾아 JSON 배열로만 응답하세요.
 
@@ -104,7 +106,7 @@ def ai_identify_changes(context_html: str, instruction: str) -> list:
 - JSON 배열만 출력, 다른 설명 없이""",
         messages=[{"role": "user", "content": f"지시: {instruction}\n\nHTML:\n{context_html}"}],
     )
-    raw = response.content[0].text.strip()
+    raw = next((b.text for b in response.content if getattr(b, "type", None) == "text"), "").strip()
     m = re.search(r'\[[\s\S]*\]', raw)
     if not m:
         raise ValueError(f"변경 사항 파싱 실패: {raw}")
@@ -243,10 +245,11 @@ def fetch_source_article(url: str) -> dict:
 
 def ai_sync_with_source(article_section: str, source: dict, instruction: str) -> list:
     """원본 기사와 다이제스트 섹션을 받아 [{old, new}] 교정 쌍 반환"""
-    client = anthropic.Anthropic()
-    response = client.messages.create(
+    response = llm.create(
+        llm.client(),
         model="claude-sonnet-5-5",
         max_tokens=8000,  # thinking 이 max_tokens 에 포함된다 — 교정 JSON ≈ 1K + thinking
+        output_config={"effort": "low"},
         system="""당신은 트렌드림 다이제스트 편집 도우미입니다.
 원본 기사와 현재 다이제스트의 해당 기사 섹션을 받아, 원본 기준으로 어긋난 부분을
 [{"old":"정확한 기존 텍스트","new":"새 텍스트"}] JSON 배열로만 출력하세요.

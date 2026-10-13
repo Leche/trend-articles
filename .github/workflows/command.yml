@@ -32,9 +32,27 @@ jobs:
       - name: Install dependencies
         run: pip install anthropic requests beautifulsoup4 lxml
 
+      # 모델 호출 경로 — curate.yml 과 동일. cli 면 Claude Code + 팀플랜 토큰 (API 과금 없음, 2026-10-13)
+      - name: Resolve LLM backend
+        id: backend
+        env:
+          VAR_BACKEND: ${{ vars.LLM_BACKEND || '' }}
+        run: |
+          B="${VAR_BACKEND:-api}"
+          echo "backend=${B}" >> "$GITHUB_OUTPUT"
+          echo "LLM backend: ${B}"
+
+      - name: Install Claude Code (cli backend)
+        if: steps.backend.outputs.backend == 'cli'
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+
       - name: Run command script
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_BACKEND: ${{ steps.backend.outputs.backend }}
+          ANTHROPIC_API_KEY: ${{ steps.backend.outputs.backend == 'cli' && '' || secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ steps.backend.outputs.backend == 'cli' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           COMMAND_PROMPT: ${{ github.event.inputs.prompt }}
           TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
         run: python scripts/command.py
