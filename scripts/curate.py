@@ -116,6 +116,16 @@ READER_PICKED_EXAMPLES = [
 # 트리거에서 워크플로 없이 즉시 바꿔 끼우기 위함(교체 워크플로는 3~8분 걸렸다, 2026-10-11).
 RESERVE_COUNT = int(os.environ.get("RESERVE_COUNT", "3"))
 
+# 웹 리서치 발굴 (2026-10-13) — 모델이 웹 검색 도구로 직접 후보를 찾는다. 1순위 후보이고 RSS·서핏 수집은 보조.
+# 2026-09 에 API 웹서치(회당 $7)로 접었던 걸, 팀플랜 CLI 백엔드에선 검색이 구독에 포함이라 되살렸다.
+# "auto" = cli 백엔드일 때만 켬 (api 백엔드는 검색 과금이 있어 안 켬). "true"/"false" 로 강제.
+WEB_DISCOVERY = os.environ.get("WEB_DISCOVERY", "auto").strip().lower()
+WEB_DISCOVERY_TARGET = int(os.environ.get("WEB_DISCOVERY_TARGET", "25"))
+WEB_DISCOVERY_SEARCHES = int(os.environ.get("WEB_DISCOVERY_SEARCHES", "15"))
+# 발굴은 Sonnet — 검색·추출 작업이라 취향 판단(그다음 Opus 선정)과 분리. 2026-10-13 로컬 실측: Opus 로 29회 검색에
+# 입력 37만 토큰(API 환산 $1.47) — 검색 결과가 컨텍스트에 누적된다. 팀플랜 한도를 아끼려 모델·횟수 둘 다 줄였다.
+MODEL_DISCOVERY = "claude-sonnet-5-5"
+
 # ─── 모델 배치 (2026-09-30, 5.5 세대) ────────────────────────
 # 단가(1M 토큰, 2026-09-30 공식 가격 페이지): Sonnet 5.5 $2/$10(Sonnet 5 와 동일), Opus 5.5 $4/$20
 # (Opus 5 $5/$25 보다 20%↓). 토크나이저는 각각 전 세대와 같아 토큰 수는 그대로다.
@@ -1041,6 +1051,138 @@ SELECT_SCHEMA = {
 }
 
 
+# ─── 웹 리서치 발굴 ─────────────────────────────────────────
+WEB_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "candidates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "검색 결과에 실제로 나온 기사 URL 그대로"},
+                    "title": {"type": "string", "description": "기사 제목 (원문 언어 그대로)"},
+                    "date": {"type": "string", "description": "발행일 YYYY-MM-DD, 모르면 빈 문자열"},
+                    "summary": {"type": "string", "description": "검색 결과·본문에서 확인한 내용 1~2문장"},
+                    "why": {"type": "string", "description": "독자 취향에 맞는 이유 한 문장"},
+                },
+                "required": ["url", "title", "date", "summary", "why"],
+                "additionalProperties": False,
+            },
+        },
+        "queries_run": {"type": "array", "items": {"type": "string"}, "description": "실제로 돌린 검색어"},
+    },
+    "required": ["candidates", "queries_run"],
+    "additionalProperties": False,
+}
+
+
+def web_discovery_enabled():
+    if WEB_DISCOVERY in ("true", "1", "yes"):
+        return True
+    if WEB_DISCOVERY in ("false", "0", "no"):
+        return False
+    return LLM_BACKEND == "cli"
+
+
+def discover_web_candidates():
+    """모델이 WebSearch/WebFetch 로 최근 2주 기사를 직접 찾아 후보로 돌려준다. 실패하면 빈 목록(보조 수집이 받친다)."""
+    if not web_discovery_enabled():
+        print("\n🌐 웹 리서치 발굴: 꺼짐 (api 백엔드 또는 WEB_DISCOVERY=false)")
+        return []
+    since = (TODAY - datetime.timedelta(days=14)).isoformat()
+    liked_text = "\n".join(f"- {t}" for t in prompt_picked_titles[:20])
+    rejected_text = "\n".join(f"- {t}" for t in prompt_rejected_titles[:25])
+    past_text = "\n".join(f"- {t}" for t in prompt_past_titles[:60])
+    prompt = f"""당신은 '트렌드림' 뉴스레터의 리서처입니다. 독자는 프로덕트 디자이너·기획자·메이커(한국, 카카오 크루)로,
+프로덕트·디자인·테크·비즈니스의 '구체적인 움직임'에 관심이 있습니다. 오늘은 {TODAY.isoformat()} 입니다.
+
+WebSearch 도구로 **{since} 이후** 발행된 기사를 직접 찾아 후보 {WEB_DISCOVERY_TARGET}개 안팎을 돌려주세요.
+검색은 **최대 {WEB_DISCOVERY_SEARCHES}번**(그 안에서 끝내세요), 아래 축을 고루 섞어서 (한국어·영어 모두):
+- 국내 서비스(카카오·네이버·토스·당근·배민·쿠팡·무신사·올리브영·삼성·은행·통신 등)의 기능 출시·전략 전환·중단·실험·사고
+- 빅테크(구글·애플·메타·OpenAI·앤스로픽·MS·X·틱톡 등)의 신제품·정책·발표 — 공식 뉴스룸·블로그 원문 우선
+- 기업이 실제로 내린 프로덕트·UX 결정의 케이스 스터디 (어느 회사가 무엇을 왜 바꿨는지)
+- AI 회사·서비스의 실제 출시·정책·사고 (개인의 AI 활용기는 제외)
+- 프로덕트 그로스·비즈니스 인사이트, 규제·보안·업계 인물의 발언
+예시 검색어: "토스 새 기능 출시 2026년 10월", "카카오톡 업데이트 10월", "네이버 서비스 출시 이번주", "product launch this week",
+"OpenAI announcement October 2026", "Apple newsroom October 2026", "site:byline.network", "site:brunch.co.kr 프로덕트 디자인",
+"design case study redesign 2026", "startup shut down feature 2026" — 날짜를 바꿔가며 최신 것을 노리세요.
+
+피하기(독자가 반복해서 뺀 유형): 투자 유치·펀딩, 개인·팀의 'AI로 일해본' 경험담·제작기·하네스 구축기, 작은 회사 리브랜딩·캐릭터,
+"~에 미래가 있을까"류 추상 전망·체크리스트, 사용법 튜토리얼, 2주보다 오래된 기사, 같은 사건의 중복 보도(원문 하나만).
+
+## 독자가 직접 골라 넣은 기사 (이런 결)
+{liked_text}
+
+## 독자가 빼버린 기사 (이런 결은 피하기)
+{rejected_text}
+
+## 이미 실린 기사 (제외 — 같은 사건의 다른 보도도 제외)
+{past_text}
+
+규칙:
+- url 은 검색 결과에 실제로 나온 주소 그대로. 지어내지 마세요. 가능하면 WebFetch 로 1~2개만 열어 발행일을 확인하세요(전부 열 필요 없음).
+- 같은 기사·같은 사건은 하나만. 출처는 고루 (한 사이트 최대 4개).
+- date 는 확인된 경우만 YYYY-MM-DD, 아니면 빈 문자열. summary 는 검색 결과에서 본 사실만.
+- 결과는 독자가 넣을 가능성이 높은 순으로."""
+    print(f"\n🌐 웹 리서치 발굴 중... (목표 {WEB_DISCOVERY_TARGET}개, 검색 ≤{WEB_DISCOVERY_SEARCHES}회, {MODEL_DISCOVERY})")
+    try:
+        response = _create(
+            None, model=MODEL_DISCOVERY, max_tokens=16000,
+            output_config={"format": {"type": "json_schema", "schema": WEB_SCHEMA}, **SELECT_EFFORT},
+            tools=["WebSearch", "WebFetch"], max_turns=WEB_DISCOVERY_SEARCHES * 2 + 10, timeout=1500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        _log_usage("웹 리서치 발굴", response)
+        text = next((b.text for b in response.content if b.type == "text"), "")
+        data = json.loads(text)
+    except Exception as e:
+        print(f"  ⚠️  웹 리서치 발굴 실패 — 보조 수집만으로 진행: {e}")
+        return []
+    out, seen = [], set()
+    for c in data.get("candidates") or []:
+        url = (c.get("url") or "").strip()
+        if not url.startswith("http"):
+            continue
+        key = _normalize_url(url)
+        if key in seen:
+            continue
+        seen.add(key)
+        d = (c.get("date") or "").strip()
+        if d and d < since:
+            continue
+        netloc = urlparse(url).netloc.lower().replace("www.", "")
+        if any(b in netloc for b in BLOCKED_DOMAINS):
+            continue
+        out.append({
+            "url": url,
+            "title_hint": (c.get("title") or "")[:100],
+            "summary_hint": ((c.get("summary") or "") + (" / " + c["why"] if c.get("why") else ""))[:220],
+            "source": f"{netloc} (web)",
+            "date_hint": d,
+            "final_url": url,
+        })
+    print(f"  → 검색 {len(data.get('queries_run') or [])}회, 후보 {len(out)}개")
+    for c in out[:40]:
+        print(f"    • [{c['date_hint'] or '날짜 미상'}] {c['title_hint'][:60]}  ({c['source']})")
+    return out
+
+
+def merge_candidates(web, feeds):
+    """웹 발굴(1순위)을 앞에, 보조 수집은 웹과 겹치지 않는 것만 뒤에."""
+    seen = {_normalize_url(c["url"]) for c in web}
+    seen |= {_normalize_url(c.get("final_url") or "") for c in web if c.get("final_url")}
+    rest = []
+    for c in feeds:
+        keys = {_normalize_url(c["url"]), _normalize_url(c.get("final_url") or "")} - {""}
+        if keys & seen:
+            continue
+        seen |= keys
+        rest.append(c)
+    print(f"📋 후보 합산: 웹 {len(web)} + 보조 {len(rest)} (겹침 {len(feeds) - len(rest)} 제외)")
+    return web + rest
+
+
 # ─── Claude API로 기사 선정 ──────────────────────────────────
 def curate_with_claude(candidates):
     """Claude API로 기사를 '선정만' 한다. 제목·요약은 summarize_articles()가 본문을 읽고 쓴다.
@@ -1088,6 +1230,8 @@ def curate_with_claude(candidates):
 4. 같은 뉴스가 여러 후보로 잡히면 공식 발표(뉴스룸·블로그 원문)를 2차 보도보다 우선하고, 하나만 고르세요.
 5. 다양한 관점·주제가 섞이게 — 비슷한 주제끼리 몰리지 않도록.
 6. **반드시 아래 후보 목록 안에서만** 고르세요. 목록에 없는 URL 을 만들어내지 마세요.
+7. 출처에 "(web)" 이 붙은 후보는 웹 리서치로 직접 찾은 1순위 후보예요. 같은 값이면 이쪽을 먼저 쓰고,
+   피드·서핏 후보는 웹 후보가 못 채운 축(국내 서비스, 케이스 스터디 등)을 보조로 메우는 데 쓰세요.
 
 ## 독자가 검수에서 직접 골라 넣은 기사 (최근순 — 이런 결을 고르세요)
 {liked_text}
@@ -2431,8 +2575,9 @@ def main():
                 f.write(f"replace_failed_summary={summary}\n")
     else:
         # ── 일반 모드 ──
-        # 1. 우선 사이트 스캔
-        candidates = scan_priority_sites()
+        # 1. 웹 리서치 발굴(1순위) + 피드·서핏 스캔(보조) → 합산
+        web_candidates = discover_web_candidates()
+        candidates = merge_candidates(web_candidates, scan_priority_sites())
         print(f"\n📋 총 {len(candidates)}개 후보 기사 수집")
         # 2. Claude API로 기사 선정 + 요약
         articles = curate_with_claude(candidates)

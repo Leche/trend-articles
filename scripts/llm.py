@@ -63,10 +63,17 @@ def _cli_create(**kwargs):
     effort = oc.get("effort") or "low"
     schema = (oc.get("format") or {}).get("schema") if isinstance(oc.get("format"), dict) else None
     prompt = kwargs["messages"][0]["content"]
+    # tools=["WebSearch","WebFetch"] 처럼 주면 그 도구만 켠다(웹 발굴용). 기본은 도구 없음.
+    tools = kwargs.get("tools") or []
+    timeout = kwargs.get("timeout") or CLI_TIMEOUT_SEC
     cmd = ["claude", "-p", "--no-session-persistence", "--disable-slash-commands",
            "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
-           "--tools", "", "--permission-mode", "dontAsk",
+           "--tools", ",".join(tools), "--permission-mode", "dontAsk",
            "--model", model, "--effort", effort, "--output-format", "json"]
+    if tools:
+        cmd += ["--allowedTools", ",".join(tools)]
+    if kwargs.get("max_turns"):
+        cmd += ["--max-turns", str(kwargs["max_turns"])]
     if schema:
         cmd += ["--json-schema", json.dumps(schema, ensure_ascii=False)]
     if kwargs.get("system"):
@@ -74,9 +81,9 @@ def _cli_create(**kwargs):
     last_err = None
     for attempt in range(3):
         try:
-            r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=CLI_TIMEOUT_SEC)
+            r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
-            last_err = f"timeout {CLI_TIMEOUT_SEC}s"
+            last_err = f"timeout {timeout}s"
             print(f"   ⏱  claude -p 타임아웃 (시도 {attempt + 1}/3)")
             continue
         if r.returncode != 0 or not r.stdout.strip():
@@ -112,6 +119,8 @@ def create(client, **kwargs):
     LLM_BACKEND=cli 면 client 를 쓰지 않고 claude -p 로 돈다."""
     if LLM_BACKEND == "cli":
         return _cli_create(**kwargs)
+    for k in ("tools", "max_turns", "timeout"):  # CLI 전용 옵션 — API 엔 없다
+        kwargs.pop(k, None)
     return client.beta.messages.create(**FALLBACK, **kwargs)
 
 
