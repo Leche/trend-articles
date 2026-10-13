@@ -119,8 +119,8 @@ RESERVE_COUNT = int(os.environ.get("RESERVE_COUNT", "3"))
 # ─── 모델 배치 (2026-09-30, 5.5 세대) ────────────────────────
 # 단가(1M 토큰, 2026-09-30 공식 가격 페이지): Sonnet 5.5 $2/$10(Sonnet 5 와 동일), Opus 5.5 $4/$20
 # (Opus 5 $5/$25 보다 20%↓). 토크나이저는 각각 전 세대와 같아 토큰 수는 그대로다.
-# - 기사 선정: Sonnet 5.5, effort medium. 후보 130개 프롬프트가 크다(회당 입력 ~27K 실측) — Opus 로 두면
-#   이 호출 하나가 회당 +$0.11, 월 +$2 라 교체율을 본 뒤 판단하기로 했다.
+# - 기사 선정: Opus 5.5, effort medium (2026-10-13 Sonnet → Opus). 취향대로 고르는 판단이 가장 중요한 자리.
+#   비용 때문에 Sonnet 으로 뒀었는데, 팀플랜 CLI 백엔드로 바뀌어 과금이 사라졌다(입력 ~30K, 한도 부담은 감수).
 # - 인트로·헤드라인·리드 + so-what: Opus 5.5, effort low. 아지트 글에서 독자가 실제로 읽는 문장
 #   (제목·인트로·기사별 so-what)이라 여기에 좋은 모델을 쓴다. 입력이 작아(3~7K) so-what 을 올려도 월 +$0.5.
 # - 본문 요약 · 교체 단일 요약: Sonnet 5.5, effort low.
@@ -128,7 +128,7 @@ RESERVE_COUNT = int(os.environ.get("RESERVE_COUNT", "3"))
 #   max_tokens=3000 에 잘렸다. 5.5 는 effort 단계가 재조정돼 생각량이 달라질 수 있어 상한을 넉넉히 잡는다.
 # ⚠️ 5.5 는 tool_choice 로 도구 호출을 강제하면 400 — JSON 이 필요하면 구조화 출력(output_config.format)만 쓴다.
 # 실제 토큰은 _log_usage() 가 호출마다 Actions 로그에 남긴다 — 비용 논의는 이 숫자로 한다.
-MODEL_SELECT = "claude-sonnet-5-5"
+MODEL_SELECT = "claude-opus-5-5"
 MODEL_HEADLINE = "claude-opus-5-5"
 MODEL_SO_WHAT = "claude-opus-5-5"
 MODEL_WRITE = "claude-sonnet-5-5"
