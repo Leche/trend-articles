@@ -78,10 +78,19 @@ def _cli_create(**kwargs):
         cmd += ["--json-schema", json.dumps(schema, ensure_ascii=False)]
     if kwargs.get("system"):
         cmd += ["--system-prompt", kwargs["system"]]
+    # ⚠️ 과금 가드 (2026-10-13 사고): GitHub 표현식 `cond && '' || secret` 이 빈 문자열을 거짓으로 보고 시크릿으로
+    # 떨어져, cli 모드 첫 테스트에서 ANTHROPIC_API_KEY 가 러너 환경에 들어갔다. 키는 OAuth 보다 우선이라 API 로
+    # 과금된다. 워크플로 배선과 무관하게 여기서 키를 자식 환경에서 아예 지운다 — cli 모드는 절대 API 키로 돌지 않는다.
+    env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
+    if not _cli_create._guard_logged:
+        had = "있었음 → 제거" if "ANTHROPIC_API_KEY" in os.environ else "없음"
+        print(f"   🔒 cli 백엔드 과금 가드: ANTHROPIC_API_KEY {had} · CLAUDE_CODE_OAUTH_TOKEN "
+              f"{'있음' if env.get('CLAUDE_CODE_OAUTH_TOKEN') else '없음(로컬 로그인 사용)'}")
+        _cli_create._guard_logged = True
     last_err = None
     for attempt in range(3):
         try:
-            r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
+            r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, env=env)
         except subprocess.TimeoutExpired:
             last_err = f"timeout {timeout}s"
             print(f"   ⏱  claude -p 타임아웃 (시도 {attempt + 1}/3)")
@@ -112,6 +121,9 @@ def client():
     if LLM_BACKEND == "cli" or anthropic is None:
         return None
     return anthropic.Anthropic(max_retries=8)
+
+
+_cli_create._guard_logged = False
 
 
 def create(client, **kwargs):

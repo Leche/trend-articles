@@ -166,8 +166,10 @@ jobs:
         env:
           LLM_BACKEND: ${{ steps.backend.outputs.backend }}
           # cli 모드에선 API 키를 아예 안 넘긴다 — 키가 있으면 OAuth 토큰보다 우선돼 API 로 과금된다.
-          ANTHROPIC_API_KEY: ${{ steps.backend.outputs.backend == 'cli' && '' || secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ steps.backend.outputs.backend == 'cli' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          # ⚠️ `cond && '' || secret` 삼항은 빈 문자열이 거짓이라 시크릿으로 떨어진다(2026-10-13 과금 사고).
+          #    키는 다른 이름으로 받아 api 모드일 때만 bash 에서 export 한다. cli 모드 자식 프로세스는 llm.py 가 키를 지운다.
+          API_KEY_FOR_API_MODE: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ARTICLE_COUNT: ${{ github.event.inputs.article_count || '8' }}
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
@@ -175,7 +177,10 @@ jobs:
           FOR_TOMORROW: ${{ github.event.inputs.for_tomorrow || 'false' }}
           REFRESH_INTRO: ${{ github.event.inputs.refresh_intro || 'false' }}
           REFRESH_SO_WHAT: ${{ github.event.inputs.refresh_so_what || 'false' }}
-        run: python scripts/curate.py
+        run: |
+          if [ "${LLM_BACKEND}" = "api" ]; then export ANTHROPIC_API_KEY="${API_KEY_FOR_API_MODE}"; fi
+          unset API_KEY_FOR_API_MODE
+          python scripts/curate.py
 
       - name: Inject GNB into generated HTML
         run: python scripts/inject_gnb.py

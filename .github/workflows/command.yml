@@ -51,11 +51,16 @@ jobs:
       - name: Run command script
         env:
           LLM_BACKEND: ${{ steps.backend.outputs.backend }}
-          ANTHROPIC_API_KEY: ${{ steps.backend.outputs.backend == 'cli' && '' || secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ steps.backend.outputs.backend == 'cli' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          # ⚠️ `cond && '' || secret` 삼항은 빈 문자열이 거짓이라 시크릿으로 떨어진다(2026-10-13 과금 사고).
+          #    키는 다른 이름으로 받아 api 모드일 때만 bash 에서 export 한다. cli 모드 자식 프로세스는 llm.py 가 키를 지운다.
+          API_KEY_FOR_API_MODE: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           COMMAND_PROMPT: ${{ github.event.inputs.prompt }}
           TARGET_DATE: ${{ github.event.inputs.target_date || '' }}
-        run: python scripts/command.py
+        run: |
+          if [ "${LLM_BACKEND}" = "api" ]; then export ANTHROPIC_API_KEY="${API_KEY_FOR_API_MODE}"; fi
+          unset API_KEY_FOR_API_MODE
+          python scripts/command.py
 
       - name: Commit and push
         id: push
