@@ -831,6 +831,77 @@ def _clean_feed_text(s, max_len=220):
     return re.sub(r"\s+", " ", text).strip()[:max_len]
 
 
+def _feed_item_image(item_el):
+    """피드 항목의 대표 이미지 URL — media:content/thumbnail·enclosure 속성, 없으면 본문 HTML 의 첫 <img>.
+    본문 페이지를 봇으로 막는 사이트(Medium 계열 uxdesign.cc: 러너에서 403·Playwright 타임아웃)도
+    피드와 이미지 CDN 은 열려 있어서, og:image 를 못 얻을 때 썸네일 폴백으로 쓴다(2026-10-14)."""
+    for el in item_el.iter():
+        tag = el.tag.rsplit("}", 1)[-1]
+        url = el.get("url") or ""
+        if tag in ("content", "thumbnail") and url.startswith("http") and (el.get("medium") in (None, "image")):
+            return url
+        if tag == "enclosure" and url.startswith("http") and (el.get("type") or "").startswith("image"):
+            return url
+    for el in item_el.iter():
+        m = re.search(r'<img[^>]+src="(https?://[^"]+)"', el.text or "")
+        if m:
+            return m.group(1)
+    return ""
+
+
+_FEED_IMG_CACHE = {}
+
+
+def _medium_feed_image(url):
+    """Medium 계열(uxdesign.cc·*.medium.com·medium.com/@user) 기사의 대표 이미지를 그 퍼블리케이션 피드에서 찾는다.
+    서핏·웹 발굴로 들어와 피드 힌트가 없는 경우용. 피드는 최신 10개라 오래된 글이면 None."""
+    pu = urlparse(url)
+    host = pu.netloc.lower().replace("www.", "")
+    if host == "medium.com":
+        parts = [x for x in pu.path.split("/") if x]
+        if not parts:
+            return None
+        feed_url = f"https://medium.com/feed/{parts[0]}"
+    elif host == "uxdesign.cc" or host.endswith(".medium.com"):
+        feed_url = f"https://{host}/feed"
+    else:
+        return None
+    m = re.search(r"-([0-9a-f]{10,16})(?:$|[/?#])", pu.path)
+    key = m.group(1) if m else pu.path.rstrip("/").rsplit("/", 1)[-1]
+    if feed_url not in _FEED_IMG_CACHE:
+        try:
+            r = requests.get(feed_url, headers=HEADERS, timeout=15)
+            _FEED_IMG_CACHE[feed_url] = r.text if r.ok else ""
+        except Exception:
+            _FEED_IMG_CACHE[feed_url] = ""
+    for item in re.findall(r"<item>(.*?)</item>", _FEED_IMG_CACHE[feed_url], re.S):
+        if key and key in item:
+            im = re.search(r'<img[^>]+src="(https?://[^"]+)"', item)
+            return im.group(1) if im else None
+    return None
+
+
+def find_thumbnail(url, html, referer=None, image_hint=""):
+    """썸네일 base64: og:image → 피드 이미지 힌트 → Medium 피드 조회 순."""
+    referer = referer or url
+    if html:
+        og = extract_og_image(html, referer)
+        if og:
+            print(f"   🖼️  썸네일 발견: {og[:80]}...")
+            b64 = download_image_as_base64(og, referer=referer)
+            if b64:
+                return b64
+    for label, img in (("피드 이미지", image_hint), ("Medium 피드", None)):
+        if label == "Medium 피드":
+            img = _medium_feed_image(referer) or _medium_feed_image(url)
+        if img:
+            print(f"   🖼️  {label}로 폴백: {img[:80]}...")
+            b64 = download_image_as_base64(img)
+            if b64:
+                return b64
+    return None
+
+
 def _parse_feed(xml_text, feed_url):
     """RSS 2.0 / Atom → 후보 dict 목록. 네임스페이스는 태그의 끝 이름만 보고 무시한다."""
     import xml.etree.ElementTree as ET
@@ -867,6 +938,7 @@ def _parse_feed(xml_text, feed_url):
         desc_el = child(it, "description", "summary", "content", "encoded")
         d = _parse_feed_date(date_el.text if date_el is not None else "")
         out.append({
+            "image_hint": _feed_item_image(it),
             "url": link,
             "title_hint": _clean_feed_text(title_el.text if title_el is not None else "", 120),
             "summary_hint": _clean_feed_text(desc_el.text if desc_el is not None else ""),
@@ -1334,6 +1406,7 @@ def curate_with_claude(candidates):
             "title_hint": cand.get("title_hint", ""),
             "summary_hint": cand.get("summary_hint", ""),
             "date_hint": cand.get("date_hint", ""),
+            "image_hint": cand.get("image_hint", ""),
             "source": cand.get("source", ""),
             "select_reason": p.get("reason", ""),
             "design": bool(p.get("design")),
@@ -1485,14 +1558,8 @@ def enrich_articles(articles, target_count=None):
 
         # 페이지 접근 시도
         html = fetch_page(url)
-        thumb_b64 = None
-
-        if html:
-            # og:image 추출·다운로드는 실제 기사 URL(final_url) 기준
-            og_img = extract_og_image(html, final_url)
-            if og_img:
-                print(f"   🖼️  썸네일 발견: {og_img[:80]}...")
-                thumb_b64 = download_image_as_base64(og_img, referer=final_url)
+        # og:image 추출·다운로드는 실제 기사 URL(final_url) 기준. 못 얻으면 피드 이미지 → Medium 피드 폴백.
+        thumb_b64 = find_thumbnail(url, html, referer=final_url, image_hint=art.get("image_hint", ""))
 
         if thumb_b64:
             thumb_success.append(num)
@@ -2605,11 +2672,7 @@ def main():
 
             # 썸네일 다운로드
             html = fetch_page(new_url)
-            thumb_b64 = None
-            if html:
-                og_img = extract_og_image(html, new_url)
-                if og_img:
-                    thumb_b64 = download_image_as_base64(og_img, referer=new_url)
+            thumb_b64 = find_thumbnail(new_url, html)
 
             # 교체로 밀려나는 기존 기사를 '버려진 기사'로 기록 (향후 재추천 방지).
             # 같은 URL로 재교체하는 경우(자기 교체)는 제외.
