@@ -38,6 +38,10 @@ on:
         description: '인트로 + so-what 다시 쓰기 (true면 기사·헤드라인은 그대로 두고 두 문장을 새로 씀 — 모델 교체 후 기존 다이제스트용)'
         required: false
         default: 'false'
+      llm_backend:
+        description: '모델 호출 경로 — 비우면 레포 변수 LLM_BACKEND(없으면 api). api=Anthropic API 키(사비) / cli=Claude Code + 팀플랜 토큰'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -139,10 +143,31 @@ jobs:
         if: github.event.inputs.refresh_intro != 'true' && github.event.inputs.refresh_so_what != 'true'
         run: playwright install chromium --with-deps
 
+      # 모델 호출 경로 결정. cli 면 러너에 Claude Code 를 깔고 리체 팀플랜 토큰(CLAUDE_CODE_OAUTH_TOKEN,
+      # `claude setup-token`)으로 `claude -p` 를 돈다 — API 과금 없음 (2026-10-13). 기본은 레포 변수 LLM_BACKEND.
+      - name: Resolve LLM backend
+        id: backend
+        env:
+          INPUT_BACKEND: ${{ github.event.inputs.llm_backend || '' }}
+          VAR_BACKEND: ${{ vars.LLM_BACKEND || '' }}
+        run: |
+          B="${INPUT_BACKEND:-${VAR_BACKEND:-api}}"
+          echo "backend=${B}" >> "$GITHUB_OUTPUT"
+          echo "LLM backend: ${B}"
+
+      - name: Install Claude Code (cli backend)
+        if: steps.backend.outputs.backend == 'cli'
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+
       - name: Run curation script
         id: curate
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LLM_BACKEND: ${{ steps.backend.outputs.backend }}
+          # cli 모드에선 API 키를 아예 안 넘긴다 — 키가 있으면 OAuth 토큰보다 우선돼 API 로 과금된다.
+          ANTHROPIC_API_KEY: ${{ steps.backend.outputs.backend == 'cli' && '' || secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ steps.backend.outputs.backend == 'cli' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           ARTICLE_COUNT: ${{ github.event.inputs.article_count || '8' }}
           CUSTOM_DATE: ${{ github.event.inputs.custom_date || '' }}
           REPLACE_URLS: ${{ github.event.inputs.replace_urls || '' }}
