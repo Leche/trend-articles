@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-15",
+  "reserves": [
+    {
+      "title_ko": "Google Play, 나만을 위한 비공개 바이브 코딩 앱 지원",
+      "one_line": "Play 스토어 공개 없이 쓰는 개인 앱.",
+      "summary_1": "Google Play가 AI로 만든 개인용 앱을 스토어에 공개하지 않고 자기 기기에서 실행하는 기능을 내놨어요. 앱은 검색과 목록에 노출되지 않고 만든 사람만 쓸 수 있어요.",
+      "summary_2": "그동안은 안드로이드에서 쓰려면 Play에 공개해야 해서, 많은 이가 바이브 코딩을 웹 앱에 한정했어요. 이제 Google AI Studio로 만든 앱을 본인 기기에서 바로 실행해요. 기존 Play 정책은 지켜야 해요.",
+      "summary_3": "처음에는 미국의 만 18세 이상 이용자에게 제공돼요. 앞으로 신뢰하는 친구와 공유할 수 있게 되고, 인기가 생기면 심사를 거쳐 정식 공개 앱으로 전환할 수 있다고 해요.",
+      "url": "https://techcrunch.com/2026/10/13/google-play-now-supports-private-vibe-coded-apps-built-just-for-you/",
+      "link": "https://techcrunch.com/2026/10/13/google-play-now-supports-private-vibe-coded-apps-built-just-for-you/",
+      "source": "techcrunch.com",
+      "select_reason": "구글 플레이가 AI로 만든 개인용 안드로이드 앱을 공개 배포 없이 쓸 수 있게 열어줘, 앱 유통 방식이 바뀌는 신호예요.",
+      "headline": "구글 플레이가 스토어에 공개하지 않은 개인용 AI 앱 실행을 허용했다",
+      "so_what": "바이브 코딩으로 만든 도구를 웹 앱으로 우회하지 않고 내 폰에서 바로 써볼 수 있어요. 개인용 프로토타입을 검증하는 부담이 훨씬 가벼워져요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "디자인 시스템, 우리는 왜 서체 고민을 멈췄을까? (2)",
+      "one_line": "AI 시대에 다시 묻는 서체 고민.",
+      "summary_1": "AI가 화면을 그려주는 시대에 디자이너가 더 고민해야 할 것은 서체와 파운데이션이라는 글이에요. 제약이 있다는 것과 그 안에서 고민을 생략하는 것은 다르다고 짚어요.",
+      "summary_2": "AI는 학습 데이터가 많은 평균값을 잘 만들어요. 관성적인 폰트와 규격화된 시스템만 넣으면 수천 개의 화면도 차별화 없는 껍데기가 될 수 있다고 경고해요.",
+      "summary_3": "대안으로 제목에는 서브셋 경량화한 개성 있는 서체를 섞고, 타이포 스케일과 행간, 자간을 브랜드 규칙으로 다듬고, 가변 폰트 같은 새 시도를 개발팀과 검토하라고 제안해요.",
+      "url": "https://surfit.io/link/qrO9D",
+      "link": "https://blog.rightbrain.co.kr/?p=20036&ref=surfit.io",
+      "source": "blog.rightbrain.co.kr (via surfit)",
+      "select_reason": "디자인 시스템에서 서체 선택 고민을 멈춘 이유를 구체적인 사례로 다룬 디자이너 에세이예요.",
+      "headline": "한 디자이너가 AI가 만든 화면의 차별점을 서체에서 찾자고 제안했다",
+      "so_what": "AI가 평균적인 화면을 쉽게 찍어낼수록 브랜드를 구분하는 수단은 줄어들어요. 그래서 타이포 규칙이 더 중요해져요. 지금 쓰는 폰트와 스케일을 다시 점검해볼 때예요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "Apple, 스마트홈 액세서리 라인업 'Apple Home Collection' 공개",
+      "one_line": "LG·슈나이더와 만든 애플 스마트홈.",
+      "summary_1": "Apple이 LG전자, Schneider Electric과 함께 만든 스마트홈 액세서리 'Apple Home Collection'을 공개했어요. 실내외 카메라, 온도조절기, 온도 센서, 비디오 초인종, 도어록이 포함돼요.",
+      "summary_2": "iPhone으로 한 번 탭해 설정하고 Apple Home 앱 하나로 관리해요. 별도 앱이나 계정이 필요 없고, 모든 액세서리는 종단 간 암호화돼 제조사와 Apple도 데이터를 읽을 수 없어요.",
+      "summary_3": "기존 Works with Apple Home과 Matter 제품 위에 추천 제품군을 더하는 방식이에요. 전 제품은 12월부터, 일부는 2027년 초부터 구매할 수 있어요.",
+      "url": "https://www.apple.com/newsroom/2026/10/introducing-apple-home-collection-a-new-lineup-of-smart-home-accessories/",
+      "link": "https://www.apple.com/newsroom/2026/10/introducing-apple-home-collection-a-new-lineup-of-smart-home-accessories/",
+      "source": "apple.com",
+      "select_reason": "애플이 LG전자·슈나이더와 함께 스마트홈 액세서리 라인업을 내놓으며 홈 생태계를 넓혔다는 공식 발표예요.",
+      "headline": "애플이 LG·슈나이더와 함께 스마트홈 액세서리 라인업을 직접 꾸렸다",
+      "so_what": "별도 앱이나 계정 없이 Home 앱 하나로 설정부터 관리까지 끝나요. 여러 제조사 기기를 하나의 경험으로 묶는 온보딩 설계를 참고하기 좋은 사례예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
