@@ -1201,8 +1201,10 @@ SELECT_SCHEMA = {
                     "url": {"type": "string", "description": "후보 목록에 있는 URL 그대로"},
                     "reason": {"type": "string", "description": "선정 이유 한 문장"},
                     "design": {"type": "boolean", "description": "디자인 슬롯 기사면 true (선정 기준의 '디자인 슬롯' 정의)"},
+                    "kind": {"type": "string", "enum": ["news", "read"],
+                             "description": "news=회사·서비스·기관이 실제로 한 일(출시·중단·정책·사고·발언·인수), read=읽을거리(에세이·케이스 스터디·디자인 결과물·칼럼)"},
                 },
-                "required": ["url", "reason", "design"],
+                "required": ["url", "reason", "design", "kind"],
                 "additionalProperties": False,
             },
         }
@@ -1424,6 +1426,8 @@ def curate_with_claude(candidates):
 후보 중에서 서로 다른 기사 {select_count}개를 골라 URL 과 선정 이유(한 문장)를 주세요.
 **독자가 넣을 가능성이 높은 순서대로** 나열하세요 — 앞의 {ARTICLE_COUNT}개가 본문이 되고, 그다음 {RESERVE_COUNT}개는 독자가 본문 기사를 빼고 싶을 때 바로 바꿔 넣는 예비 기사가 됩니다.
 앞 {ARTICLE_COUNT}개 안에 design: true 가 {DESIGN_MIN}개 들어가게 하고, 예비 쪽에도 디자인 글 하나를 두면 좋아요.
+kind 는 둘 중 하나예요 — news: 회사·서비스·기관이 실제로 한 일(출시·중단·정책·사고·발언·인수) / read: 읽을거리(에세이·케이스 스터디·디자인 결과물 소개·칼럼).
+발행 순서는 코드가 정해요(뉴스가 앞, 읽을거리가 뒤). 디자인 슬롯은 보통 read 지만, 브랜드 로고 공개처럼 회사가 한 일이면 news 로 표시하세요.
 (나머지는 중복 제거·차단 도메인 제외에 대비한 여유분입니다.)
 **출처 다양성**: 같은 출처(사이트)에서 최대 2개까지만 — 이건 상한이지 목표가 아닙니다. 한 출처에서 2개를 채우려 하지 마세요.
 "(via surfit)"는 전달 경로 표시일 뿐이라 출처 상한은 실제 도메인 기준으로 세세요. 서핏 경유 후보는 국내 큐레이션 플랫폼이 이미 골라 올린 글이라 요약이 짧아도 동등하게 고려하세요.
@@ -1468,6 +1472,7 @@ def curate_with_claude(candidates):
             "source": cand.get("source", ""),
             "select_reason": p.get("reason", ""),
             "design": bool(p.get("design")),
+            "kind": "read" if p.get("kind") == "read" else "news",
         })
 
     print(f"✅ {len(articles)}개 기사 1차 선정")
@@ -1739,8 +1744,12 @@ def generate_intro(articles, lead_fixed=False, avoid_so_whats=None):
         lead_block = ("리드(lead_num): 편집자가 **1번 기사를 리드로 확정**했어요. lead_num 은 1로 답하고, "
                       "인트로 첫 문장은 반드시 1번 기사의 사건으로 시작하세요.")
     else:
-        lead_block = ("리드(lead_num): 위 헤드라인 중 독자가 가장 멈춰 볼 것 하나 — 그 기사 번호(1부터). "
-                      "중요도가 아니라 **훅의 세기**로 고르세요.")
+        news_count = sum(1 for a in articles if a.get("kind") != "read")
+        news_hint = (f" 1~{news_count}번이 뉴스, 그 뒤는 읽을거리예요. 리드는 **뉴스 중에서만** 고르세요."
+                     if 0 < news_count < len(articles) else "")
+        lead_block = ("리드(lead_num): 그날 **가장 큰 사건** 하나 — 그 기사 번호(1부터). 영향 범위가 넓고 많은 독자가 "
+                      "이미 들었거나 들어야 할 뉴스(빅테크 출시·정책 변화·대형 사고·국내 서비스의 큰 결정)를 고르세요. "
+                      "재미있거나 의외인 것이 아니라 그날의 머리기사감이어야 해요." + news_hint)
 
     prompt = f"""당신은 트렌드림이라는 프로덕트·기술 아티클 다이제스트의 큐레이터입니다.
 독자는 대부분 프로덕트 디자이너·메이커·기획자예요. 아래는 오늘 최종 선정된 기사 {len(articles)}개와 각 요약입니다.
@@ -2094,14 +2103,38 @@ def write_thumbnails(articles, out_dir):
     return written
 
 
+def apply_order_rules(articles):
+    """최초 큐레이션의 기사 순서 규칙 (2026-10-15 리체 지시 "순서에 규칙이 있으면 좋겠다").
+    9~10월 28일치의 최초 순서 vs 리체가 손본 최종 순서를 비교해 뽑은 규칙:
+      · 앞 5개(아지트 본문형) = 뉴스, 뒤 3개(아지트 링크형) = 읽을거리(에세이·케이스 스터디·디자인 글)
+        — 읽을거리 31건 중 23건이 최종 6~8번이었다.
+      · 1번 = 그날 가장 큰 사건 (generate_intro 의 lead_num, 뉴스 중에서만 고른다) — 모델이 '훅의 세기'로
+        고른 1번은 28일 중 19일 밀려났고, 최종 1번은 22일이 빅테크·국내 뉴스였다.
+      · 같은 묶음 안에서는 선정 순서(독자가 넣을 가능성 높은 순)를 유지한다.
+    교체 모드에선 호출하지 않는다 — 리체가 잡은 순서를 존중한다."""
+    news = [a for a in articles if a.get("kind") != "read"]
+    reads = [a for a in articles if a.get("kind") == "read"]
+    ordered = news + reads
+    for i, a in enumerate(ordered, 1):
+        a["article_num"] = i
+    print(f"🗂  순서 규칙: 뉴스 {len(news)}개 앞 · 읽을거리 {len(reads)}개 뒤"
+          + (f" ⚠️ 읽을거리가 {len(reads)}개라 본문 자리(5번)까지 들어감" if len(reads) > 3 else ""))
+    return ordered
+
+
 def generate_html(articles):
     """확정된 템플릿으로 HTML 생성"""
+
+    # 새 큐레이션은 순서 규칙(뉴스 앞·읽을거리 뒤)을 먼저 적용한다. 교체·인트로 다시 쓰기는 기존 순서 유지.
+    if not REPLACEMENTS and not (REFRESH_INTRO or REFRESH_SO_WHAT):
+        ordered = apply_order_rules(articles)
+        articles[:] = ordered
 
     # AI 인트로 + 기사별 헤드라인 + 읽기 시간
     intro_text, headlines, lead_num = generate_intro(articles)
     for art, h in zip(articles, headlines):
         art["headline"] = h
-    # 새 큐레이션에서만 훅이 가장 센 기사를 1번으로 올린다 — 아지트 글 제목이 1번 헤드라인이라
+    # 새 큐레이션에서만 그날 가장 큰 사건(뉴스 중)을 1번으로 올린다 — 아지트 글 제목이 1번 헤드라인이라
     # 제목·인트로·첫 카드가 한 이야기가 되게. 교체 모드는 리체가 잡은 순서를 존중한다.
     # (articles 를 제자리에서 바꾼다 — 뒤따르는 write_thumbnails() 가 새 번호로 파일을 쓴다)
     if lead_num and not REPLACEMENTS and 1 <= lead_num <= len(articles):
