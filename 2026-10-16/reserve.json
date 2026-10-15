@@ -2,20 +2,6 @@
   "date": "2026-10-16",
   "reserves": [
     {
-      "title_ko": "구글, 지능형 쇼핑 카트 '유니버설 카트' 미국 출시",
-      "one_line": "구글, 여러 쇼핑몰 통합 카트 출시.",
-      "summary_1": "구글이 10월 15일 미국에서 유니버설 카트를 출시했어요. 검색과 제미나이 앱에서 여러 쇼핑몰의 상품을 한 카트에 모아 관리해요.",
-      "summary_2": "가격 하락과 재입고를 알려 주고, 관련 프로모션 코드와 최적의 결제 수단도 제안해요. 브라우저 탭을 여러 개 열어 두던 불편을 줄이는 방향이에요.",
-      "summary_3": "결제는 구글 페이와 유니버설 커머스 프로토콜(UCP) 기반으로 하거나, 판매처 사이트로 넘겨 마무리할 수 있어요. 구글은 사용자가 통제하는 도구라고 설명해요.",
-      "url": "https://blog.google/products-and-platforms/products/shopping/universal-cart-launch/",
-      "link": "https://blog.google/products-and-platforms/products/shopping/universal-cart-launch/",
-      "source": "blog.google",
-      "select_reason": "구글이 I/O에서 예고한 AI 통합 쇼핑 카트 'Universal Cart'를 연말 쇼핑 시즌에 맞춰 정식 출시했어요. 구글 블로그 원문이에요.",
-      "headline": "구글이 검색에서 여러 쇼핑몰 상품을 한 카트에 모았다",
-      "so_what": "쇼핑을 시작하는 곳이 판매처 사이트에서 AI 어시스턴트로 옮겨가고 있어요. 이제 상품 페이지는 사람과 에이전트가 함께 읽는다고 보고 설계해야 해요.",
-      "thumb": "reserve-thumb-1.webp"
-    },
-    {
       "title_ko": "제미나이 AI Plus 구독자, 다음 달부터 Pro 모델 못 쓴다",
       "one_line": "AI Plus, 11월 13일부터 Pro 모델 제외.",
       "summary_1": "구글이 제미나이 AI Plus 구독자에게 11월 13일부터 Pro 모델 선택이 불가능해진다고 이메일로 알리기 시작했어요. Flash-Lite와 Flash만 쓸 수 있어요.",
