@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-19",
+  "reserves": [
+    {
+      "title_ko": "멕시코, Meta·TikTok·X에 청소년 보호 의무화",
+      "one_line": "멕시코의 청소년 보호 대통령령.",
+      "summary_1": "멕시코 대통령 클라우디아 셰인바움이 TikTok·Meta·X 등 플랫폼이 폭력·성적 콘텐츠로부터 아동을 보호하도록 하는 대통령령에 서명했어요.",
+      "summary_2": "플랫폼은 설계 단계부터 이런 콘텐츠 노출을 제한하고, 청소년 프로필의 위험 자료는 즉시 삭제해야 해요. 준수 기한은 한 달이고, 진전이 없으면 법제화하겠다고 밝혔어요.",
+      "summary_3": "10월 초 코아우일라주 고등학교 공격 사건이 배경이에요. 아동 보호를 설계 요건으로 요구하는 글로벌 규제 흐름이 멕시코에서도 이어진 거예요.",
+      "url": "https://www.aljazeera.com/news/2026/10/14/mexico-to-force-meta-tiktok-and-x-to-better-protect-minors-on-platform",
+      "link": "https://www.aljazeera.com/news/2026/10/14/mexico-to-force-meta-tiktok-and-x-to-better-protect-minors-on-platform",
+      "source": "aljazeera.com (web)",
+      "select_reason": "멕시코가 메타·틱톡·X에 한 달 안에 청소년 보호 조치를 따르라는 법령을 냈어요. 플랫폼 규제 흐름을 보여주는 소식이에요.",
+      "headline": "멕시코가 플랫폼에 한 달 안에 청소년 보호 설계를 요구했다",
+      "so_what": "아동 보호가 출시 뒤 덧붙이는 기능이 아니라 기본 설계 요건이 되고 있어요. 글로벌 서비스라면 국가별 청소년 기본값을 미리 준비해 둘 때예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "아스널의 역사를 글자로 옮긴 서체 '로캐슬'",
+      "one_line": "아스널 전용 블랙레터 서체 로캐슬.",
+      "summary_1": "아스널이 디자이너 데이비드 러드닉과 전용 서체 '로캐슬'을 만들었어요. 세 가지 굵기의 블랙레터이고 개발에 4년 넘게 걸렸으며, 구단 전설 데이비드 로캐슬의 이름을 땄어요.",
+      "summary_2": "과거 문장, 시즌권, 경기 프로그램, 팬들의 기념품을 연구했어요. 기존엔 일부 글자만 있던 블랙레터를 팬들이 알아보는 형태로 다양한 문구에 쓸 수 있는 체계로 확장했어요.",
+      "summary_3": "로캐슬은 서체 체계에서 패션·음악·예술 같은 문화 영역을 맡아요. 노스뱅크, 채프먼에 이어지며 주요 문화 활동과 특별한 순간에 선별적으로 쓸 계획이에요.",
+      "url": "https://designcompass.org/2026/10/13/arsenal-rocastle-blackletter-typeface-david-rudnick/",
+      "link": "https://designcompass.org/2026/10/13/arsenal-rocastle-blackletter-typeface-david-rudnick/",
+      "source": "designcompass.org",
+      "select_reason": "아스널이 구단의 역사 자료를 바탕으로 4년 넘게 만든 블랙레터 전용 서체를 소개해요. 디자인 결과물이 구체적인 예비 디자인 글이에요.",
+      "headline": "아스널이 4년 걸려 구단 전용 블랙레터 서체를 만들었다",
+      "so_what": "팬들이 기억하던 옛 글자를 체계로 키워 정체성 자산으로 만들었어요. 서체를 용도별로 나눠 쓰는 방식도 브랜드 시스템 설계에 참고할 만해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "지그재그, 성수동에 오프라인 팝업 '지그재그 익스프레스' 열다",
+      "one_line": "온라인 쇼핑몰의 오프라인 팝업.",
+      "summary_1": "지그재그가 16~18일 성수동에서 팝업 '지그재그 익스프레스'를 열었어요. 쇼핑몰 50곳의 약 630종을 입어보고 살 수 있고, 피팅룸 10개를 마련했어요.",
+      "summary_2": "1층은 6개 스타일 테마로, 2층은 지그재그 전용 쇼핑몰 11곳별로 구성했어요. 현장 결제 외에 상품 택의 QR코드로 앱에서 주문하면 현장에 없는 색상·옵션도 고를 수 있어요.",
+      "summary_3": "자체 제작 상품으로 승부하는 쇼핑몰이 늘면서 팬덤을 넓혀 브랜드로 키우려는 취지예요. 카카오스타일 대표는 쇼핑몰의 오프라인 진출 지원 계획도 밝혔어요.",
+      "url": "https://byline.network/2026/10/15_zigzag/",
+      "link": "https://byline.network/2026/10/15_zigzag/",
+      "source": "byline.network",
+      "select_reason": "지그재그가 성수동 팝업으로 입점 쇼핑몰의 오프라인 고객 접점을 넓혔어요. 국내 커머스 서비스가 실제로 실행한 전략이에요.",
+      "headline": "지그재그가 성수동 팝업에 쇼핑몰 50곳 옷 630종을 걸었다",
+      "so_what": "QR로 앱 주문을 이어 붙여 매장이 재고가 아닌 체험의 접점이 됐어요. 온라인 서비스가 오프라인 공간을 어떻게 설계할지 보여주는 사례예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
