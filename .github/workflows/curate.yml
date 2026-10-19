@@ -230,12 +230,25 @@ jobs:
           # 큐레이션 결과물과 같은 커밋에 넣어서, 큐레이션이 실패하면 예약도 안 생긴다.
           # 놀금(그 달 마지막 금요일)은 예약하지 않는다 — 원래 미루기 버튼으로 넘기는 날이라(repurpose.yml 과 같은 판정).
           # 이미 더 뒤 날짜 예약이 있으면 건드리지 않는다.
-          if [ "${FOR_TOMORROW,,}" = "true" ] && [ "${TEST_MODE,,}" != "true" ] && [ -z "${REPLACE_URLS}" ] \
+          # 2026-10-19: for_tomorrow 조건 제거 — 밤 실행이 팀플랜 한도로 실패해 리체가 새벽에 트리거로 수동 실행했더니
+          # 예약이 안 걸려 10시에 손으로 발행해야 했다. 이제 새 큐레이션이면 경로와 무관하게, 만든 날짜가
+          # 아직 발행 전(오늘 10:00 이전이거나 미래)일 때 예약한다.
+          if [ "${TEST_MODE,,}" != "true" ] && [ -z "${REPLACE_URLS}" ] \
              && [ "${REFRESH_INTRO}" != "true" ] && [ "${REFRESH_SO_WHAT}" != "true" ]; then
             python3 << 'PYEOF'
           import json, datetime, pathlib
           kst = datetime.timezone(datetime.timedelta(hours=9))
-          target = datetime.datetime.now(kst).date() + datetime.timedelta(days=1)
+          import os
+          now = datetime.datetime.now(kst)
+          cd = os.environ.get('CUSTOM_DATE', '').strip()
+          if cd:
+              target = datetime.date.fromisoformat(cd)
+          elif os.environ.get('FOR_TOMORROW', '').lower() == 'true':
+              target = now.date() + datetime.timedelta(days=1)
+          else:
+              target = now.date()
+          if target < now.date() or (target == now.date() and now.hour >= 10):
+              print(f"[auto-schedule] {target} 10:00 이 이미 지남 — 예약 안 함 (필요하면 트리거에서 즉시 게시)"); raise SystemExit
           tgt_s = target.isoformat()
           if not pathlib.Path(tgt_s, 'index.html').exists():
               print(f"[auto-schedule] {tgt_s}/index.html 없음 — 예약 안 함"); raise SystemExit
