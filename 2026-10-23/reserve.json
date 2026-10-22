@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-23",
+  "reserves": [
+    {
+      "title_ko": "1Password, AI 에이전트가 비밀번호를 보지 않고 로그인하게 한다",
+      "one_line": "비밀번호 노출 없는 에이전트 로그인.",
+      "summary_1": "1Password가 AI 에이전트가 비밀번호를 보거나 다루지 않고도 계정에 로그인하게 하는 '1Password for Agents'를 선보였어요. 모든 계정에 자유롭게 접근하는 것은 아니에요.",
+      "summary_2": "에이전트가 고유한 디지털 키로 신원을 증명하면, 앱이 어떤 계정 정보가 왜 필요한지 알림을 보내요. 승인하면 1Password가 에이전트 대신 로그인 정보를 채워 넣어요.",
+      "summary_3": "승인은 사용자 본인 기기에서 하며 2단계 인증과 비슷한 방식이에요. CEO는 에이전트에 영구 접근 권한을 넘기지 않고도 일을 맡길 수 있는 신뢰 계층이라고 설명했어요.",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/1016399/1password-ai-agent-password-sign-in",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1016399/1password-ai-agent-password-sign-in",
+      "source": "theverge.com",
+      "select_reason": "1Password가 AI 에이전트가 비밀번호를 보지 않고도 로그인하게 해 주는 기능을 내놨습니다. 에이전트 시대에 신뢰 문제를 어떻게 푸는지 보여 주는 출시입니다.",
+      "headline": "1Password가 에이전트 대신 로그인 정보를 채워 넣는다",
+      "so_what": "에이전트에 비밀번호를 통째로 넘기지 않고 필요할 때마다 승인하는 방식이 생겼어요. 권한을 맡기는 흐름을 설계할 때 기준으로 삼을 만해요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "KB증권, 25개 AI 에이전트를 하나로 묶은 '깨비AI'",
+      "one_line": "25개 에이전트를 통합한 KB증권 깨비AI.",
+      "summary_1": "KB증권은 임직원용 통합 AI 에이전트 '깨비AI'로 25개 AI 에이전트와 140개 데이터 저장소를 하나로 통합했어요. 업무마다 에이전트를 따로 만들던 방식에서 슈퍼 에이전트 구조로 바꿨어요.",
+      "summary_2": "회사에 따르면 IPO 수요예측은 7~8시간에서 30분~1시간으로, 불완전판매 점검은 약 1시간에서 5분으로 줄었어요. 서비스 시작 이후 이용자 수와 이용량은 17.5배 이상 늘었어요.",
+      "summary_3": "AI 결과는 중요도에 따라 사람이 검토하고, 자금 이동이 걸린 업무는 반드시 사람이 승인해요. 다음 달부터 KB금융 계열사에 적용하고 B2B 사업화도 단계적으로 추진할 계획이에요.",
+      "url": "https://byline.network/2026/10/1021-10/",
+      "link": "https://byline.network/2026/10/1021-10/",
+      "source": "byline.network (web)",
+      "select_reason": "KB증권이 따로 돌던 AI 에이전트 25개를 서비스 하나로 묶었습니다. 국내 금융권에서 AI 서비스 구조를 실제로 바꾼 사례입니다.",
+      "headline": "KB증권이 25개 AI 에이전트를 깨비AI 하나로 합쳤다",
+      "so_what": "업무마다 에이전트를 따로 두지 않고 한 창구로 묶자 이용량이 17배 넘게 늘었어요. 자금 이동만큼은 사람이 승인하도록 남긴 점도 눈여겨볼 만해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "디자인 대 ADHD: 'ADHD 친화 디자인'은 정말 가능한가",
+      "one_line": "ADHD 친화 디자인 통념에 던진 반론.",
+      "summary_1": "흔히 ADHD 친화 디자인으로 권하는 복잡함 줄이기, 방해 요소 피하기, 정보 구조 단순화는 진정한 해법이 아니라고 저자는 주장해요. 진짜 해법은 더 정교하고 어렵다고 봐요.",
+      "summary_2": "글은 팝업 광고를 만든 Ethan Zuckerman의 사과에서 시작해요. 팝업 이후 공격적인 광고가 늘었고, 알림과 이메일로 사용자의 주의를 끄는 소란스러운 인터넷이 됐다고 짚어요.",
+      "summary_3": "주변 모든 것이 주의를 끌려는 환경에서 주의력이 흐트러진 사람이 어떻게 집중하고 결정을 내리느냐는 질문을 던져요. 개별 화면 개선을 넘어 제품과 시스템을 돌아보게 해요.",
+      "url": "https://uxdesign.cc/design-vs-adhd-4411c3b81d1b?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/design-vs-adhd-4411c3b81d1b?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "흔히 말하는 'ADHD 친화 디자인' 권장 사항을 하나씩 따져 보는 글입니다. 예비 디자인 읽을거리로 둡니다.",
+      "headline": "한 디자이너가 ADHD 친화 디자인의 단순화 공식을 반박했다",
+      "so_what": "화면을 덜어내는 것만으로는 부족하다는 주장이에요. 알림과 광고로 주의를 빼앗는 제품 구조부터 다시 보게 해요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
