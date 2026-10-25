@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-26",
+  "reserves": [
+    {
+      "title_ko": "블루 플래닛 III, AI 시대에 거친 면을 그대로 남기다",
+      "one_line": "AI 시대, 거친 영상으로 진짜임을 증명.",
+      "summary_1": "BBC 〈블루 플래닛 III〉는 예전 같으면 잘라냈을 완벽하지 않은 장면을 그대로 넣었어요. 너무 매끈한 영상은 AI의 단서가 될 수 있어서 진짜임을 보여주려는 선택이에요.",
+      "summary_2": "총괄 프로듀서는 예전엔 플랑크톤이 많거나 수질이 나쁘면 컷을 버렸고 배나 부표도 프레임 밖으로 뺐다고 말했어요. 이번엔 그런 요소를 남겨 더 유기적인 바다를 보여줘요.",
+      "summary_3": "시리즈엔 해면으로 구멍을 막아 물고기를 잡는 돌고래와 줄지어 먹이를 먹는 게 20만 마리가 나와요. 제작진은 실제 바다 생물이 AI의 상상보다 더 놀랍다고 말해요.",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/1018205/blue-planet-iii-authentic-organic-ai",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1018205/blue-planet-iii-authentic-organic-ai",
+      "source": "theverge.com",
+      "select_reason": "AI 시대에 진짜임을 보여주려고 BBC 블루 플래닛 III가 일부러 매끄럽지 않은 장면을 남긴 제작 결정을 다뤄요. 미감과 신뢰가 어떻게 연결되는지 생각해볼 수 있어요.",
+      "headline": "BBC 블루 플래닛 III가 버리던 탁한 바다 장면을 그대로 남겼다",
+      "so_what": "너무 매끈하면 오히려 AI처럼 보이는 지금은 다듬지 않은 흔적이 진짜임을 보여주는 증거가 돼요. 결과물을 얼마나 다듬을지 다시 생각해 볼 만해요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "우버는 코드 지우는 AI에게 무엇을 맡기지 않았을까",
+      "one_line": "우버 AutoClean, 수정 가능 파일을 제한.",
+      "summary_1": "우버가 공개한 AutoClean은 다 쓰고 남은 피처 플래그를 찾아 코드를 지우고, 깨진 테스트를 고치고, 검증까지 마친 diff를 담당 팀에 보내는 시스템이에요.",
+      "summary_2": "우버는 몇 년간 이 시스템으로 플래그 1만 6천 개 이상, 코드 100만 줄 이상을 정리했다고 밝혔어요. AI가 이미 돌아가는 프로덕션 코드를 지운다는 점이 핵심이에요.",
+      "summary_3": "글은 에이전트가 무엇을 했는지보다 우버가 무엇을 맡기지 않았는지에 주목해요. 고칠 수 있는 파일 자체를 제한했다는 점이 핵심이에요. 인자 제거는 모든 호출 지점을 확인해야 해요.",
+      "url": "https://surfit.io/link/yr6dB",
+      "link": "https://inlevel9.com/issues/uber-autoclean-flag-cleanup?ref=surfit.io",
+      "source": "inlevel9.com (via surfit)",
+      "select_reason": "우버가 코드 정리 AI가 고칠 수 있는 파일 범위를 어떻게 제한했는지 보여주는 글로, 기업이 AI 도입 범위를 실제로 정한 결정 사례예요.",
+      "headline": "우버가 코드 지우는 AI가 고칠 수 있는 파일을 제한했다",
+      "so_what": "AI에게 일을 맡길 땐 무엇을 할 수 있는지보다 어디까지 손대게 둘지를 먼저 정해야 해요. 실제 서비스에 AI를 붙일 때 참고하기 좋은 설계예요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "삼성월렛 머니·포인트, 출시 1주년 만에 가입자 300만 명 돌파",
+      "one_line": "삼성월렛 머니·포인트 가입자 300만 돌파.",
+      "summary_1": "삼성월렛 머니·포인트가 출시 1주년에 가입자 300만 명을 넘었어요. 두 달 만에 100만 명을 달성했고, 삼성은 실적·한도 없는 적립, 모든 가맹점 사용, 즉시 현금처럼 쓰는 포인트를 성장 배경으로 꼽았어요.",
+      "summary_2": "20일부터 앱 업데이트로 포인트 등급제와 해외 결제를 순차 추가해요. 등급은 Solar, Lunar, Sky, Young 4단계이고, 만 14~29세 Young 등급은 결제 시 3%를 추가 적립해요.",
+      "summary_3": "혜택 탭에는 미니 게임 14종이 생겨요. 27일부터 첫 결제 시 5,000포인트 지급, 해외 결제 2.5% 추가 적립 등 기념 이벤트도 열려요.",
+      "url": "https://news.samsung.com/kr/%ec%82%bc%ec%84%b1%ec%a0%84%ec%9e%90-%ec%82%bc%ec%84%b1%ec%9b%94%eb%a0%9b-%eb%a8%b8%eb%8b%88%c2%b7%ed%8f%ac%ec%9d%b8%ed%8a%b8-%ec%84%9c%eb%b9%84%ec%8a%a4-%ec%b6%9c%ec%8b%9c-1%ec%a3%bc%eb%85%84",
+      "link": "https://news.samsung.com/kr/%ec%82%bc%ec%84%b1%ec%a0%84%ec%9e%90-%ec%82%bc%ec%84%b1%ec%9b%94%eb%a0%9b-%eb%a8%b8%eb%8b%88%c2%b7%ed%8f%ac%ec%9d%b8%ed%8a%b8-%ec%84%9c%eb%b9%84%ec%8a%a4-%ec%b6%9c%ec%8b%9c-1%ec%a3%bc%eb%85%84",
+      "source": "news.samsung.com",
+      "select_reason": "삼성월렛 머니·포인트가 출시 1년 만에 가입자 300만 명을 넘었어요. 국내 금융 서비스의 성장 지표를 보여주는 소식이에요.",
+      "headline": "삼성월렛 머니·포인트가 1년 만에 가입자 300만 명을 넘었다",
+      "so_what": "실적 조건 없는 적립처럼 단순한 혜택이 빠르게 사용자를 모았어요. 이제 등급제와 미니 게임으로 계속 쓰게 만드는 단계로 넘어가요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
