@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-27",
+  "reserves": [
+    {
+      "title_ko": "1Password, AI 에이전트가 비밀번호를 보지 않고 대신 로그인하는 기능 공개",
+      "one_line": "비밀번호 없이 에이전트가 로그인.",
+      "summary_1": "1Password가 'Agents용 1Password'를 내놓았어요. 사용자가 AI 에이전트에게 개인 계정 로그인을 맡기되 에이전트는 자격 증명을 볼 수 없어요.",
+      "summary_2": "에이전트가 로그인을 시도하면 고유 디지털 키로 신원을 확인하고, 사용자에게 알림이 가요. 사용자가 승인하면 1Password가 대신 자격 증명을 입력해요. Claude Duet, ChatGPT Work, Grok Bot 등을 고를 수 있어요.",
+      "summary_3": "같은 날 악시오스는 미국 은행들이 사용자 계정 안의 에이전트 활동을 감지하기 시작했다고 보도했어요. 은행 대부분이 사용자 요청에서 나온 활동인지 구분하지 못해 문제가 크다고 해요.",
+      "url": "https://techcrunch.com/2026/10/22/1password-launches-a-way-for-ai-agents-to-log-in-on-your-behalf-without-seeing-your-password/",
+      "link": "https://techcrunch.com/2026/10/22/1password-launches-a-way-for-ai-agents-to-log-in-on-your-behalf-without-seeing-your-password/",
+      "source": "techcrunch.com",
+      "select_reason": "1Password가 AI 에이전트에게 비밀번호를 보여주지 않고도 대신 로그인하게 하는 기능을 냈어요. 에이전트 시대에 맞춘 구체적인 출시예요.",
+      "headline": "1Password가 비밀번호를 보여주지 않고 AI 에이전트를 로그인시킨다",
+      "so_what": "에이전트에게 일을 맡길 때 권한과 승인 과정을 어떻게 보여줄지가 이제 설계 과제예요. 은행들조차 아직 사람과 에이전트를 구분하지 못하고 있어요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "금감원 \"AI 보안 역량 갖춘 금융사부터 망분리 해제 검토\"",
+      "one_line": "금감원의 단계적 망분리 해제 검토.",
+      "summary_1": "금융감독원 이석 국장이 서울핀테크위크 2026에서 AI 보안 역량이 충분한 금융사부터 망분리 규제를 전면 해제하는 방안을 검토 중이라고 밝혔어요. 망분리는 AI 시대에 맞지 않고 경쟁력을 떨어뜨린다는 지적이 있었어요.",
+      "summary_2": "금융당국은 2024년 8월 로드맵 발표 후 규제를 단계적으로 완화하고 있어요. 6월 49곳이 신청해 10곳을 골라 1차 테스트를 했고, 결과를 공유하며 2·3차 테스트를 늘릴 계획이에요.",
+      "summary_3": "AI 의사결정의 책임은 사람과 금융사에 있다고 강조했어요. 자본시장연구원 이성복 위원은 AI가 새로운 고객 접점이 될 수 있지만 비용 때문에 내부 업무 활용에 머문다고 봤어요.",
+      "url": "https://byline.network/2026/10/1026-6/",
+      "link": "https://byline.network/2026/10/1026-6/",
+      "source": "byline.network",
+      "select_reason": "금감원이 AI 보안 역량을 갖춘 금융사부터 망분리 규제를 해제하겠다고 밝혔어요. 국내 금융 서비스의 AI 도입에 영향을 주는 규제 소식이에요.",
+      "headline": "금감원이 AI 보안을 갖춘 금융사부터 망분리 해제를 검토한다",
+      "so_what": "금융 서비스에서도 외부 AI를 쓸 길이 열리고 있어요. 다만 책임은 금융사에 남으니, 사람이 확인하는 단계를 설계에 꼭 넣어야 해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "이제 애플 TV에서 인스타그램 릴스를 볼 수 있어요",
+      "one_line": "애플 TV로 확장한 인스타그램.",
+      "summary_1": "인스타그램이 애플 TV용 앱 'Instagram for TV'를 조용히 출시했어요. 맥루머스가 10월 23일 앱스토어에서 애플 TV 호환 추가를 확인했고, 18일 기록에는 아이패드와 iOS만 있었어요.",
+      "summary_2": "릴스, 라이브 스트림 등 영상 콘텐츠를 큰 화면에 맞춘 앱이에요. 지난해 12월 테스트를 시작했고, 6월 새 기능을 내놓았으며 파이어 TV, 삼성 스마트 TV, 구글 TV에서도 쓸 수 있어요.",
+      "summary_3": "더버지는 인스타그램이 장편·에피소드형 콘텐츠로 확장하고 마이크로드라마 인기에 올라타려는 전략에서 이 앱이 중요하다고 봤어요. 거실로의 확장이 이어지고 있어요.",
+      "url": "https://www.theverge.com/tech/1018253/now-you-can-watch-instagram-reels-on-your-apple-tv",
+      "link": "https://www.theverge.com/tech/1018253/now-you-can-watch-instagram-reels-on-your-apple-tv",
+      "source": "theverge.com",
+      "select_reason": "인스타그램이 애플 TV 앱을 내고 거실 화면으로 넓혀 가는 플랫폼 확장 소식이에요.",
+      "headline": "인스타그램이 애플 TV 앱을 공지 없이 앱스토어에 올렸다",
+      "so_what": "폰으로 보던 세로 숏폼을 이제 소파에 앉아 리모컨으로 봐요. 작은 화면에 맞춘 콘텐츠와 조작을 큰 화면으로 어떻게 옮길지 참고할 만해요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
