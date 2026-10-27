@@ -16,20 +16,6 @@
       "thumb": "reserve-thumb-1.webp"
     },
     {
-      "title_ko": "구글 포토, 맞춤 설정 가능한 '컬렉션' 탭으로 개편",
-      "one_line": "직접 고르는 구글 포토 컬렉션 탭.",
-      "summary_1": "안드로이드용 구글 포토가 컬렉션 탭을 맞춤 설정 중심으로 개편했어요. 이전에는 2×2 격자에 큰 카드와 목록이 이어지는 구성이었어요.",
-      "summary_2": "맨 위 '고정됨' 섹션에서 보여줄 카드를 고르며, 기본값은 즐겨찾기, 스크린샷, 휴지통이에요. 이 섹션은 없앨 수도 있어요. 각 섹션은 숨기거나 순서를 바꿀 수 있고 '모두 보기'로 전체 화면에 갈 수 있어요.",
-      "summary_3": "하단에는 '기타 컬렉션' 격자와 '순서 변경' 버튼이 있어요. 구글 포토 7.97과 함께 서버 측 업데이트로 배포 중이고, 7월 플로팅 내비게이션 바에 이은 개편이에요.",
-      "url": "https://9to5google.com/2026/10/26/google-photos-collections-redesign/",
-      "link": "https://9to5google.com/2026/10/26/google-photos-collections-redesign/",
-      "source": "9to5google.com",
-      "select_reason": "구글 포토가 하단 플로팅 내비게이션에 이어 '모음' 탭을 사용자가 직접 바꿀 수 있게 다시 디자인했습니다.",
-      "headline": "구글 포토가 컬렉션 탭 구성을 사용자가 직접 고르게 바꿨다",
-      "so_what": "정해진 화면 대신 고정·숨김·순서 변경을 사용자에게 맡겼어요. 쌓여만 가는 콘텐츠를 정리하는 화면을 어떻게 설계할지 참고할 만해요.",
-      "thumb": "reserve-thumb-2.webp"
-    },
-    {
       "title_ko": "Opera One, 맥에서 애플 파운데이션 모델을 브라우저로 직접 실행",
       "one_line": "브라우저에서 로컬 AI를 쓰는 Opera One.",
       "summary_1": "Opera One이 제안 웹 표준 WebAI로 기기에서 돌아가는 로컬 AI 모델을 쓰는 프리뷰 기능을 시작했어요. Opera GX와 Neon도 뒤따라요.",

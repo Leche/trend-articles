@@ -953,5 +953,10 @@
     "url": "https://www.stepsecurity.io/blog/opencode-security-breach",
     "title": "OpenCode 보안 침해: 외부 AI 제공자를 연결한 콘솔 사용자가 영향받아",
     "rejected_at": "2026-10-27"
+  },
+  {
+    "url": "https://openai.com/index/chatgpt-ads-expands-26-new-countries",
+    "title": "ChatGPT 광고, 26개국 추가 확대로 총 89개국",
+    "rejected_at": "2026-10-28"
   }
 ]
