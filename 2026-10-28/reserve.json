@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-28",
+  "reserves": [
+    {
+      "title_ko": "Anthropic 보고서: AI 에이전트가 일과 고용을 바꾸는 방식",
+      "one_line": "에이전트 확산 속 달라진 Anthropic 고용.",
+      "summary_1": "Anthropic은 주니어 기술직 채용 비중을 줄였어요. 같은 시기 AI 에이전트 근무 시간이 급증해 8월에는 상호작용형 에이전트 시간이 직원의 6배였어요.",
+      "summary_2": "에이전트가 퍼지며 1인당 코드 생산, 영업 성사, 계약 처리가 늘었어요. 이제 병목은 사람의 주의력이에요. 비기술직도 에이전트 결과를 다 읽으면 주 근무시간의 절반이 걸려요.",
+      "summary_3": "직원들은 가시성 도구를 만들고 에이전트 파이프라인을 감시하는 '메타 업무'를 해요. 채용 담당자도 기술 전문성보다 자율성과 판단력을 더 중시해요.",
+      "url": "https://www.anthropic.com/research/employment-at-anthropic",
+      "link": "https://www.anthropic.com/research/employment-at-anthropic",
+      "source": "anthropic.com (web)",
+      "select_reason": "주니어 채용 비중이 27%에서 9%로 줄었다는 등, AI 회사가 자기 조직 변화를 실제 수치로 공개한 보고서입니다.",
+      "headline": "Anthropic에서 AI 에이전트 근무 시간이 직원의 6배를 넘었다",
+      "so_what": "에이전트가 일을 더 많이 할수록 사람의 주의력이 병목이 돼요. 결과를 검토하고 감독하는 흐름을 어떻게 설계할지가 이제 핵심 과제예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "구글 포토, 맞춤 설정 가능한 '컬렉션' 탭으로 개편",
+      "one_line": "직접 고르는 구글 포토 컬렉션 탭.",
+      "summary_1": "안드로이드용 구글 포토가 컬렉션 탭을 맞춤 설정 중심으로 개편했어요. 이전에는 2×2 격자에 큰 카드와 목록이 이어지는 구성이었어요.",
+      "summary_2": "맨 위 '고정됨' 섹션에서 보여줄 카드를 고르며, 기본값은 즐겨찾기, 스크린샷, 휴지통이에요. 이 섹션은 없앨 수도 있어요. 각 섹션은 숨기거나 순서를 바꿀 수 있고 '모두 보기'로 전체 화면에 갈 수 있어요.",
+      "summary_3": "하단에는 '기타 컬렉션' 격자와 '순서 변경' 버튼이 있어요. 구글 포토 7.97과 함께 서버 측 업데이트로 배포 중이고, 7월 플로팅 내비게이션 바에 이은 개편이에요.",
+      "url": "https://9to5google.com/2026/10/26/google-photos-collections-redesign/",
+      "link": "https://9to5google.com/2026/10/26/google-photos-collections-redesign/",
+      "source": "9to5google.com",
+      "select_reason": "구글 포토가 하단 플로팅 내비게이션에 이어 '모음' 탭을 사용자가 직접 바꿀 수 있게 다시 디자인했습니다.",
+      "headline": "구글 포토가 컬렉션 탭 구성을 사용자가 직접 고르게 바꿨다",
+      "so_what": "정해진 화면 대신 고정·숨김·순서 변경을 사용자에게 맡겼어요. 쌓여만 가는 콘텐츠를 정리하는 화면을 어떻게 설계할지 참고할 만해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "Opera One, 맥에서 애플 파운데이션 모델을 브라우저로 직접 실행",
+      "one_line": "브라우저에서 로컬 AI를 쓰는 Opera One.",
+      "summary_1": "Opera One이 제안 웹 표준 WebAI로 기기에서 돌아가는 로컬 AI 모델을 쓰는 프리뷰 기능을 시작했어요. Opera GX와 Neon도 뒤따라요.",
+      "summary_2": "구글 Gemma와 맥의 애플 온디바이스 파운데이션 모델을 쓸 수 있어요. 구독은 필요 없고 선택 기능이며, 모델에 접근할 사이트도 사용자가 정해요.",
+      "summary_3": "개발자는 AI 인프라나 요청별 비용 없이 AI 기능을 넣을 수 있어요. 또 HTML-in-Canvas로 작동하는 웹페이지를 2D·3D 장면에 넣을 수 있어요.",
+      "url": "https://9to5mac.com/2026/10/27/opera-one-now-lets-mac-users-run-apples-foundation-model-directly-in-the-browser/",
+      "link": "https://9to5mac.com/2026/10/27/opera-one-now-lets-mac-users-run-apples-foundation-model-directly-in-the-browser/",
+      "source": "9to5mac.com",
+      "select_reason": "오페라가 제안 단계의 웹 표준 WebAI로 애플 파운데이션 모델을 브라우저 안에서 돌리는 기능을 내놓았습니다.",
+      "headline": "Opera One이 맥의 애플 온디바이스 모델을 웹페이지에 열었다",
+      "so_what": "서버 비용 없이 웹에서 AI 기능을 넣을 수 있게 돼요. 어떤 사이트가 모델을 쓸지 사용자가 정한다는 점도 권한 설계에 참고가 돼요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
