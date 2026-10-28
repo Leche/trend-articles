@@ -1,47 +1,4 @@
 {
   "date": "2026-10-29",
-  "reserves": [
-    {
-      "title_ko": "아마존 2026년 10월 하드웨어 발표 총정리",
-      "one_line": "화면 중심 신형 에코 라인업.",
-      "summary_1": "아마존이 새 에코 기기들을 공개했어요. 알렉사 포토 프레임, 에코 타임 스마트 알람시계, 홈 카메라 달린 화면 없는 에코 스튜디오, 새로 디자인한 에코 닷, 에코 쇼 16이에요.",
-      "summary_2": "에코 쇼 16은 우퍼 8개를 갖추고 터치로 파이어 TV 경험을 쓸 수 있는 플래그십이에요. 12월 16일 출시이고, 나머지는 지금 살 수 있어요.",
-      "summary_3": "올해는 가을 대형 행사 대신 10월 내내 제품별 소규모 발표를 이어갔어요. 이번 주제는 큰 화면과 화면 없는 기기로, 알렉사 플러스 업데이트도 함께 나왔어요.",
-      "url": "https://www.theverge.com/tech/1020403/everything-announced-at-amazons-october-2026-hardware-launch",
-      "link": "https://www.theverge.com/tech/1020403/everything-announced-at-amazons-october-2026-hardware-launch",
-      "source": "theverge.com",
-      "select_reason": "아마존이 큰 무대 행사 대신 10월 내내 따로따로 발표하는 방식으로 바꾸고 에코와 알렉사 플러스 신제품을 정리한, 빅테크 하드웨어 전략 소식입니다.",
-      "headline": "아마존이 화면 없는 에코 스튜디오에 홈 카메라를 달았다",
-      "so_what": "큰 화면 기기와 화면 없는 기기를 한꺼번에 내놨어요. 집 안 기기마다 알렉사와 만나는 방식이 어떻게 달라지는지 비교해 보기 좋아요.",
-      "thumb": "reserve-thumb-1.webp"
-    },
-    {
-      "title_ko": "AI가 먼저 거는 전화는 어떻게 만들까: 채널톡 FDE 이야기 2",
-      "one_line": "LLM을 분류에 쓰는 아웃바운드 콜.",
-      "summary_1": "채널톡 FDE팀이 미납 안내·방문 일정 확인 같은 아웃바운드 콜 엔진을 만든 과정을 소개해요. 대본이 미리 있으니 LLM은 답변을 분기로 분류만 하고, 엔진이 지정 발화를 실행해요.",
-      "summary_2": "공통 요청은 전역 규칙으로 분리해 노드보다 우선 처리해요. 주관식 답변은 값을 수집·확인·정정하되 완료 조건은 엔진이 관리해요. 응답 지연을 줄이는 것도 핵심 과제였어요.",
-      "summary_3": "말을 멈춘 뒤 이어질지를 LLM이 의미로 판단하는 SVAD도 도입했어요. LLM의 자유도를 좁혀 안정성과 속도를 챙기는 음성 AI 설계 사례예요.",
-      "url": "https://surfit.io/link/N1Wlg",
-      "link": "https://tech.channel.io/kr/articles/e7597f39?ref=surfit.io",
-      "source": "tech.channel.io (via surfit)",
-      "select_reason": "채널톡이 AI가 먼저 거는 전화를 설계하면서 LLM을 발화 생성이 아니라 분류에 쓰기로 한, 프로덕트 결정 케이스 스터디입니다.",
-      "headline": "채널톡이 전화 AI의 LLM에게 답변 분류만 맡겼다",
-      "so_what": "LLM이 할 일을 좁힐수록 응답이 빠르고 안정적이었어요. 음성 AI 흐름을 설계할 때 어디까지 모델에 맡길지 정하는 기준이 돼요.",
-      "thumb": "reserve-thumb-2.webp"
-    },
-    {
-      "title_ko": "칠 산스, 기하학적 골격에 자연스러운 곡선을 더한 서체",
-      "one_line": "친근한 곡선의 기하학적 산세리프.",
-      "summary_1": "오스트리아 독립 서체 제작사 칠 타입이 산세리프 서체 칠 산스를 선보였어요. 기하학적 구조에 자연스러운 곡선을 더해 친근함과 진솔함을 전하려는 서체예요.",
-      "summary_2": "헤어라인부터 울트라까지 8개 굵기에 이탤릭을 더해 16개 스타일이에요. 소문자 m, n, u, w, y를 둥근 형태로 바꾸는 대체 글리프와 올드스타일·고정폭 숫자, 합자, 분수 기능도 있어요.",
-      "summary_3": "굵기뿐 아니라 개별 글자의 곡선과 구조까지 고르게 설계한 점이 특징이에요. 칠 타입은 2024년 베다드 실랴크가 세웠고, 제품 페이지에서 기능을 켜고 끄며 비교할 수 있어요.",
-      "url": "https://designcompass.org/2026/10/28/chill-sans-chill-type/",
-      "link": "https://designcompass.org/2026/10/28/chill-sans-chill-type/",
-      "source": "designcompass.org",
-      "select_reason": "기하학적 골격에 자연스러운 곡선을 더한 새 산세리프 서체 칠 산스 소개로, 서체 디자인 결과물을 원하는 독자에게 맞는 예비 디자인 기사입니다.",
-      "headline": "칠 타입이 m·n·u를 둥글게 바꾸는 산세리프를 냈다",
-      "so_what": "대체 글리프 하나로 같은 서체에서 다른 인상을 낼 수 있어요. 브랜드 톤을 부드럽게 바꾸고 싶을 때 써볼 만한 선택지예요.",
-      "thumb": "reserve-thumb-3.webp"
-    }
-  ]
+  "reserves": []
 }
