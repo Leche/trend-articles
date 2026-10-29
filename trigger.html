@@ -1519,12 +1519,15 @@ function renderDashboard(state) {
     const hh = String(state.agitTime.getHours()).padStart(2, '0');
     const mm = String(state.agitTime.getMinutes()).padStart(2, '0');
     agit.innerHTML = `<span class="dash-dot green"></span><span>오늘 게시 완료 (${hh}:${mm})</span>`;
+  } else if (state.agitStatus === 'posting') {
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>지금 게시 중 — 1~2분 뒤 올라가요</span>';
   } else if (weekend) {
     agit.innerHTML = '<span class="dash-dot gray"></span><span>주말 (자동 게시 없음)</span>';
   } else if (pendingToday && !past1000) {
     agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 10:00 예정</span>';
   } else if (pendingToday && past1000) {
-    agit.innerHTML = '<span class="dash-dot gray"></span><span>발행 대기 중 (cron 호출 전)</span>';
+    // 예약은 살아 있고 cron(10:00·10:05·10:10)이 곧 집어간다. 회색 "대기"로 보이면 풀린 줄 알게 된다.
+    agit.innerHTML = '<span class="dash-dot yellow"></span><span>오늘 10:00 예약 — 곧 게시돼요</span>';
   } else if (pendingFuture) {
     const [, fm, fd] = pendingDate.split('-');
     agit.innerHTML = `<span class="dash-dot yellow"></span><span>${fm}/${fd} 10:00 예정</span>`;
@@ -1574,6 +1577,10 @@ async function loadDashboard() {
       // agit-post 워크플로우는 pending 미스매치로 발행을 skip 해도 conclusion 이
       // success 로 끝난다. 그래서 단순 success 만 보면 "발행됐다" 라고 오인.
       // 실제 'Post digest to Agit' step 이 success 로 실행됐을 때만 발행 완료로 잡음.
+      // 아직 끝나지 않은 게시 실행이 있으면 '게시 중'. 2026-10-29 10:00 cron 발행이 도는 1분 동안
+      // 대시보드가 "발행 대기 중"으로 보여 예약이 풀린 줄 알고 즉시 게시를 눌러 글이 두 번 올라갔다.
+      // (게시 중이면 getActiveCurationDate 가드가 즉시 게시·편집을 막는다)
+      if (todayRuns.some(r => r.status !== 'completed')) agitStatus = 'posting';
       for (const run of todayRuns.filter(r => r.conclusion === 'success')) {
         try {
           const jobsRes = await fetch(run.jobs_url, { headers });
@@ -1916,7 +1923,7 @@ function getTodayKST() {
 // · latestCurationDate < today  → 어제 이전, 발행 끝, 무조건 막음
 // · latestCurationDate 미정     → 대시보드 로딩 전, 막음
 let latestCurationDate = null;
-let todayAgitStatus = null;  // loadDashboard 완료 시 'pending' | 'posted' 로 채워짐
+let todayAgitStatus = null;  // loadDashboard 완료 시 'pending' | 'posting' | 'posted' 로 채워짐
 function getActiveCurationDate() {
   if (!latestCurationDate) return null;
   const today = getTodayKST();
@@ -1939,6 +1946,8 @@ function checkActiveCurationDate(statusId) {
     msg = `최신 큐레이션이 ${latestCurationDate}로 어제 이전이라 막혔어요. 새 큐레이션 생성 후 다시 시도하세요.`;
   } else if (todayAgitStatus === 'posted') {
     msg = `오늘(${latestCurationDate}) 다이제스트는 이미 아지트에 발행돼서 막혔어요.`;
+  } else if (todayAgitStatus === 'posting') {
+    msg = `오늘(${latestCurationDate}) 다이제스트를 지금 아지트에 올리는 중이라 막혔어요. 1~2분 뒤 대시보드를 확인하세요.`;
   } else {
     msg = '대시보드 로딩이 끝나지 않았어요. 잠시 후 다시 시도하세요.';
   }
@@ -3205,6 +3214,14 @@ async function ghMultiFileCommit({ message, files }) {
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json',
   };
+
+  // 0. 큐레이션(교체·인트로 다시 쓰기 등)이 돌고 있으면 막는다. 같은 index.html 을 양쪽이 고치면
+  //    액션 쪽 push 가 충돌로 죽는다 (2026-10-29 03:54 순서 조정이 돌던 인트로 다시 쓰기를 깨뜨림).
+  const curateRes = await fetch(`${base}/actions/workflows/curate.yml/runs?per_page=5`, { headers, cache: 'no-store' });
+  if (curateRes.ok) {
+    const running = ((await curateRes.json()).workflow_runs || []).some(r => r.status !== 'completed');
+    if (running) throw new Error('큐레이션 작업이 아직 돌고 있어요. 끝난 뒤(최근 활동에서 확인) 다시 눌러주세요');
+  }
 
   // 1. main HEAD → parent commit SHA
   const refRes = await fetch(`${base}/git/refs/heads/main`, { headers });
