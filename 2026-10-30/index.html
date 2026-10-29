@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)"><title>2026. 10. 30 금요일 Trend Article Digest</title><style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
+  --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
+  --img-bg:#fff; --cta-bg:#191919; --cta-text:#fff; --gnb-bg:rgba(255,255,255,0.85); --label-bg:#f5f5f5; --label-text:#999; --label-border:transparent;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --line:#2a2a2a; --text:#e8e8e8; --text2:#ccc; --text3:#aaa; --text4:#888; --text5:#777;
+    --surface:#1a1a1a; --page:#111; --link-bg:rgba(60,140,240,0.12); --link-border:rgba(60,140,240,0.15); --link-text:#6ab0ff;
+    --img-bg:#1a1a1a; --cta-bg:#e8e8e8; --cta-text:#111; --gnb-bg:rgba(26,26,26,0.85); --label-bg:#2a2a2a; --label-text:#777; --label-border:transparent;
+  }
+}
+html,body { width:100%; background:var(--surface); }
+body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:var(--text); }
+.page { width:100%; background:#fff; }
+.card { width:100%; max-width:100%; background:var(--surface); border-radius:8px; }
+.header { padding:28px 20px 24px; border-bottom:1px solid var(--line); }
+.header h1 { font-size:clamp(24px,3vw,30px); font-weight:600; line-height:1.2; letter-spacing:-0.02em; }
+.header-meta { margin-top:14px; font-size:16px; color:var(--text4); font-weight:500; line-height:1.6; }
+.article-wrap { padding:0 20px 0; }
+.article-item { padding:24px 0 28px; border-bottom:1px solid var(--line); }
+.article-item:last-of-type { border-bottom:0; padding-bottom:20px; }
+.article-label { display:inline-block; margin-bottom:14px; padding:7px 10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }
+.article-title { font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }
+.article-summary { font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }
+.image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--img-bg); }
+.article-image { width:100%; height:auto; display:block; background:var(--img-bg); border:0; border-radius:8px; object-fit:contain; object-position:center center; }
+.no-thumb { width:100%; aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; background:var(--page); color:var(--text5); font-size:14px; }
+.summary-label, .link-label { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text5); margin-bottom:10px; }
+.bullet-list { list-style:none; display:grid; gap:10px; margin-bottom:18px; }
+.bullet-item { font-size:clamp(14px,1.8vw,16px); line-height:1.72; color:var(--text2); padding-left:16px; position:relative; word-break:keep-all; }
+.bullet-item::before { content:'·'; position:absolute; left:0; top:0; color:var(--text4); font-weight:700; }
+.link-box { display:block; padding:14px 16px; border:1px solid var(--link-border); border-radius:8px; background:var(--link-bg); }
+.article-link { display:block; font-size:14px; line-height:1.75; color:var(--link-text); text-decoration:none; word-break:break-all; }
+.article-link:hover { text-decoration:underline; }
+@media (max-width:767px) { .article-summary,.bullet-item{font-size:17px;} }
+@media (min-width:768px) {
+  html,body{background:var(--page);} .page{background:var(--page);padding:28px;}
+  .card{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}
+  .header{padding:40px 32px 32px;} .article-wrap{padding:0 32px 0;} .article-item{padding:28px 0 32px;}
+  .article-item:last-of-type{padding-bottom:40px;}
+}
+@media (min-width:1200px) {
+  .page{padding:36px;}
+  .card{max-width:1320px;}
+  .header{padding:48px 40px 36px;}
+  .article-wrap{
+    padding:0 40px 40px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap: 40px;
+  }
+  .article-item{ padding:28px 0 32px; }
+  /* 데스크탑에서 인트로가 카드 전체 폭으로 늘어나 한 줄이 지나치게 길어지는 것 방지.
+     텍스트(.digest-summary)에만 폭을 제한해 행 길이를 읽기 좋게 줄인다.
+     컨테이너(.digest-intro)와 하단 디바이더(border-bottom)는 전체 폭을 유지해
+     아래 기사 행과 정렬되게 한다. */
+  .digest-summary{ max-width:900px; }
+}
+@media (min-width: 1200px) {
+  .image-frame { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 8px; background: var(--img-bg); }
+  .image-frame .article-image { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center center; }
+}
+@media (max-width: 1199px) {
+  .image-frame { aspect-ratio: auto; }
+  .image-frame .article-image { width: 100%; height: auto; display: block; object-fit: contain; object-position: center center; }
+}
+@media (min-width: 1200px) {
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+@media (min-width: 1600px) {
+  .card { max-width: 1800px; }
+  .article-wrap { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+  .article-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--line) !important; padding-bottom: 32px !important; margin-bottom: 0 !important; }
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+.link-box a, .link-url, .article-link, .url-text {
+  display: block !important; width: 100% !important; min-width: 0 !important;
+  overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
+}
+.agit-cta { margin: 0 20px; border-top: 1px solid var(--line); padding: 20px 0 28px; text-align: center; }
+.agit-cta-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: var(--cta-bg); color: var(--cta-text) !important; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+.agit-cta-btn:hover { opacity: 0.8; }
+@media (min-width: 768px) { .agit-cta { margin: 0 40px; padding: 40px 0 32px; } .agit-cta-btn { display: inline-flex; width: auto; padding: 0 24px; } }
+@media (min-width: 1200px) { .agit-cta { padding: 40px 0 36px; } }
+/*GNB-CSS-START*/html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}body{padding-top:var(--gnb-h,55px);}:root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}.gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:55px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}.gnb-inner{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}.gnb-brand{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}.gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}.gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}.gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}.gnb-toc-btn:active{opacity:0.75;}.gnb-toc-label{font-weight:500;font-size:13px;}.gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}.gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}body.toc-open{overflow:hidden;}.toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}.toc-panel.open{visibility:visible;pointer-events:auto;}.toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}.toc-panel.open .toc-overlay{opacity:1;}.toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}.toc-panel.open .toc-drawer{transform:translateY(0);}.toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}.toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}.toc-close{background:transparent;border:0;font-size:28px;cursor:pointer;color:var(--text2);padding:0 6px;line-height:1;font-family:inherit;}.toc-close:hover{color:var(--text);}.toc-list{list-style:none;padding:4px 12px 32px;margin:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}.toc-list li{margin:0;}.toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}.toc-panel.open .toc-item{opacity:1;transform:translateY(0);}.toc-item:hover{background:var(--page);}.toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}.toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}.toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}.article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}.link-box{padding:8px 12px;}.agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}.back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}}.back-to-top:active,.agit-cta-btn:active{opacity:0.75;}.back-to-top:focus,.agit-cta-btn:focus{outline:none;}.back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}@media (min-width:768px){html,body{background:var(--surface);}.card{border:0;border-radius:0;}}@media (min-width:768px){.gnb-inner{padding:14px 32px;}.toc-drawer{left:auto;width:420px;max-width:92vw;transform:translateX(100%);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,0.12);}.toc-panel.open .toc-drawer{transform:translateX(0);}.toc-item{transform:translateX(30px);}.toc-panel.open .toc-item{transform:translateX(0);}.toc-header{padding:22px 24px 16px;}.toc-title{font-size:20px;}.toc-list{padding:4px 16px 40px;}.agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}.back-to-top,.agit-cta-btn{height:48px;font-size:14px;}}.digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}.digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}.digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}.pc-fabs{display:none;}@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}.pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}.pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}.pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}.pc-fab svg{flex-shrink:0;display:block;}.pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}.pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}.digest-intro{grid-column:1 / -1;padding:36px 0 40px;}.article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}.article-item > *{min-width:0;}}@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}.article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}:root{--gnb-flash-bg:rgba(0,0,0,0.08);}@media (prefers-color-scheme:dark){:root{--gnb-flash-bg:rgba(255,255,255,0.08);}}@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}@media (min-width:1200px){.article-item{position:relative;isolation:isolate;}.article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}}/*GNB-CSS-END*/</style></head><body><!--GNB-HTML-START--><nav class="gnb"><div class="gnb-inner"><a href="#top" class="gnb-brand" data-gnb-top><span class="gnb-brand-name">트렌드림</span><span class="gnb-date"></span></a><button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel"><span class="gnb-toc-label">목차</span><span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span></button></div><div class="gnb-progress-fill"></div></nav><aside id="toc-panel" class="toc-panel" aria-hidden="true"><div class="toc-overlay"></div><div class="toc-drawer"><div class="toc-header"><span class="toc-title">목차</span><button type="button" class="toc-close" aria-label="목차 닫기">×</button></div><ol class="toc-list"></ol></div></aside><!--GNB-HTML-END--><div class="card"><main class="article-wrap article-list">
+<section class="digest-intro" data-static-intro><div class="digest-meta"><span>8개 기사</span><span>·</span><span>약 4분 읽기</span></div><p class="digest-summary">애플이 맥북 프로에 처음으로 터치를 넣었어요. 마우스 포인터에 맞춰 짠 맥 앱 화면을 이제 손가락 기준으로도 다시 봐야 한다는 뜻이에요. 크롬은 지메일 속 주문번호와 항공편 정보를 꺼내 양식을 대신 채워줘요. 입력을 덜 시키는 쪽이 사용자를 붙잡는 만큼, 우리 서비스에서 입력이 어디서 막히는지부터 점검해볼 때예요.</p></section>
+<script id="agit-digest-data" type="application/json">{"intro": "애플이 맥북 프로에 처음으로 터치를 넣었어요. 마우스 포인터에 맞춰 짠 맥 앱 화면을 이제 손가락 기준으로도 다시 봐야 한다는 뜻이에요. 크롬은 지메일 속 주문번호와 항공편 정보를 꺼내 양식을 대신 채워줘요. 입력을 덜 시키는 쪽이 사용자를 붙잡는 만큼, 우리 서비스에서 입력이 어디서 막히는지부터 점검해볼 때예요.", "articles": [{"num": 1, "title": "애플, 탠덤 OLED 'PROLED XDR 디스플레이'와 터치를 넣은 맥북 프로 공개", "headline": "애플이 맥북 프로에 처음으로 터치스크린을 넣었다", "so_what": "화면에 다이나믹 아일랜드까지 올라왔어요. 아이폰에서 익숙한 알림·상태 표시 패턴이 맥에서도 공통 언어가 될 수 있다는 신호예요.", "link": "https://www.apple.com/newsroom/2026/10/apple-unveils-groundbreaking-macbook-pro-with-proled-xdr-display/", "thumb": "thumb-1.webp"}, {"num": 2, "title": "도어대시, 170억 달러에 인스타카트 인수", "headline": "도어대시가 170억 달러에 인스타카트를 사들인다", "so_what": "브랜드와 앱은 따로 두고 멤버십만 하나로 묶어요. 플랫폼을 합치지 않고 혜택으로 사용자를 묶는 통합 방식이라 눈여겨볼 만해요.", "link": "https://www.theverge.com/business/1021981/doordash-instacart-acquisition-announcement", "thumb": "thumb-2.webp"}, {"num": 3, "title": "레딧도 '포유' 피드 도입", "headline": "레딧이 앱 첫 화면에 추천 중심 포유 피드를 열었다", "so_what": "커뮤니티 중심이던 레딧마저 추천 피드를 홈 전면에 세웠어요. 다만 마지막에 본 피드를 기억해 선택권을 남긴 점이 설계 포인트예요.", "link": "https://techcrunch.com/2026/10/28/reddit-is-the-latest-platform-to-embrace-the-for-you-feed/", "thumb": "thumb-3.webp"}, {"num": 4, "title": "10월 4주 앱인토스 업데이트: 리스트배너 디자인 변경과 카테고리 세분화", "headline": "앱인토스가 미니앱 카테고리를 3단계로 쪼갠다", "so_what": "SDK 3.0.5 미만이면 광고 노출이 줄 수 있어요. 추천 판정이 최하위 카테고리 기준이니, 미니앱 분류를 지금 다시 점검해볼 때예요.", "link": "https://toss.im/apps-in-toss/blog/update-26-10-21", "thumb": "thumb-4.webp"}, {"num": 5, "title": "당근중고차, 계약금 '안심송금' 서비스 도입", "headline": "당근이 중고차 계약금을 가상계좌로 대신 맡아준다", "so_what": "결제 화면이 아니라 채팅방 안에 송금 버튼을 붙였어요. 불안이 생기는 바로 그 대화 지점에 신뢰 장치를 두는 설계가 돋보여요.", "link": "https://about.daangn.com/company/pr/archive/당근중고차-안심송금-서비스-도입/", "thumb": "thumb-5.webp"}, {"num": 6, "title": "네이비 블루를 버린 화이트 앤 케이스 리브랜딩", "headline": "화이트 앤 케이스가 로펌의 상징 네이비 블루를 버렸다", "so_what": "보수적인 업계일수록 색 하나로도 차별화가 돼요. 업계 관습 컬러를 버리고 메시지와 포스터로 태도를 보여준 방식이 참고할 만해요.", "link": "https://www.creativeboom.com/work/this-rebrand-ditches-every-law-firm-cliche-as-white-case-loses-the-navy-blue/", "thumb": "thumb-6.webp"}, {"num": 7, "title": "크롬 AI 자동완성, 이제 지메일을 뒤져 양식을 채워줘요", "headline": "크롬 자동완성이 지메일을 읽어 주문번호를 채워준다", "so_what": "사용자가 직접 켜야 하는 옵트인 방식이에요. 개인 데이터를 깊이 쓰는 기능일수록 동의와 암호화를 어떻게 보여줄지가 신뢰를 좌우해요.", "link": "https://techcrunch.com/2026/10/28/chromes-ai-powered-autofill-can-now-dig-through-your-gmail-to-fill-out-forms/", "thumb": "thumb-7.webp"}, {"num": 8, "title": "AI 딥리서치 설계하기: 구글·퍼플렉시티·마이크로소프트에서 얻는 교훈", "headline": "구글·퍼플렉시티의 딥리서치는 기다리는 시간을 설계한다", "so_what": "딥리서치는 기다림 자체가 경험이 돼요. 몇 분씩 걸리는 AI 작업에서 진행 상황을 어떻게 보여줄지 고민 중이라면 읽어볼 만해요.", "link": "https://uxdesign.cc/designing-for-ai-deep-research-lessons-from-google-perplexity-and-microsoft-b32fa2f21e7e?source=rss----138adf9c44c---4", "thumb": "thumb-8.webp"}]}</script>
+<article id="article-1" class="article-item">
+<div class="article-label">ARTICLE 01</div>
+<h2 class="article-title">애플, 탠덤 OLED 'PROLED XDR 디스플레이'와 터치를 넣은 맥북 프로 공개</h2>
+<p class="article-summary">터치 지원 탠덤 OLED 맥북 프로.</p>
+<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">애플이 탠덤 OLED 기반 PROLED XDR 디스플레이를 얹은 14·16인치 맥북 프로를 공개했어요. 최대 2000니트 밝기, 1000만:1 명암비, 120Hz 가변 주사율을 지원해요.</li>
+<li class="bullet-item">맥에 처음으로 터치 기능이 들어와 3D 모델 조작이나 악기 연주 같은 작업을 화면에서 직접 할 수 있어요. 다이나믹 아일랜드도 맥에 올라와 Spotlight, 라이브 액티비티, Siri AI의 공간이 돼요.</li>
+<li class="bullet-item">M5 Pro·M5 Max 칩, 최대 128GB 메모리, 최대 24시간 배터리를 담았어요. 10월 28일부터 예약 주문을 받고 11월 6일에 출시돼요. 입력 방식이 바뀌는 만큼 맥 앱 인터페이스 설계도 달라질 수 있어요. </li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.apple.com/newsroom/2026/10/apple-unveils-groundbreaking-macbook-pro-with-proled-xdr-display/" target="_blank">https://www.apple.com/newsroom/2026/10/apple-unveils-groundbreaking-macbook-pro-with-proled-xdr-display/</a></div>
+</article>
+<article id="article-2" class="article-item">
+<div class="article-label">ARTICLE 02</div>
+<h2 class="article-title">도어대시, 170억 달러에 인스타카트 인수</h2>
+<p class="article-summary">도어대시의 인스타카트 인수 발표.</p>
+<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">도어대시가 약 170억 달러 규모로 인스타카트를 인수한다고 발표했어요. 인스타카트의 식료품 마켓플레이스와 소매 파트너십으로 온라인 장보기 배달 입지를 넓히려는 거예요.</li>
+<li class="bullet-item">인스타카트 이용자는 5만 곳 이상의 추가 매장을 이용할 수 있고, 대시패스와 인스타카트 플러스 회원은 멤버십 요금을 하나만 내면 돼요. 인수는 2027년 말~2028년 상반기 완료가 목표예요.</li>
+<li class="bullet-item">인수 후에도 인스타카트의 브랜드와 앱은 유지되고 하나의 플랫폼으로 합치지 않아요. 지역 식료품점은 독점 제한 없이 두 서비스와 모두 일할 수 있고, 배달 기사도 도어대시 주문 수락 여부를 고를 수 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.theverge.com/business/1021981/doordash-instacart-acquisition-announcement" target="_blank">https://www.theverge.com/business/1021981/doordash-instacart-acquisition-announcement</a></div>
+</article>
+<article id="article-3" class="article-item">
+<div class="article-label">ARTICLE 03</div>
+<h2 class="article-title">레딧도 '포유' 피드 도입</h2>
+<p class="article-summary">레딧의 포유 피드 도입.</p>
+<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">레딧이 앱을 열면 '포유'와 '팔로잉' 두 피드를 고르게 하는 구조로 바꿨어요. 포유는 가입한 커뮤니티의 글과 관심사 기반 추천을 섞어 보여주고, 팔로잉은 가입한 커뮤니티 글만 보여줘요.</li>
+<li class="bullet-item">레딧은 원래도 가입하지 않은 커뮤니티의 글을 추천했지만, 이제 추천이 홈에서 별도 피드를 갖게 됐어요. 사용자는 피드를 전환할 수 있고, 다음에 열면 마지막에 본 피드로 돌아와요.</li>
+<li class="bullet-item">인스타그램, X, 스레드, 페이스북 등 추천 중심 피드가 표준이 되고 있어요. 다만 테스트 단계부터 불만을 표한 이용자도 있어요. 새 피드는 앞으로 몇 주에 걸쳐 전 세계에 순차 적용돼요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://techcrunch.com/2026/10/28/reddit-is-the-latest-platform-to-embrace-the-for-you-feed/" target="_blank">https://techcrunch.com/2026/10/28/reddit-is-the-latest-platform-to-embrace-the-for-you-feed/</a></div>
+</article>
+<article id="article-4" class="article-item">
+<div class="article-label">ARTICLE 04</div>
+<h2 class="article-title">10월 4주 앱인토스 업데이트: 리스트배너 디자인 변경과 카테고리 세분화</h2>
+<p class="article-summary">앱인토스의 광고·카테고리 개편.</p>
+<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">10월 26일부터 토스애즈 리스트배너 디자인이 바뀌고 신규 광고 상품도 송출돼요. WebView SDK 3.0.5 이상에서만 지원돼서, 업데이트하지 않으면 노출 물량과 비율이 줄 수 있어요.</li>
+<li class="bullet-item">11월 2일부터 미니앱 카테고리가 대·중·세분류 3단계로 나뉘어요. 10월 22일부터 시행된 노출 정책이 재방문율, 핵심 행동 전환율로 추천을 판단하는데, 가장 하위 카테고리를 기준으로 판정해요.</li>
+<li class="bullet-item">미니앱마다 검색엔진에 노출되는 공개 상세 페이지도 생겼어요. 이름, 설명, 순위, 평점, 리뷰가 보이고 QR로 바로 실행할 수 있어요. '구경하고 포인트 받기' 포인트는 10원에서 5원으로 낮아졌어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://toss.im/apps-in-toss/blog/update-26-10-21" target="_blank">https://toss.im/apps-in-toss/blog/update-26-10-21</a></div>
+</article>
+<article id="article-5" class="article-item">
+<div class="article-label">ARTICLE 05</div>
+<h2 class="article-title">당근중고차, 계약금 '안심송금' 서비스 도입</h2>
+<p class="article-summary">중고차 직거래 안심송금 도입.</p>
+<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">당근이 중고차 직거래용 '안심송금'을 도입했어요. 구매자가 NH농협은행 가상계좌에 대금을 먼저 입금하면, 당근이 소유주와 예금주 일치 여부를 확인한 뒤 판매자에게 전달해요.</li>
+<li class="bullet-item">소유주 인증을 마친 개인 직거래 매물에 무료로 쓸 수 있고, 1회 1천만 원 미만까지 가능해요. 채팅방 상단의 '계약금 안심송금'을 누르고 계약금과 환불 계좌를 입력하면 가상계좌가 발급돼요.</li>
+<li class="bullet-item">거래를 송금 전에 취소하거나 입금 후 48시간 안에 판매자가 수락하지 않으면 자동 환불돼요. 판매자 계정에서 사기 정황이 보이면 전달이 중단돼요. 대화 맥락 안에서 신뢰 장치를 붙인 사례예요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://about.daangn.com/company/pr/archive/당근중고차-안심송금-서비스-도입/" target="_blank">https://about.daangn.com/company/pr/archive/당근중고차-안심송금-서비스-도입/</a></div>
+</article>
+<article id="article-6" class="article-item">
+<div class="article-label">ARTICLE 06</div>
+<h2 class="article-title">네이비 블루를 버린 화이트 앤 케이스 리브랜딩</h2>
+<p class="article-summary">로펌 클리셰를 버린 리브랜딩.</p>
+<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">글로벌 로펌 화이트 앤 케이스가 Uncommon Creative Studio와 13년 만에 리브랜딩했어요. 로펌 특유의 네이비 블루를 버리고 '카탈리스트 블루'라는 전기적인 파란색을 택했어요.</li>
+<li class="bullet-item">복잡성을 위험이 아닌 새로운 사고와 기회의 촉매로 보는 것이 핵심 개념이에요. '복잡함은 위험을 만든다'와 '우리는 기회를 본다'를 나란히 놓은 포스터로 이를 드러내요.</li>
+<li class="bullet-item">로고는 트라야누스 기둥의 로마 석조 문자에서 영감을 받았고, 글자를 가르는 사선이 앞으로 기우는 느낌을 줘요. 앰퍼샌드는 독립 모노그램이 됐고, 사진을 데이터 흐름으로 바꾸는 자체 이미지 도구도 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.creativeboom.com/work/this-rebrand-ditches-every-law-firm-cliche-as-white-case-loses-the-navy-blue/" target="_blank">https://www.creativeboom.com/work/this-rebrand-ditches-every-law-firm-cliche-as-white-case-loses-the-navy-blue/</a></div>
+</article>
+<article id="article-7" class="article-item">
+<div class="article-label">ARTICLE 07</div>
+<h2 class="article-title">크롬 AI 자동완성, 이제 지메일을 뒤져 양식을 채워줘요</h2>
+<p class="article-summary">지메일 연동 크롬 자동완성.</p>
+<div class="image-frame"><img class="article-image" src="thumb-7.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">크롬이 지메일에서 정보를 가져와 온라인 양식을 채워주는 고급 자동완성을 선보였어요. 항공편 확인번호, 멤버십 ID, 배송 추적 정보, 주문번호, 주소, 전화번호, 카드번호 등을 제안해요.</li>
+<li class="bullet-item">구글의 퍼스널 인텔리전스를 확장한 기능이에요. 사용자가 크롬 설정에서 켜야 하고, 민감한 데이터는 암호화된다고 구글이 밝혔어요. 작은 기능이지만 크롬과 구글 AI 생태계에 머물 이유가 돼요.</li>
+<li class="bullet-item">애플이 문자로 온 인증번호를 키보드 위에 띄워 한 번에 입력하게 하는 기능과 닮았어요. 미국 사용자 대상으로 데스크톱과 iOS·안드로이드의 크롬 속 제미나이 앱에서 순차 제공돼요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://techcrunch.com/2026/10/28/chromes-ai-powered-autofill-can-now-dig-through-your-gmail-to-fill-out-forms/" target="_blank">https://techcrunch.com/2026/10/28/chromes-ai-powered-autofill-can-now-dig-through-your-gmail-to-fill-out-forms/</a></div>
+</article>
+<article id="article-8" class="article-item">
+<div class="article-label">ARTICLE 08</div>
+<h2 class="article-title">AI 딥리서치 설계하기: 구글·퍼플렉시티·마이크로소프트에서 얻는 교훈</h2>
+<p class="article-summary">AI 딥리서치 UX 질문 6가지.</p>
+<div class="image-frame"><img class="article-image" src="thumb-8.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">시간이 걸리는 AI 리서치 작업을 설계할 때 따져볼 UX 질문 6가지를 다룬 글이에요. 구글, 퍼플렉시티, 마이크로소프트의 딥리서치 제품을 사례로 삼은 것으로 보여요.</li>
+<li class="bullet-item">딥리서치는 답이 바로 나오는 챗봇과 달리 결과가 나올 때까지 기다려야 해요. 그래서 그 시간 동안 사용자에게 무엇을 보여줄지가 설계의 쟁점이 돼요.</li>
+<li class="bullet-item">본문을 확인하지 못해 구체적인 질문 내용과 사례별 분석은 알 수 없어요. 제목과 요약으로 보면 긴 AI 작업의 UX를 고민하는 디자이너와 기획자에게 참고가 될 글이에요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://uxdesign.cc/designing-for-ai-deep-research-lessons-from-google-perplexity-and-microsoft-b32fa2f21e7e?source=rss----138adf9c44c---4" target="_blank">https://uxdesign.cc/designing-for-ai-deep-research-lessons-from-google-perplexity-and-microsoft-b32fa2f21e7e?source=rss----138adf9c44c---4</a></div>
+</article>
+
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트</a></div></div><!--GNB-JS-START--><script>(function(){
+// Naver-style trick: set theme-color content to empty so iOS Safari renders
+// status bar transparent over page content (instead of solid theme-color tint).
+var tcs=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<tcs.length;i++)tcs[i].setAttribute('content','');
+if(!tcs.length){
+var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content','');document.head.appendChild(m);
+}
+var arts=document.querySelectorAll('.article-item');
+if(!arts.length)return;
+// PC FAB: 우하단 floating "맨위로" + "아지트로 →" (1200+ only, scroll-to-show)
+if(!document.querySelector('.pc-fabs')){
+var agitBtn=document.querySelector('.agit-cta-btn');
+var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
+var fabs=document.createElement('div');
+fabs.className='pc-fabs';
+fabs.setAttribute('aria-hidden','true');
+var upSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1V15M13 6L8 1L3 6"/></svg>';
+var returnSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 5L6 8"/><path d="M3 5H10C10.7956 5 11.5587 5.31607 12.1213 5.87868C12.6839 6.44129 13 7.20435 13 8V14"/></svg>';
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top>'+upSvg+'<span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'">'+returnSvg+'<span>아지트로</span></a>';
+document.body.appendChild(fabs);
+var pcTop=fabs.querySelector('[data-pc-top]');
+if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
+function checkPcScroll(){if(window.scrollY>200){fabs.classList.add('visible');}else{fabs.classList.remove('visible');}}
+window.addEventListener('scroll',checkPcScroll,{passive:true});
+checkPcScroll();
+}
+// Insert digest intro at top of article-wrap (count + reading time)
+var artWrap=document.querySelector('.article-wrap');
+if(artWrap&&!document.querySelector('.digest-intro')){
+var totalChars=0;
+for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
+var readMins=Math.max(1,Math.round(totalChars/700));
+var titles=[];
+for(var ti=0;ti<Math.min(arts.length,3);ti++){var tt=arts[ti].querySelector('.article-title');if(tt)titles.push(tt.textContent.trim());}
+var summaryText=titles.length>0?titles.join(', ')+' 등 '+arts.length+'개의 이야기를 담았어요.':'오늘의 '+arts.length+'개 기사를 확인해보세요.';
+var intro=document.createElement('section');
+intro.className='digest-intro';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">'+summaryText+'</p>';
+artWrap.insertBefore(intro,artWrap.firstElementChild);
+}
+var gnb=document.querySelector('.gnb');
+var tocList=document.querySelector('.toc-list');
+var tocBtn=document.querySelector('.gnb-toc-btn');
+var tocPanel=document.getElementById('toc-panel');
+var tocClose=document.querySelector('.toc-close');
+var tocOverlay=document.querySelector('.toc-overlay');
+var curEl=document.querySelector('.gnb-toc-progress .cur');
+var totEl=document.querySelector('.gnb-toc-progress .tot');
+var brand=document.querySelector('[data-gnb-top]');
+var dateEl=document.querySelector('.gnb-date');
+var DAYS=['일','월','화','수','목','금','토'];
+var pm=location.pathname.match(/(\d{4})-(\d{2})-(\d{2})/);
+if(pm&&dateEl){
+var y=parseInt(pm[1],10),mo=parseInt(pm[2],10),d=parseInt(pm[3],10);
+var dow=DAYS[new Date(y,mo-1,d).getDay()];
+dateEl.textContent=(y%100)+'.'+mo+'.'+d+' ('+dow+')';
+}
+function updateGnbH(){var g=document.querySelector('.gnb');if(g){document.documentElement.style.setProperty('--gnb-h',g.offsetHeight+'px');}}
+updateGnbH();
+window.addEventListener('resize',updateGnbH);
+var progressFill=document.querySelector('.gnb-progress-fill');
+function updateProgress(){
+if(!progressFill)return;
+var d=document.documentElement;
+var total=d.scrollHeight-window.innerHeight;
+var cur=window.scrollY||d.scrollTop;
+var pct=total>0?Math.min(100,(cur/total)*100):0;
+progressFill.style.width=pct+'%';
+}
+updateProgress();
+window.addEventListener('scroll',updateProgress,{passive:true});
+window.addEventListener('resize',updateProgress);
+arts.forEach(function(art,i){
+art.id='article-'+(i+1);
+var num='#'+(i+1);
+var lbl=art.querySelector('.article-label');
+if(lbl)lbl.textContent=num;
+var t=art.querySelector('.article-title');
+var title=t?t.textContent.trim():'Article '+(i+1);
+var li=document.createElement('li');
+var a=document.createElement('a');
+a.href='#article-'+(i+1);a.className='toc-item';
+var ns=document.createElement('span');ns.className='toc-num';ns.textContent=num;
+var ts=document.createElement('span');ts.className='toc-text';ts.textContent=title;
+a.appendChild(ns);a.appendChild(ts);li.appendChild(a);tocList.appendChild(li);
+// 제목/썸네일/요약 영역도 원문 링크로 이동
+var lk=art.querySelector('.article-link');
+var url=lk?lk.getAttribute('href'):'';
+if(url){
+var targets=['.article-title','.article-summary','.image-frame','.bullet-list'];
+for(var ti2=0;ti2<targets.length;ti2++){
+var el=art.querySelector(targets[ti2]);
+if(!el)continue;
+el.classList.add('clickable-link');
+el.addEventListener('click',function(u){return function(e){
+if(window.getSelection&&window.getSelection().toString().length>0)return;
+window.open(u,'_blank','noopener');
+};}(url));
+}
+}
+});
+totEl.textContent=arts.length;
+// 외부 hash 진입 / 페이지 내 목차 클릭 모두에서 타깃 카드 flash
+function flashTarget(){if(!location.hash)return;var t=document.querySelector(location.hash);if(!t||!t.classList||!t.classList.contains('article-item'))return;t.classList.remove('flash-target');void t.offsetWidth;t.classList.add('flash-target');}
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();flashTarget();},0);}
+window.addEventListener('hashchange',function(){setTimeout(flashTarget,50);});
+var items=document.querySelectorAll('.toc-item');
+function setOpen(o){
+if(o){
+items.forEach(function(it,i){var d=(0.06+i*0.045)+'s';it.style.transitionDelay=d+','+d+',0s,0s';});
+}else{
+items.forEach(function(it){it.style.transitionDelay='0s';});
+}
+tocPanel.classList.toggle('open',o);
+tocPanel.setAttribute('aria-hidden',!o);
+tocBtn.setAttribute('aria-expanded',o);
+document.body.classList.toggle('toc-open',o);
+}
+tocBtn.addEventListener('click',function(){setOpen(!tocPanel.classList.contains('open'));tocBtn.blur();});
+if(tocClose)tocClose.addEventListener('click',function(){setOpen(false);});
+if(tocOverlay)tocOverlay.addEventListener('click',function(){setOpen(false);});
+tocPanel.addEventListener('click',function(e){if(e.target.closest('a.toc-item'))setOpen(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&tocPanel.classList.contains('open'))setOpen(false);});
+if(brand){brand.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});brand.blur();});}
+function setActive(idx){
+curEl.textContent=idx+1;
+items.forEach(function(it,i){it.classList.toggle('active',i===idx);});
+}
+if('IntersectionObserver' in window){
+var io=new IntersectionObserver(function(entries){
+var vis=entries.filter(function(e){return e.isIntersecting;});
+if(vis.length){
+vis.sort(function(a,b){return a.target.getBoundingClientRect().top-b.target.getBoundingClientRect().top;});
+var idx=Array.prototype.indexOf.call(arts,vis[0].target);
+setActive(idx);
+}
+},{rootMargin:'-30% 0px -55% 0px',threshold:0});
+arts.forEach(function(a){io.observe(a);});
+}
+var cta=document.querySelector('.agit-cta');
+if(cta){
+var bt=document.createElement('button');
+bt.type='button';
+bt.className='back-to-top';
+bt.textContent='맨 위로';
+bt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});bt.blur();});
+cta.insertBefore(bt,cta.firstChild);
+var agitBtn=cta.querySelector('.agit-cta-btn');
+if(agitBtn)agitBtn.addEventListener('click',function(){agitBtn.blur();});
+}
+})();</script><!--GNB-JS-END--></body></html>
