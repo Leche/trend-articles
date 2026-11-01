@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-02",
+  "reserves": [
+    {
+      "title_ko": "웹사이트가 AI 학습 선호를 더 쉽게 밝히도록",
+      "one_line": "robots.txt 공통 AI 학습 신호 지원.",
+      "summary_1": "OpenAI가 robots.txt의 공통 신호를 존중하겠다고 밝혔어요. 웹사이트가 생성형 AI 학습에 콘텐츠를 쓰는 데 대한 선호를 여러 참여 사업자에게 한꺼번에 전할 수 있어요.",
+      "summary_2": "기존에는 제공사별 크롤러를 파악해 규칙을 각각 관리해야 했어요. OpenAI는 앞으로 몇 달 안에 적용을 목표로 하고, 기존 크롤러 제어도 그대로 유지해요.",
+      "summary_3": "IETF의 AI 선호 워킹그룹 작업에 기반한 자발적 노력이에요. OpenAI는 다른 AI 제공사도 이 신호를 따르길 권해요.",
+      "url": "https://openai.com/index/helping-websites-express-ai-training-preferences",
+      "link": "https://openai.com/index/helping-websites-express-ai-training-preferences",
+      "source": "openai.com",
+      "select_reason": "OpenAI가 공통 robots.txt 신호를 따라 웹사이트의 AI 학습 허용 여부를 존중하겠다고 밝힌 공식 정책 발표예요.",
+      "headline": "오픈AI가 robots.txt 공통 AI 학습 신호를 따르기로 했다",
+      "so_what": "사이트 운영자는 크롤러마다 규칙을 따로 짜지 않고 한 번에 학습 선호를 밝힐 수 있어요. 다른 AI 회사들이 따라올지가 관건이에요.",
+      "thumb": null
+    },
+    {
+      "title_ko": "구글 지니 4, 소리와 대화까지 생성하는 가상 세계",
+      "one_line": "소리까지 만드는 월드 모델 지니 4.",
+      "summary_1": "구글 딥마인드가 10월 27일 가상 공간과 소리를 실시간 생성하는 월드 모델 '지니 4'를 공개했어요. 사용자의 조작에 따라 풍경과 인물의 행동이 달라져요.",
+      "summary_2": "키보드로 이동하고 카메라를 조작하며, 글로 날씨를 바꾸거나 인물과 사물을 추가할 수 있어요. 음악과 주변 소음에 더해 인물의 대사도 생성하는 것이 새로워요.",
+      "summary_3": "현재는 선정된 테스터에게 연구용 미리보기를 제공해요. 이후 구글 AI 울트라 구독자와 일부 개발 파트너로 넓힐 계획이고, 일반 출시일은 발표하지 않았어요.",
+      "url": "https://designcompass.org/2026/10/30/google-deepmind-genie-4-interactive-world-model/",
+      "link": "https://designcompass.org/2026/10/30/google-deepmind-genie-4-interactive-world-model/",
+      "source": "designcompass.org (web)",
+      "select_reason": "소리와 대화까지 만들어내는 구글 딥마인드의 월드 모델 Genie 4 공개 소식이에요.",
+      "headline": "구글 딥마인드 지니 4가 가상 세계 속 인물의 대사까지 만든다",
+      "so_what": "이제 화면뿐 아니라 소리와 대화까지 실시간으로 만들어져요. 게임이나 인터랙션 프로토타입을 글 몇 줄로 시험해 볼 날이 가까워졌어요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "새 맥북 프로와 macOS 27, 터치에 이렇게 최적화됐다",
+      "one_line": "터치 맥북 프로의 macOS 27 최적화.",
+      "summary_1": "애플이 첫 터치 디스플레이 맥북 프로를 공개했어요. 탭할 때 창 왼쪽 위 신호등 버튼이 커지고, 메뉴 막대의 컨텍스트 메뉴 항목도 터치용으로 커져요.",
+      "summary_2": "트랙패드 제스처를 화면에서도 쓸 수 있어요. 세 손가락 스와이프로 미션 컨트롤과 스페이스를 전환하고 핀치 줌도 돼요. iOS 시뮬레이터도 터치로 조작할 수 있어요.",
+      "summary_3": "사파리 당겨서 새로고침과 메뉴 막대 간격 확대는 macOS 27의 모든 맥에 들어가요. 애플은 터치 최적화가 더 나올 것이라고 했어요.",
+      "url": "https://9to5mac.com/2026/10/31/macbook-pro-touch-optimizations-macos-27-golden-gate/",
+      "link": "https://9to5mac.com/2026/10/31/macbook-pro-touch-optimizations-macos-27-golden-gate/",
+      "source": "9to5mac.com",
+      "select_reason": "첫 터치 맥북에 맞춰 macOS 27의 UI를 어떻게 바꿨는지 정리한, 애플의 구체적인 인터페이스 디자인 결정이에요.",
+      "headline": "애플 첫 터치 맥북 프로는 탭하면 창 신호등 버튼이 커진다",
+      "so_what": "이제 맥 앱도 마우스와 손가락을 함께 고려해서 설계해야 해요. 터치 영역 크기와 제스처 대응을 미리 점검해 두면 좋아요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
