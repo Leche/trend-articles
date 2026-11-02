@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-03",
+  "reserves": [
+    {
+      "title_ko": "애플 크리에이터 스튜디오, 새 AI 기능과 창작 도구 대거 추가",
+      "one_line": "애플 크리에이터 스튜디오 대형 업데이트.",
+      "summary_1": "애플이 크리에이터 스튜디오 업데이트를 발표했어요. 파이널 컷 프로에 MotionVFX가 내장되고 픽셀메이터 프로에서 바로 편집할 수 있으며, 콘텐츠 허브에 영상 소재가 추가돼요.",
+      "summary_2": "로직 프로에는 베타 지능형 어시스턴트와 드럼까지 분리하는 스템 스플리터, 스플라이스 라이브러리를 담은 새 브라우저가 들어와요. 픽셀메이터 프로는 자연어로 이미지 영역을 바꾸는 생성 채우기를 선보여요.",
+      "summary_3": "키노트, 페이지스, 넘버스에는 문서 맥락을 이해하는 베타 어시스턴트와 워크플로 자동화를 위한 MCP 지원이 추가돼요. 11월 앱스토어에서 기존 구독자에게 무료로 제공돼요.",
+      "url": "https://www.apple.com/newsroom/2026/10/apple-creator-studio-adds-powerful-new-ai-features-and-even-more-creative-tools/",
+      "link": "https://www.apple.com/newsroom/2026/10/apple-creator-studio-adds-powerful-new-ai-features-and-even-more-creative-tools/",
+      "source": "apple.com",
+      "select_reason": "애플이 크리에이터용 앱 묶음 Creator Studio에 AI 기능과 창작 도구를 더한 공식 발표로, 메이커 독자와 직접 맞닿아 있어요.",
+      "headline": "애플이 키노트·페이지스·넘버스에 MCP 지원을 넣었다",
+      "so_what": "매일 쓰는 문서 앱이 AI 에이전트 워크플로에 바로 연결돼요. 기획서와 자동화 도구를 어떻게 이을지 다시 설계해볼 때예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "하이트진로음료, 블랙보리 4종 디자인 9년 만에 전면 리뉴얼",
+      "one_line": "블랙보리 패키지 9년 만의 개편.",
+      "summary_1": "하이트진로음료가 블랙보리 오리지널, 라이트, 다크로스트, 누룽지 4종의 용기와 라벨 디자인을 바꿨어요. 2017년 12월 첫 출시 이후 약 9년 만의 전면 개편이에요.",
+      "summary_2": "곡물 이삭을 본뜬 용기 형태는 살리되 더 가늘게 다듬고, 라벨 길이는 줄였어요. 서체와 로고는 간결하게 바꾸고 공통 요소를 넣어 같은 브랜드라는 점을 드러냈어요.",
+      "summary_3": "맛의 차이는 살리면서 패키지에 통일감을 주는 데 초점을 맞췄어요. '내 취향대로 블랙보리' 온라인 영상 캠페인으로 젊은 소비자와의 접점도 넓힐 계획이에요.",
+      "url": "https://www.financialpost.co.kr/news/articleView.html?idxno=283636",
+      "link": "https://www.financialpost.co.kr/news/articleView.html?idxno=283636",
+      "source": "financialpost.co.kr (web)",
+      "select_reason": "하이트진로음료가 출시 9년 만에 블랙보리 4종 패키지를 전면 개편하며 서체를 간결하게 하고 공통 요소로 브랜드를 묶은 국내 소비재 디자인 사례예요.",
+      "headline": "하이트진로음료가 블랙보리 용기와 라벨을 9년 만에 바꿨다",
+      "so_what": "맛별 차이는 살리면서 공통 요소로 한 브랜드처럼 묶었어요. 라인업이 늘어난 제품이 패키지를 정리할 때 참고하기 좋아요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "오픈AI, 커뮤니티 안전 보고서 발간과 청소년 보호 강화",
+      "one_line": "오픈AI의 안전 보고서·청소년 보호.",
+      "summary_1": "오픈AI가 폭력 예방을 위한 커뮤니티 안전 보고서를 내기로 하고, 미성년자 대상 총기 관련 콘텐츠 제한도 강화한다고 밝혔어요. 2026년 3분기에는 법 집행기관에 200건 넘게 신고했어요.",
+      "summary_2": "보고서는 위험을 탐지·조사·대응하는 방식과 익명 사례, 새 완화책과 정책 변경, 관련 데이터를 담아요. 첫 보고서는 2027년 초에 2026년 하반기를 다루고, 이후 6개월마다 나와요.",
+      "summary_3": "모든 이용자에게 적용되는 정책 경계도 강화해요. 과거 대규모 공격과 가해자에 대한 질문에는 다른 곳에서 구할 수 있는 정보라도 덜 자세히 답하도록 모델을 조정해요.",
+      "url": "https://openai.com/index/community-safety-report-and-new-protections-for-teens",
+      "link": "https://openai.com/index/community-safety-report-and-new-protections-for-teens",
+      "source": "openai.com",
+      "select_reason": "OpenAI가 ChatGPT의 폭력 예방 장치와 청소년 보호를 강화하고 공개 안전 보고를 약속한 실제 정책 발표예요.",
+      "headline": "오픈AI가 6개월마다 커뮤니티 안전 보고서를 낸다",
+      "so_what": "AI 서비스의 위험 대응도 정기적으로 공개 보고하는 대상이 되고 있어요. 우리 제품도 신고와 대응 과정을 설명할 준비가 필요해요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
