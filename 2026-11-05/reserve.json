@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-05",
+  "reserves": [
+    {
+      "title_ko": "최대 PC 게임 모드 사이트 넥서스 모즈, AI 사용 공개 의무화",
+      "one_line": "모드 업로드 시 AI 사용 공개 의무화.",
+      "summary_1": "PC 게임 모드 저장소 넥서스 모즈가 새 모드를 올릴 때 AI 사용 여부를 반드시 밝히게 해요. 'AI 지원' 태그가 붙은 모드는 AI를 어디에 어떻게 썼는지 공개 설명도 넣어야 해요.",
+      "summary_2": "AI 태그는 모드 페이지에서 더 눈에 띄게 표시돼요. 이용자들이 가장 많이 제기한 불만이 AI 사용 여부가 분명히 공개되지 않는다는 점이었다고 해요. 이미 있던 태그를 더 알기 쉽게 다듬는 거예요.",
+      "summary_3": "운영진은 '인간 창의성을 지지'하면서도 전면 금지는 하지 않아요. 스크립트 자동완성부터 텍스처·음성 생성까지 AI가 제작 전반에 쓰여 경계를 긋기 어렵고, 금지하면 사용을 숨기게 될 뿐이라는 이유예요.",
+      "url": "https://www.theverge.com/games/1026085/nexus-mods-ai-disclosures",
+      "link": "https://www.theverge.com/games/1026085/nexus-mods-ai-disclosures",
+      "source": "theverge.com",
+      "select_reason": "PC 게임 최대 모드 사이트 넥서스 모드가 업로드할 때 AI 사용 여부 공개를 의무화한 플랫폼 정책이에요.",
+      "headline": "넥서스 모즈가 모드 업로드 때 AI 사용 공개를 의무화했다",
+      "so_what": "AI를 막지 않고 어디에 어떻게 썼는지 밝히게 했어요. 금지해서 숨기게 만드는 대신 투명하게 쓰게 하는 방식이라, 플랫폼 정책을 짤 때 참고할 만해요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "소노스 AI 음성 기능, 앱 참사 반복을 피하려 통제된 베타로 공개",
+      "one_line": "소노스, AI 음성을 조심스레 베타 공개.",
+      "summary_1": "소노스가 'Hey Sonos'로 자연어 음성 제어를 하는 Sonos 27voice를 베타로 내놔요. 노래 설명으로 앨범을 찾고, 스피커를 묶어 재생하고, 일반 질문에도 답하는 기능이에요.",
+      "summary_2": "2년 전 앱을 처음부터 다시 만들었다가 핵심 기능이 사라지고 구형 스피커 연결과 접근성에 문제가 생겨 CEO가 물러난 일이 있었어요. 소노스는 이번에 작은 27 앱 업데이트를 먼저 내고 음성 기능은 따로 뺐어요.",
+      "summary_3": "베타는 조기 접근을 신청해 승인받아야 하고, 비교적 적은 인원이 대상이에요. 소노스는 테스터의 상세한 피드백을 받아 내년 출시를 계획하고 있어요. 대규모 변경을 단계적으로 검증하는 방식이에요.",
+      "url": "https://9to5mac.com/2026/11/04/how-to-get-access-to-sonos-ai-features-as-company-aims-to-avoid-another-app-disaster/",
+      "link": "https://9to5mac.com/2026/11/04/how-to-get-access-to-sonos-ai-features-as-company-aims-to-avoid-another-app-disaster/",
+      "source": "9to5mac.com",
+      "select_reason": "앱 개편 실패를 겪었던 소노스가 이번에는 AI 기능을 조심스럽게 단계적으로 공개하는 출시 전략 변화예요.",
+      "headline": "소노스가 AI 음성 제어를 소수 신청자 대상 베타로 공개했다",
+      "so_what": "앱 개편 실패로 CEO까지 물러난 뒤라 큰 변화를 쪼개서 검증하기로 했어요. 대형 기능을 출시하는 전략을 세울 때 좋은 참고 사례예요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "에이전트도 우리와 같은 나쁜 UX에 고전한다",
+      "one_line": "AI 에이전트는 가장 정직한 UX 테스터.",
+      "summary_1": "컴퓨터를 직접 쓰는 에이전트는 짐작하거나 임기응변을 하거나 동료에게 물어볼 수 없어요. 그래서 글쓴이는 에이전트를 지금까지 가장 정직한 사용성 테스터라고 불러요.",
+      "summary_2": "글쓴이는 에이전트가 협력업체 포털에서 실패하는 모습을 처음 봤을 때, 그 실패가 낯익었다고 해요. 사람 사용자가 겪던 문제와 같은 종류라는 거예요. 본문은 확인하지 못해 세부 사례는 알 수 없어요.",
+      "summary_3": "에이전트가 막히는 지점은 사람도 불편해하던 UX 결함을 드러내는 신호일 수 있어요. 에이전트가 쓰는 제품이 늘수록 명확한 인터페이스 설계의 중요성이 커진다는 시사점이 있어요.",
+      "url": "https://uxdesign.cc/agents-struggle-with-the-same-bad-ux-we-do-98415f2b8981?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/agents-struggle-with-the-same-bad-ux-we-do-98415f2b8981?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "컴퓨터를 조작하는 AI 에이전트가 실패하는 지점을 실제 사례로 보여주며 나쁜 UX를 짚은 디자인 에세이예요.",
+      "headline": "AI 에이전트가 협력업체 포털에서 사람과 똑같이 막혔다",
+      "so_what": "에이전트는 짐작하거나 돌아가지 못해서 UX 결함이 그대로 드러나요. 에이전트를 사용성 점검 도구로 써보면 사람이 겪던 불편도 함께 찾을 수 있어요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
