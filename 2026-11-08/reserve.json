@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-08",
+  "reserves": [
+    {
+      "title_ko": "뮤즈 앱을 나에게 맞게 디자인하는 '스페이스' 공개",
+      "one_line": "뮤즈 앱의 맞춤형 스페이스.",
+      "summary_1": "메타가 뮤즈 앱에 '스페이스' 기능을 도입했어요. 선물 목록 관리, 매일 하는 단어 게임, DIY 계획 보드처럼 원하는 아이디어를 말로 설명하면 앱 안에 맞춤 경험이 만들어져요.",
+      "summary_2": "처음 만든 결과는 시작점이에요. 사용하면서 뮤즈와 대화하며 빠진 기능을 더하거나 모양과 작동 방식을 바꿀 수 있어요.",
+      "summary_3": "스페이스는 사이드바나 메인 탭에 두고, 숨기거나 노출 시간을 예약할 수 있어요. 평일엔 주간 플래너, 토요일엔 주말 계획을 앞에 두는 식이에요.",
+      "url": "https://about.fb.com/news/2026/11/introducing-spaces-customize-muse-app/",
+      "link": "https://about.fb.com/news/2026/11/introducing-spaces-customize-muse-app/",
+      "source": "about.fb.com",
+      "select_reason": "메타가 뮤즈 앱에 사용자가 직접 화면을 꾸리는 '스페이스'를 도입한 개인화 UX 업데이트예요.",
+      "headline": "메타가 말로 설명하면 앱 화면을 만들어 주는 뮤즈 스페이스를 냈다",
+      "so_what": "앱 기능을 고르는 것을 넘어 사용자가 직접 만드는 단계로 넘어가고 있어요. 어디까지 열어 주고 무엇을 고정할지가 이제 디자이너의 숙제예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "AI 시대에도 단일 답변보다 '베리피킹' 검색이 강하다",
+      "one_line": "AI 검색에도 통하는 베리피킹.",
+      "summary_1": "마샤 베이츠는 1989년 논문에서 사람들이 검색할 때 모으고, 방향을 바꾸고, 질문을 고쳐 가며 움직인다고 했어요. 검색은 한 번의 질의와 하나의 최선 결과가 아니라는 거예요.",
+      "summary_2": "채팅창은 질의 하나에 답 하나라는 기존 검색 모델의 가정을 더 빠르게 되풀이해요. 거대언어모델은 답할 수 있는 범위를 바꿨지만, 막연하게 시작해 읽으며 배우고 중간에 방향을 바꾸는 사람의 방식은 그대로예요.",
+      "summary_3": "필자는 법률 테크 소프트웨어의 검색·요약 설계에 베이츠의 개념을 적용했다고 해요. 지금 내릴 설계 결정과 연결되는 다섯 가지 아이디어를 소개하고, 그중 '진화하는 검색 지원'이 첫 번째예요.",
+      "url": "https://uxdesign.cc/berrypicking-still-beats-the-single-answer-for-search-even-in-the-world-of-ai-6d7174099500?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/berrypicking-still-beats-the-single-answer-for-search-even-in-the-world-of-ai-6d7174099500?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "베이츠의 '베리피킹' 이론으로 AI 단일 답변 검색이 놓치는 탐색 경험을 짚은 디자인 에세이예요.",
+      "headline": "법률 테크 설계자가 1989년 베리피킹 이론을 AI 검색에 적용했다",
+      "so_what": "질문 하나에 답 하나를 주는 채팅 UI는 사람이 실제로 찾는 방식과 달라요. 중간에 방향을 바꾸는 탐색을 돕는 설계가 AI 검색의 차이를 만들어요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "두려움과 의심이 확신으로 바뀌도록: 당근 T&S팀 이야기",
+      "one_line": "당근 T&S 매니저의 신뢰 만들기.",
+      "summary_1": "당근에서 중고거래나 알바 구인, 동네 모임을 하다 보면 낯선 사람을 직접 만나게 돼요. 이때 생기는 마음속 두려움과 의심을 줄이는 일을 Trust & Safety(T&S)팀이 맡아요.",
+      "summary_2": "T&S팀은 신고 접수 문서에서 반복되는 문제를 찾아 정책과 시스템을 바꾸거나 새 기능을 만들어요. 노쇼 신고를 살피다 약속을 잡고 관리하는 기능을 만든 것이 사례예요.",
+      "summary_3": "T&S 매니저 노라와 로디가 신뢰를 만드는 방법을 이야기해요. 노라는 AI 에이전트와 함께 공고·신고·활동 이력에서 위험 신호를 찾고, 로디는 버티컬 마켓플레이스 T&S팀을 이끌어요.",
+      "url": "https://surfit.io/link/WvAJO",
+      "link": "https://careers.daangn.com/blog/post/interview-trust-safety-team/?ref=surfit.io",
+      "source": "careers.daangn.com (via surfit)",
+      "select_reason": "당근이 사용자의 목소리를 듣고 그것을 실제 제품으로 만들어 간 과정을 담은 국내 프로덕트 케이스예요.",
+      "headline": "당근 T&S팀이 노쇼 신고를 분석해 약속 관리 기능을 만들었다",
+      "so_what": "신고 데이터는 문제를 처리하는 데서 그치지 않고 제품 기능의 단서가 돼요. 낯선 사람과 만나는 서비스라면 신뢰도 설계 대상이라는 걸 보여 줘요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
