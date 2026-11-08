@@ -1,47 +1,4 @@
 {
   "date": "2026-11-09",
-  "reserves": [
-    {
-      "title_ko": "네이티브는 천장이 아니라 바닥이다",
-      "one_line": "AI 시대 네이티브의 의미 재고.",
-      "summary_1": "AI 덕분에 세련된 겉모습을 만드는 비용이 거의 없어졌다는 문제의식에서 출발하는 글이에요. 외형만으로는 더 차별화가 어려워졌다는 뜻이에요.",
-      "summary_2": "피드 요약에 따르면 네이티브는 그림으로 그릴 수 없는 것을 가져오고, 모방하는 쪽보다 한 걸음 앞서 시스템과 함께 움직여요.",
-      "summary_3": "본문을 가져오지 못해 세부 논거는 확인되지 않았어요. 작성자는 AI 어시스턴트의 도움을 받았고 아이디어와 경험, 최종 편집은 본인 몫이라고 밝혔어요.",
-      "url": "https://uxdesign.cc/native-is-a-floor-not-a-ceiling-09bc4f27ddce?source=rss----138adf9c44c---4",
-      "link": "https://uxdesign.cc/native-is-a-floor-not-a-ceiling-09bc4f27ddce?source=rss----138adf9c44c---4",
-      "source": "uxdesign.cc",
-      "select_reason": "AI로 매끈한 외관은 공짜가 된 시대에, 네이티브 UI가 주는 가치를 짚은 디자인 에세이입니다.",
-      "headline": "한 메이커가 네이티브를 품질의 천장이 아닌 바닥으로 다시 정의했다",
-      "so_what": "AI로 세련된 화면은 누구나 금방 만들어요. 이제 차별점은 따라 그리기 어려운 시스템 이해와 한발 앞선 움직임에서 나온다는 얘기예요.",
-      "thumb": "reserve-thumb-1.webp"
-    },
-    {
-      "title_ko": "에디츠, 멀티트랙 타임라인으로 확장한 맥 영상 편집 앱",
-      "one_line": "인스타그램 에디츠 맥 버전 출시.",
-      "summary_1": "인스타그램이 영상 편집 앱 에디츠의 맥 버전을 공개했어요. 모바일 인터페이스를 넓은 화면으로 확장하고 멀티트랙 타임라인, 키프레임, 오디오 파형 기반 컷 편집을 제공해요.",
-      "summary_2": "색보정은 컬러 휠과 커브를 지원하고, 개인 LUT와 폰트 파일도 가져올 수 있어요. 라이선스 음원과 로열티 프리 오디오 라이브러리, 무제한 자동 자막도 쓸 수 있어요.",
-      "summary_3": "앱은 무료이며 M1 이상 맥에서 쓸 수 있어요. 인스타그램에 바로 게시하거나 워터마크 없이 4K로 내보낼 수 있어요. 윈도 버전은 아직 없어요.",
-      "url": "https://designcompass.org/2026/11/06/instagram-edits-desktop-mac-video-editor/",
-      "link": "https://designcompass.org/2026/11/06/instagram-edits-desktop-mac-video-editor/",
-      "source": "designcompass.org",
-      "select_reason": "인스타그램이 영상 편집 앱 에디츠의 맥 버전을 냈습니다. 멀티트랙 타임라인과 무료 4K 내보내기로 캡컷과 정면으로 경쟁하는 움직임이에요.",
-      "headline": "인스타그램이 멀티트랙 타임라인을 갖춘 에디츠 맥 앱을 무료로 냈다",
-      "so_what": "전문 편집 툴 없이도 키프레임, 색보정, 워터마크 없는 4K 내보내기까지 할 수 있어요. 숏폼 제작 도구에 거는 기본 기대치가 그만큼 올라갔어요.",
-      "thumb": "reserve-thumb-2.webp"
-    },
-    {
-      "title_ko": "크로마그래프 카메라, 아이폰에서 찾던 바로 그 카메라 앱",
-      "one_line": "과처리 없는 아이폰 카메라 앱.",
-      "summary_1": "영화감독 라이언 존슨이 공개한 아이폰 카메라 앱 크로마그래프 카메라를 필자가 12.99달러에 구매해 써봤고 결과에 만족했다고 해요.",
-      "summary_2": "필자는 애플 기본 카메라가 과하게 처리돼 기본값이 아쉽다고 봐요. 아이폰 18 프로의 필름 질감은 과하고, 어도비 프로젝트 인디고는 후처리가 길어 불편했다고 해요.",
-      "summary_3": "설정을 만지지 않고 찍기만 해도 좋은 사진이 나오는 경험이 강점이에요. 시작 가격은 높지만 번거로움 없는 결과를 원한다면 값어치가 있다는 평가예요.",
-      "url": "https://9to5mac.com/2026/11/07/chromagraph-camera-is-exactly-the-camera-app-ive-been-looking-for-on-iphone/",
-      "link": "https://9to5mac.com/2026/11/07/chromagraph-camera-is-exactly-the-camera-app-ive-been-looking-for-on-iphone/",
-      "source": "9to5mac.com",
-      "select_reason": "감독 라이언 존슨이 내놓은 아이폰 카메라 앱입니다. 과하게 보정된 아이폰 사진의 대안이 되겠다는 분명한 제품 관점을 담았어요.",
-      "headline": "라이언 존슨 감독이 과처리 없는 아이폰 카메라 앱을 내놓았다",
-      "so_what": "설정을 만지지 않고 찍기만 해도 좋은 사진이 나오는 게 강점이에요. 기능을 늘리기보다 기본값을 잘 고른 앱에 12.99달러를 낸다는 점이 눈여겨볼 만해요.",
-      "thumb": "reserve-thumb-3.webp"
-    }
-  ]
+  "reserves": []
 }
