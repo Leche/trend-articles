@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-10",
+  "reserves": [
+    {
+      "title_ko": "올해 '랩드'를 출시하기 전에 확인할 것",
+      "one_line": "연말 리캡 출시 전 점검할 점.",
+      "summary_1": "지난 12월 연말 리캡이 5개나 3주 안에 나왔어요. 스포티파이 랩드는 24시간 만에 2억 명에 닿았고, 유튜브 리캡, 애플 리플레이, 챗GPT의 연말 시가 이어졌어요.",
+      "summary_2": "사용 데이터를 모으는 제품이라면 올해도 '우리도 랩드 하자'는 말이 나올 만해요. 지금도 어느 팀은 마지막 카드의 컨페티가 숫자를 가리지 않는지 QA 중일 거예요.",
+      "summary_3": "글은 지난해 리캡이 잘한 점, 2026년의 변화, 거의 아무도 밟지 않는 단계를 다뤄요. 공개된 본문은 여기까지이고 나머지는 멤버 전용이라 구체적 내용은 확인되지 않아요.",
+      "url": "https://uxdesign.cc/before-you-ship-your-wrapped-this-year-a0a47ee191f8?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/before-you-ship-your-wrapped-this-year-a0a47ee191f8?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "연말 결산(Wrapped) 기능을 지난해 사례로 짚고 올해 무엇을 챙겨야 하는지 정리한, 시의성 있는 프로덕트 디자인 글이에요.",
+      "headline": "스포티파이 랩드가 24시간 만에 2억 명에게 닿았다",
+      "so_what": "지난해엔 리캡 다섯 개가 3주 안에 몰렸어요. 올해 연말 리캡을 준비한다면 출시 전에 무엇을 다르게 할지 먼저 정리해 두는 게 좋아요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "애플 \"아이폰 Duo 최적화 앱 10만 개 돌파\"",
+      "one_line": "Duo 최적화 앱 10만 개 돌파.",
+      "summary_1": "애플이 App Store에 아이폰 Duo용으로 만든 앱이 10만 개를 넘었고 매일 수천 개씩 늘고 있다고 밝혔어요. 초기 리뷰에서는 최적화 앱 부족이 약점으로 지적됐어요.",
+      "summary_2": "마이크로소프트 워드·아웃룩, 줌, NBA·NHL, 에치, Goodnotes, Halide Mark III 등이 새로 추가됐어요. 최적화되지 않은 앱은 옆에 검은 막대가 생기고 일부 기능이 더보기 메뉴에 숨어요.",
+      "summary_3": "애플은 19개 도시 50여 회 워크숍에 개발자 2000여 명이 참여했다고 해요. Duo는 1,999달러부터인데 매진돼 배송이 내년으로 밀렸고, 개선 시점은 예측하기 어렵다고 했어요.",
+      "url": "https://techcrunch.com/2026/11/06/the-duo-apps-are-coming-says-apple/",
+      "link": "https://techcrunch.com/2026/11/06/the-duo-apps-are-coming-says-apple/",
+      "source": "techcrunch.com",
+      "select_reason": "애플이 Duo 최적화 앱이 10만 개를 넘었고 지금도 하루 수천 개씩 늘고 있다고 밝혔어요. 새 플랫폼 생태계가 어디까지 왔는지 보여 줘요.",
+      "headline": "애플 아이폰 Duo 최적화 앱이 10만 개를 넘었다",
+      "so_what": "새 폼팩터에서는 앱이 얼마나 대응했는지가 체감 품질을 좌우해요. 최적화 안 된 앱은 검은 막대와 숨은 기능으로 바로 티가 나요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "Gemini로 손그림 스케치를 실제 작동하는 앱으로",
+      "one_line": "스케치 사진으로 앱 만들기.",
+      "summary_1": "앱 목업, 습관 트래커, 보드게임 판 같은 스케치를 사진으로 찍어 Gemini에 올릴 수 있어요. Canvas 도구를 선택하고 \"이 앱을 코드로 만들어줄래?\"라고 요청하면 돼요.",
+      "summary_2": "Gemini가 그림을 읽고 코드를 작성해요. 결과는 미리보기 창에서 바로 테스트할 수 있어요. 색상, 글꼴, 기능도 실시간으로 조정할 수 있어요.",
+      "summary_3": "종이 위 아이디어를 바로 동작하는 프로토타입으로 바꾸는 흐름이에요. 기획자나 디자이너가 개발 없이 아이디어를 빠르게 검증하는 데 쓸 수 있어요.",
+      "url": "https://blog.google/innovation-and-ai/products/gemini-app/turn-drawings-into-apps-gemini/",
+      "link": "https://blog.google/innovation-and-ai/products/gemini-app/turn-drawings-into-apps-gemini/",
+      "source": "blog.google",
+      "select_reason": "제미나이에서 간단한 손그림을 바로 동작하는 앱으로 바꾸는 기능을 구글이 직접 소개한 글이에요.",
+      "headline": "Gemini가 손그림 스케치 사진을 작동하는 앱으로 만든다",
+      "so_what": "종이 스케치를 개발 없이 직접 눌러 보는 프로토타입으로 바꿀 수 있어요. 아이디어 검증을 얼마나 앞당길 수 있는지 직접 시험해 볼 만해요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
