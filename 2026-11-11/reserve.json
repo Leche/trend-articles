@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-11",
+  "reserves": [
+    {
+      "title_ko": "네이버, 멤버십과 AI로 쿠팡 추격",
+      "one_line": "네이버, 멤버십·AI로 쿠팡 추격.",
+      "summary_1": "네이버가 25일부터 N배송 새벽배송을 네이버플러스 멤버십 회원 전용으로 바꿔요. 무료배송·반품·포인트 혜택과 묶어 충성 고객 락인을 노린 것으로 풀이돼요.",
+      "summary_2": "쇼핑 AI 에이전트는 3월 출시 대비 8월 월간 이용자와 일평균 대화 수가 약 5배, 일평균 거래액이 약 4배 늘었어요. 연내 일부 상품군에 에이전트 내 결제도 시범 적용해요.",
+      "summary_3": "2024년 거래액 기준 점유율은 네이버 20.7%, 쿠팡 22.7%예요. 커머스 매출은 늘지만 AI 투자와 프로모션 비용으로 3분기 영업이익은 줄 전망이에요.",
+      "url": "https://www.thebigdata.co.kr/view.php?ud=2026110516594261040a47484cf8_23",
+      "link": "https://www.thebigdata.co.kr/view.php?ud=2026110516594261040a47484cf8_23",
+      "source": "thebigdata.co.kr (web)",
+      "select_reason": "네이버가 N배송 새벽배송을 네이버플러스 멤버십 전용 혜택으로 바꾸며 쿠팡 와우를 겨냥하는, 국내 커머스의 멤버십 전략 전환이에요.",
+      "headline": "네이버가 새벽배송을 멤버십 회원 전용으로 바꾼다",
+      "so_what": "배송 속도를 기본 혜택이 아니라 멤버십에 가입할 이유로 쓰는 셈이에요. 쇼핑 에이전트 안 결제까지 붙으면 고객이 떠나기 더 어려워져요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "드롭스, 친구와 노래를 나누는 재미를 되살리는 음악 앱",
+      "one_line": "짧은 클립으로 즐기는 음악 발견 앱.",
+      "summary_1": "삼성 자회사 하만이 음악 발견 앱 Drops를 출시했어요. 틱톡처럼 세로로 넘기며 가사·앨범 아트와 함께 10~30초 노래 클립을 듣고, 미국 iOS·안드로이드에서 쓸 수 있어요.",
+      "summary_2": "좋아요, 댓글, 리포스트, 공유, Droplists 저장과 DM이 가능해요. 전체 곡은 Apple Music, Qobuz, TIDAL 같은 스트리밍 서비스로 바로 이어져요.",
+      "summary_3": "생성형 AI는 오디오·비주얼에 쓰지 않고 정식 앨범 아트와 사진만 써요. 권리자에게 비용을 내고 재생 수도 보고해요. 유니버설뮤직 등이 파트너예요.",
+      "url": "https://techcrunch.com/2026/11/09/meet-drops-the-new-music-app-bringing-back-the-fun-of-sharing-songs-with-friends/",
+      "link": "https://techcrunch.com/2026/11/09/meet-drops-the-new-music-app-bringing-back-the-fun-of-sharing-songs-with-friends/",
+      "source": "techcrunch.com",
+      "select_reason": "10~30초 곡 조각을 스크롤하며 친구와 공유하는 새 음악 앱으로, 독자가 좋아하는 신규 앱 소개 결이에요.",
+      "headline": "하만이 10~30초 노래 클립을 넘겨 듣는 앱 드롭스를 냈다",
+      "so_what": "알고리즘 추천보다 친구와 나누는 발견에 무게를 뒀어요. 생성형 AI 없이 권리자에게 비용을 내는 구조라 음악 서비스 설계의 참고 사례가 될 만해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "가장 먼저 망한다던 피그마는 어떻게 AI의 작업대가 됐을까",
+      "one_line": "AI 에이전트의 작업대가 된 피그마.",
+      "summary_1": "'피그마부터 망한다'는 예측과 달리 피그마 파일에는 디자인 규칙이 쌓여 있어, 에이전트가 읽고 수정하는 작업 지시서가 됐어요. 주가는 2026년 상반기 51.6% 하락했어요.",
+      "summary_2": "Claude Code, Codex, Cursor 같은 코딩 에이전트가 피그마 MCP 서버로 파일을 읽고, 3월부터는 직접 쓰기도 해요. 2분기 매출은 3억 7,010만 달러로 48% 늘었어요.",
+      "summary_3": "피그마는 10월 29일 자체 편집 모델 학습 과정을 공개했어요. 프론티어 모델이 피그마 문법을 잘 몰라, 25만 개 넘는 예시를 피그마 고유 파일 형식으로 표현해 학습시켰어요.",
+      "url": "https://surfit.io/link/2LE7q",
+      "link": "https://inlevel9.com/issues/figma-ai-survival?ref=surfit.io",
+      "source": "inlevel9.com (via surfit)",
+      "select_reason": "AI 시대에 가장 먼저 망한다던 피그마가 어떻게 에이전트의 작업 지시서가 됐는지 짚는 글로, 디자인 툴의 프로덕트 포지션 변화를 다뤄요.",
+      "headline": "피그마가 25만 개 예시로 자체 디자인 편집 모델을 학습시켰다",
+      "so_what": "프론티어 모델이 피그마 문법을 잘 모르는 빈틈을 피그마가 직접 메우고 있어요. 파일이 에이전트의 작업 지시서가 될수록 규칙을 잘 정리해 둔 팀이 유리해요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
