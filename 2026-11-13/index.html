@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)"><title>2026. 11. 13 금요일 Trend Article Digest</title><style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
+  --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
+  --img-bg:#fff; --cta-bg:#191919; --cta-text:#fff; --gnb-bg:rgba(255,255,255,0.85); --label-bg:#f5f5f5; --label-text:#999; --label-border:transparent;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --line:#2a2a2a; --text:#e8e8e8; --text2:#ccc; --text3:#aaa; --text4:#888; --text5:#777;
+    --surface:#1a1a1a; --page:#111; --link-bg:rgba(60,140,240,0.12); --link-border:rgba(60,140,240,0.15); --link-text:#6ab0ff;
+    --img-bg:#1a1a1a; --cta-bg:#e8e8e8; --cta-text:#111; --gnb-bg:rgba(26,26,26,0.85); --label-bg:#2a2a2a; --label-text:#777; --label-border:transparent;
+  }
+}
+html,body { width:100%; background:var(--surface); }
+body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:var(--text); }
+.page { width:100%; background:#fff; }
+.card { width:100%; max-width:100%; background:var(--surface); border-radius:8px; }
+.header { padding:28px 20px 24px; border-bottom:1px solid var(--line); }
+.header h1 { font-size:clamp(24px,3vw,30px); font-weight:600; line-height:1.2; letter-spacing:-0.02em; }
+.header-meta { margin-top:14px; font-size:16px; color:var(--text4); font-weight:500; line-height:1.6; }
+.article-wrap { padding:0 20px 0; }
+.article-item { padding:24px 0 28px; border-bottom:1px solid var(--line); }
+.article-item:last-of-type { border-bottom:0; padding-bottom:20px; }
+.article-label { display:inline-block; margin-bottom:14px; padding:7px 10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }
+.article-title { font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }
+.article-summary { font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }
+.image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--img-bg); }
+.article-image { width:100%; height:auto; display:block; background:var(--img-bg); border:0; border-radius:8px; object-fit:contain; object-position:center center; }
+.no-thumb { width:100%; aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; background:var(--page); color:var(--text5); font-size:14px; }
+.summary-label, .link-label { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text5); margin-bottom:10px; }
+.bullet-list { list-style:none; display:grid; gap:10px; margin-bottom:18px; }
+.bullet-item { font-size:clamp(14px,1.8vw,16px); line-height:1.72; color:var(--text2); padding-left:16px; position:relative; word-break:keep-all; }
+.bullet-item::before { content:'·'; position:absolute; left:0; top:0; color:var(--text4); font-weight:700; }
+.link-box { display:block; padding:14px 16px; border:1px solid var(--link-border); border-radius:8px; background:var(--link-bg); }
+.article-link { display:block; font-size:14px; line-height:1.75; color:var(--link-text); text-decoration:none; word-break:break-all; }
+.article-link:hover { text-decoration:underline; }
+@media (max-width:767px) { .article-summary,.bullet-item{font-size:17px;} }
+@media (min-width:768px) {
+  html,body{background:var(--page);} .page{background:var(--page);padding:28px;}
+  .card{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}
+  .header{padding:40px 32px 32px;} .article-wrap{padding:0 32px 0;} .article-item{padding:28px 0 32px;}
+  .article-item:last-of-type{padding-bottom:40px;}
+}
+@media (min-width:1200px) {
+  .page{padding:36px;}
+  .card{max-width:1320px;}
+  .header{padding:48px 40px 36px;}
+  .article-wrap{
+    padding:0 40px 40px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap: 40px;
+  }
+  .article-item{ padding:28px 0 32px; }
+  /* 데스크탑에서 인트로가 카드 전체 폭으로 늘어나 한 줄이 지나치게 길어지는 것 방지.
+     텍스트(.digest-summary)에만 폭을 제한해 행 길이를 읽기 좋게 줄인다.
+     컨테이너(.digest-intro)와 하단 디바이더(border-bottom)는 전체 폭을 유지해
+     아래 기사 행과 정렬되게 한다. */
+  .digest-summary{ max-width:900px; }
+}
+@media (min-width: 1200px) {
+  .image-frame { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 8px; background: var(--img-bg); }
+  .image-frame .article-image { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center center; }
+}
+@media (max-width: 1199px) {
+  .image-frame { aspect-ratio: auto; }
+  .image-frame .article-image { width: 100%; height: auto; display: block; object-fit: contain; object-position: center center; }
+}
+@media (min-width: 1200px) {
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+@media (min-width: 1600px) {
+  .card { max-width: 1800px; }
+  .article-wrap { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+  .article-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--line) !important; padding-bottom: 32px !important; margin-bottom: 0 !important; }
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+.link-box a, .link-url, .article-link, .url-text {
+  display: block !important; width: 100% !important; min-width: 0 !important;
+  overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
+}
+.agit-cta { margin: 0 20px; border-top: 1px solid var(--line); padding: 20px 0 28px; text-align: center; }
+.agit-cta-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: var(--cta-bg); color: var(--cta-text) !important; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+.agit-cta-btn:hover { opacity: 0.8; }
+@media (min-width: 768px) { .agit-cta { margin: 0 40px; padding: 40px 0 32px; } .agit-cta-btn { display: inline-flex; width: auto; padding: 0 24px; } }
+@media (min-width: 1200px) { .agit-cta { padding: 40px 0 36px; } }
+/*GNB-CSS-START*/html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}body{padding-top:var(--gnb-h,55px);}:root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}.gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:55px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}.gnb-inner{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}.gnb-brand{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}.gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}.gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}.gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}.gnb-toc-btn:active{opacity:0.75;}.gnb-toc-label{font-weight:500;font-size:13px;}.gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}.gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}body.toc-open{overflow:hidden;}.toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}.toc-panel.open{visibility:visible;pointer-events:auto;}.toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}.toc-panel.open .toc-overlay{opacity:1;}.toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}.toc-panel.open .toc-drawer{transform:translateY(0);}.toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}.toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}.toc-close{background:transparent;border:0;font-size:28px;cursor:pointer;color:var(--text2);padding:0 6px;line-height:1;font-family:inherit;}.toc-close:hover{color:var(--text);}.toc-list{list-style:none;padding:4px 12px 32px;margin:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}.toc-list li{margin:0;}.toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}.toc-panel.open .toc-item{opacity:1;transform:translateY(0);}.toc-item:hover{background:var(--page);}.toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}.toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}.toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}.article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}.link-box{padding:8px 12px;}.agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}.back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}}.back-to-top:active,.agit-cta-btn:active{opacity:0.75;}.back-to-top:focus,.agit-cta-btn:focus{outline:none;}.back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}@media (min-width:768px){html,body{background:var(--surface);}.card{border:0;border-radius:0;}}@media (min-width:768px){.gnb-inner{padding:14px 32px;}.toc-drawer{left:auto;width:420px;max-width:92vw;transform:translateX(100%);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,0.12);}.toc-panel.open .toc-drawer{transform:translateX(0);}.toc-item{transform:translateX(30px);}.toc-panel.open .toc-item{transform:translateX(0);}.toc-header{padding:22px 24px 16px;}.toc-title{font-size:20px;}.toc-list{padding:4px 16px 40px;}.agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}.back-to-top,.agit-cta-btn{height:48px;font-size:14px;}}.digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}.digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}.digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}.pc-fabs{display:none;}@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}.pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}.pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}.pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}.pc-fab svg{flex-shrink:0;display:block;}.pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}.pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}.digest-intro{grid-column:1 / -1;padding:36px 0 40px;}.article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}.article-item > *{min-width:0;}}@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}.article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}:root{--gnb-flash-bg:rgba(0,0,0,0.08);}@media (prefers-color-scheme:dark){:root{--gnb-flash-bg:rgba(255,255,255,0.08);}}@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}@media (min-width:1200px){.article-item{position:relative;isolation:isolate;}.article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}}/*GNB-CSS-END*/</style></head><body><!--GNB-HTML-START--><nav class="gnb"><div class="gnb-inner"><a href="#top" class="gnb-brand" data-gnb-top><span class="gnb-brand-name">트렌드림</span><span class="gnb-date"></span></a><button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel"><span class="gnb-toc-label">목차</span><span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span></button></div><div class="gnb-progress-fill"></div></nav><aside id="toc-panel" class="toc-panel" aria-hidden="true"><div class="toc-overlay"></div><div class="toc-drawer"><div class="toc-header"><span class="toc-title">목차</span><button type="button" class="toc-close" aria-label="목차 닫기">×</button></div><ol class="toc-list"></ol></div></aside><!--GNB-HTML-END--><div class="card"><main class="article-wrap article-list">
+<section class="digest-intro" data-static-intro><div class="digest-meta"><span>8개 기사</span><span>·</span><span>약 4분 읽기</span></div><p class="digest-summary">EU 집행위원회가 디지털공정법 초안에서 무한 스크롤과 자동재생을 소비자가 끌 수 있게 하고, 이 규정을 AI 챗봇에도 적용하기로 했어요. 사용자를 오래 붙잡아 두는 설계가 이제 법적 리스크가 된다는 뜻이에요. 유나이티드항공은 AI 비서가 자사 항공권 결제까지 끝내지 못하게 막았어요. AI 에이전트가 어디까지 할 수 있는지를 서비스 쪽이 직접 정하기 시작한 거예요.</p></section>
+<script id="agit-digest-data" type="application/json">{"intro": "EU 집행위원회가 디지털공정법 초안에서 무한 스크롤과 자동재생을 소비자가 끌 수 있게 하고, 이 규정을 AI 챗봇에도 적용하기로 했어요. 사용자를 오래 붙잡아 두는 설계가 이제 법적 리스크가 된다는 뜻이에요. 유나이티드항공은 AI 비서가 자사 항공권 결제까지 끝내지 못하게 막았어요. AI 에이전트가 어디까지 할 수 있는지를 서비스 쪽이 직접 정하기 시작한 거예요.", "articles": [{"num": 1, "title": "EU, 루트박스·인플루언서·중독 유발 기능 규제 나선다", "headline": "EU가 무한 스크롤과 자동재생을 끌 수 있게 하라고 요구했다", "so_what": "거짓 품절 문구나 광고 표시 없는 협찬도 금지 대상이에요. 긴급함을 연출하던 UI 카피와 배너부터 다시 점검해 볼 때예요.", "link": "https://www.theverge.com/policy/1031575/digital-fairness-act-eu-dfa-consumer-protection", "thumb": "thumb-1.webp"}, {"num": 2, "title": "\"수부지 선크림 추천해줘\"…올리브영, AI 쇼핑 도우미 '올영 티키' 출시", "headline": "올리브영이 검색창 대신 대화로 화장품을 찾는 AI 도우미를 열었다", "so_what": "피부 고민만 말해도 상품을 찾아 줘요. 정확한 검색어를 몰라도 되는 대화형 탐색이 커머스 앱의 기본 화면이 되어 가는 신호예요.", "link": "https://www.newspim.com/news/view/20261111001427", "thumb": "thumb-2.webp"}, {"num": 3, "title": "유나이티드항공, AI 에이전트의 항공권 예약을 허용하지 않는다", "headline": "유나이티드항공이 AI 비서의 항공권 결제를 막았다", "so_what": "CEO는 또 다른 중개자를 원치 않는다고 했어요. 고객 접점을 지키려는 기업이 늘면 개인 AI 비서가 할 수 있는 일도 좁아질 수 있어요.", "link": "https://www.theverge.com/ai-artificial-intelligence/1031623/united-unauthorized-ai-agents", "thumb": "thumb-3.webp"}, {"num": 4, "title": "유튜브, 굵고 좁아진 영상 제목과 위로 옮긴 구독 탭", "headline": "유튜브가 하단 구독 탭을 홈 상단 Subs 버튼으로 옮겼다", "so_what": "응답자 92%가 기존 구독 탭을 원했어요. 손에 익은 탭 위치를 옮기면 잘못 누르는 일과 반발이 함께 따라온다는 걸 보여 줘요.", "link": "https://designcompass.org/2026/11/12/youtube-video-title-font-and-subscriptions-tab/", "thumb": "thumb-4.webp"}, {"num": 5, "title": "애플 카플레이에 제미나이가 들어왔어요", "headline": "구글이 애플 카플레이에 제미나이 라이브를 넣었다", "so_what": "운전 중 음성 대화가 차량 화면까지 왔어요. 화면을 거의 볼 수 없는 상황에서 AI와의 대화를 어떻게 설계할지가 새 과제예요.", "link": "https://blog.google/innovation-and-ai/products/gemini-app/gemini-on-apple-carplay/", "thumb": "thumb-5.webp"}, {"num": 6, "title": "당근, 개업 준비부터 초기 정착까지 동네가게 사장님 지원", "headline": "당근이 새로 문 연 동네가게에 광고캐시 10만 원을 준다", "so_what": "광고캐시와 결제 적립을 개업 시기에 묶었어요. 사장님이 가장 바쁜 초기에 당근의 비즈니스 기능을 습관으로 만들려는 설계예요.", "link": "https://about.daangn.com/company/pr/archive/당근-개업-준비부터-초기-정착까지동네가게-사장님-지원-나선다/", "thumb": "thumb-6.webp"}, {"num": 7, "title": "가상자산 거래소 플라이빗 해킹, 고객 40명 주민번호·납세정보 유출", "headline": "플라이빗이 그룹웨어 해킹으로 고객 40명 주민번호를 유출했다", "so_what": "거래 시스템이 아니라 그룹웨어 메일 첨부파일이 뚫렸어요. 외부 협업 도구도 고객정보 보호 범위에 넣어야 한다는 경고예요.", "link": "https://www.dailysecu.com/news/articleView.html?idxno=209490", "thumb": "thumb-7.webp"}, {"num": 8, "title": "FL Prefere, 읽기 까다로운 a와 e에 두 번째 모양을 더하다", "headline": "FL Prefere가 읽기 어려운 a와 e에 대체 글자를 추가했다", "so_what": "보여 주는 형태와 읽히는 형태를 스타일 세트로 나눴어요. 같은 서체라도 포스터와 웹 제목에서 다르게 골라 쓸 수 있게 됐어요.", "link": "https://designcompass.org/2026/11/12/fl-prefere-typeface-opentype-alternates/", "thumb": "thumb-8.webp"}]}</script>
+<article id="article-1" class="article-item">
+<div class="article-label">ARTICLE 01</div>
+<h2 class="article-title">EU, 루트박스·인플루언서·중독 유발 기능 규제 나선다</h2>
+<p class="article-summary">EU 디지털공정법안의 다크패턴 규제.</p>
+<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">EU 집행위원회가 디지털공정법(DFA) 초안을 공개했어요. 소비자가 더 많은 시간과 돈을 쓰도록 유도하는 관행을 겨냥해요. 오해를 부르는 가격·재고 표시, 루트박스 같은 중독적 설계, 광고 표시 없는 인플루언서 마케팅이 대상이에요.</li>
+<li class="bullet-item">상품이 거의 다 팔렸다는 거짓 문구처럼 소비자를 몰아가는 다크패턴을 금지해요. 지속적인 알림, 무한 스크롤, 영상 자동재생 같은 중독적 기능은 소비자가 끌 수 있어야 해요.</li>
+<li class="bullet-item">중독적 설계 제한은 AI 동반자와 범용 대화형 챗봇에도 적용돼요. 집행위는 공정한 경쟁으로 EU 소비자가 연간 최대 137억 유로를 절약할 것으로 기대한다고 밝혔어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.theverge.com/policy/1031575/digital-fairness-act-eu-dfa-consumer-protection" target="_blank">https://www.theverge.com/policy/1031575/digital-fairness-act-eu-dfa-consumer-protection</a></div>
+</article>
+<article id="article-2" class="article-item">
+<div class="article-label">ARTICLE 02</div>
+<h2 class="article-title">"수부지 선크림 추천해줘"…올리브영, AI 쇼핑 도우미 '올영 티키' 출시</h2>
+<p class="article-summary">올리브영의 대화형 AI 쇼핑 도우미 시범 운영.</p>
+<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">CJ올리브영이 생성형 AI 쇼핑 어시스턴트 '올영 티키'를 시범 운영해요. 이달 말까지 고객 약 100만 명이 대상이고, 이용 경험을 반영해 12월에 정식 출시할 예정이에요.</li>
+<li class="bullet-item">정확한 상품명이나 검색어를 몰라도 피부 고민과 사용 목적을 말하면 필요한 정보를 찾을 수 있게 모바일 앱을 개편했어요. 상품 추천과 특징 비교, 사용법, 피부 관리법을 안내해요.</li>
+<li class="bullet-item">매장별 상품 재고와 온라인몰 이용 방법도 확인할 수 있어요. 검색창 대신 대화로 상품을 찾는 쪽으로 쇼핑 경험이 옮겨 가는 사례로 볼 수 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.newspim.com/news/view/20261111001427" target="_blank">https://www.newspim.com/news/view/20261111001427</a></div>
+</article>
+<article id="article-3" class="article-item">
+<div class="article-label">ARTICLE 03</div>
+<h2 class="article-title">유나이티드항공, AI 에이전트의 항공권 예약을 허용하지 않는다</h2>
+<p class="article-summary">유나이티드항공의 AI 에이전트 예약 차단.</p>
+<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">유나이티드항공이 개인용 AI 비서가 자사 항공권을 예약하지 못하게 하겠다고 밝혔어요. 개인정보와 규제 문제를 이유로 들었어요. 아직 AI 에이전트로 예약을 시도하는 사람은 많지 않다고 해요.</li>
+<li class="bullet-item">고객 정보 노출, 의도하지 않은 구매, 수하물에 폭발물이 없다는 확인 같은 연방 규정 우회 가능성을 우려했어요. 에이전트는 항공편을 보여줄 수는 있지만 결제를 대신 완료할 수는 없어요.</li>
+<li class="bullet-item">CEO 스콧 커비는 "또 다른 중개자를 만들고 싶지 않다"고 말했어요. 이런 결정이 이어지면 Meta의 Muse, OpenAI의 Dots 같은 개인 AI 비서의 쓸모가 제한될 수 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.theverge.com/ai-artificial-intelligence/1031623/united-unauthorized-ai-agents" target="_blank">https://www.theverge.com/ai-artificial-intelligence/1031623/united-unauthorized-ai-agents</a></div>
+</article>
+<article id="article-4" class="article-item">
+<div class="article-label">ARTICLE 04</div>
+<h2 class="article-title">유튜브, 굵고 좁아진 영상 제목과 위로 옮긴 구독 탭</h2>
+<p class="article-summary">유튜브 제목 서체와 구독 탭 위치 변경.</p>
+<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">유튜브 모바일 앱 일부 화면에서 영상 제목이 굵고 폭이 좁은 글자로 바뀌었어요. 같은 제목도 줄바꿈 위치가 달라져요. 레딧에서는 여러 줄 제목을 훑어보기 어려워졌다는 반응이 나왔어요.</li>
+<li class="bullet-item">하단의 '구독' 탭은 홈 상단 'Subs'로 옮겨졌어요. 하단에는 홈, 쇼츠, 만들기, 내 페이지가 남았어요. 예전 구독 버튼 자리를 눌러 만들기 화면을 열었다는 사용자 글도 있었어요.</li>
+<li class="bullet-item">새 구독 피드에서는 '오늘', '동영상', '쇼츠' 필터가 보이지 않는다는 지적도 있어요. 안드로이드 어소리티의 자발적 투표에서는 응답자 1,274명 중 92.3%가 기존 구독 탭 복원을 원했어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/11/12/youtube-video-title-font-and-subscriptions-tab/" target="_blank">https://designcompass.org/2026/11/12/youtube-video-title-font-and-subscriptions-tab/</a></div>
+</article>
+<article id="article-5" class="article-item">
+<div class="article-label">ARTICLE 05</div>
+<h2 class="article-title">애플 카플레이에 제미나이가 들어왔어요</h2>
+<p class="article-summary">애플 카플레이로 확장된 제미나이 라이브.</p>
+<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">구글이 Gemini 앱을 애플 카플레이에 선보였어요. iOS 사용자가 운전 중 차량 디스플레이에서 Gemini Live로 핸즈프리 대화를 할 수 있어요. 안드로이드 오토에 이은 확장이에요.</li>
+<li class="bullet-item">일정 관리, 이메일 요약, 아이디어 구상, 발표 연습 같은 작업을 음성으로 할 수 있어요. 구글은 운전 중 주의가 분산되지 않도록 대화형 동반자처럼 설계했다고 설명해요.</li>
+<li class="bullet-item">대화는 아이폰과 동기화돼서 주차한 뒤 이어서 볼 수 있어요. Gemini 앱을 업데이트하고 마이크 권한을 켠 뒤 차량 화면의 Gemini 아이콘을 누르면 시작할 수 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://blog.google/innovation-and-ai/products/gemini-app/gemini-on-apple-carplay/" target="_blank">https://blog.google/innovation-and-ai/products/gemini-app/gemini-on-apple-carplay/</a></div>
+</article>
+<article id="article-6" class="article-item">
+<div class="article-label">ARTICLE 06</div>
+<h2 class="article-title">당근, 개업 준비부터 초기 정착까지 동네가게 사장님 지원</h2>
+<p class="article-summary">당근의 동네가게 개업패키지 프로모션.</p>
+<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">당근이 새로 문을 연 동네 사장님을 위한 '동네가게 개업패키지' 프로모션을 12월 16일까지 진행해요. 개업 초기에 당근의 비즈니스 기능을 부담 없이 써 보도록 혜택을 묶었어요.</li>
+<li class="bullet-item">광고 간편모드와 당근알바를 처음 쓰면 광고캐시를 각각 5만 원씩 최대 10만 원 지원해요. 가게별 선착순 100명이 당근페이로 결제하면 1인당 1천 원을 적립해 줘요. 매장당 최대 10만 원이에요.</li>
+<li class="bullet-item">비즈프로필을 만들고 사업자 인증을 마친 신청자 500명에게 당근포인트 5만 원을 추첨으로 줘요. 월세 카드결제 최대 6개월 무이자 할부와 개업 사장님 키트 1,000명 추첨도 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://about.daangn.com/company/pr/archive/당근-개업-준비부터-초기-정착까지동네가게-사장님-지원-나선다/" target="_blank">https://about.daangn.com/company/pr/archive/당근-개업-준비부터-초기-정착까지동네가게-사장님-지원-나선다/</a></div>
+</article>
+<article id="article-7" class="article-item">
+<div class="article-label">ARTICLE 07</div>
+<h2 class="article-title">가상자산 거래소 플라이빗 해킹, 고객 40명 주민번호·납세정보 유출</h2>
+<p class="article-summary">플라이빗 그룹웨어 침해로 고객정보 유출.</p>
+<div class="image-frame"><img class="article-image" src="thumb-7.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">가상자산 거래소 플라이빗에서 고객 40명의 개인정보가 유출됐어요. 성명, 주민등록번호 또는 생년월일, 연락처가 포함됐고 일부 고객은 납세 관련 정보도 노출됐어요. 법인 상호와 법인번호도 포함됐어요.</li>
+<li class="bullet-item">11월 1일 운영사 한국디지털거래소가 쓰는 다우기술 그룹웨어에 비인가 접근이 있었고, 11월 5일 유출을 확인했어요. 조세 관련 기관의 정보제공 요청 이메일 첨부파일이 노출됐어요.</li>
+<li class="bullet-item">회사는 거래 시스템 침입은 없고 고객 자산은 안전하다는 입장이에요. 외부 접속 차단과 경찰 수사 의뢰를 했어요. 외부 위탁 업무시스템까지 보안 관리 범위를 넓혀야 한다는 과제가 남았어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.dailysecu.com/news/articleView.html?idxno=209490" target="_blank">https://www.dailysecu.com/news/articleView.html?idxno=209490</a></div>
+</article>
+<article id="article-8" class="article-item">
+<div class="article-label">ARTICLE 08</div>
+<h2 class="article-title">FL Prefere, 읽기 까다로운 a와 e에 두 번째 모양을 더하다</h2>
+<p class="article-summary">FL Prefere의 a·e 대체 글자 추가.</p>
+<div class="image-frame"><img class="article-image" src="thumb-8.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">플라이트 모드가 디스플레이 세리프 서체 FL Prefere를 업데이트했어요. 소문자 'a'와 'e'에 더 익숙한 형태의 대체 글자를 추가했어요. 오픈타입 스타일 세트를 켜면 같은 글자의 모양이 바뀌어요.</li>
+<li class="bullet-item">FL Prefere는 글자 일부를 가상의 가로선에 맞춘 서체예요. 그래서 안쪽 빈 공간이 납작해지거나 막힌 글자도 있어요. 포스터처럼 형태를 보여줄 땐 기본형을 쓰면 돼요.</li>
+<li class="bullet-item">웹 제목처럼 빠르게 읽어야 하는 곳에는 대체형을 쓸 수 있어요. 굵기와 기울기는 그대로예요. 서체는 라이트부터 헤비까지 다섯 굵기와 이탤릭으로 구성되고, 기존 구매자는 제작자에게 연락하면 무료 업데이트를 받아요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/11/12/fl-prefere-typeface-opentype-alternates/" target="_blank">https://designcompass.org/2026/11/12/fl-prefere-typeface-opentype-alternates/</a></div>
+</article>
+
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트</a></div></div><!--GNB-JS-START--><script>(function(){
+// Naver-style trick: set theme-color content to empty so iOS Safari renders
+// status bar transparent over page content (instead of solid theme-color tint).
+var tcs=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<tcs.length;i++)tcs[i].setAttribute('content','');
+if(!tcs.length){
+var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content','');document.head.appendChild(m);
+}
+var arts=document.querySelectorAll('.article-item');
+if(!arts.length)return;
+// PC FAB: 우하단 floating "맨위로" + "아지트로 →" (1200+ only, scroll-to-show)
+if(!document.querySelector('.pc-fabs')){
+var agitBtn=document.querySelector('.agit-cta-btn');
+var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
+var fabs=document.createElement('div');
+fabs.className='pc-fabs';
+fabs.setAttribute('aria-hidden','true');
+var upSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1V15M13 6L8 1L3 6"/></svg>';
+var returnSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 5L6 8"/><path d="M3 5H10C10.7956 5 11.5587 5.31607 12.1213 5.87868C12.6839 6.44129 13 7.20435 13 8V14"/></svg>';
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top>'+upSvg+'<span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'">'+returnSvg+'<span>아지트로</span></a>';
+document.body.appendChild(fabs);
+var pcTop=fabs.querySelector('[data-pc-top]');
+if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
+function checkPcScroll(){if(window.scrollY>200){fabs.classList.add('visible');}else{fabs.classList.remove('visible');}}
+window.addEventListener('scroll',checkPcScroll,{passive:true});
+checkPcScroll();
+}
+// Insert digest intro at top of article-wrap (count + reading time)
+var artWrap=document.querySelector('.article-wrap');
+if(artWrap&&!document.querySelector('.digest-intro')){
+var totalChars=0;
+for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
+var readMins=Math.max(1,Math.round(totalChars/700));
+var titles=[];
+for(var ti=0;ti<Math.min(arts.length,3);ti++){var tt=arts[ti].querySelector('.article-title');if(tt)titles.push(tt.textContent.trim());}
+var summaryText=titles.length>0?titles.join(', ')+' 등 '+arts.length+'개의 이야기를 담았어요.':'오늘의 '+arts.length+'개 기사를 확인해보세요.';
+var intro=document.createElement('section');
+intro.className='digest-intro';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">'+summaryText+'</p>';
+artWrap.insertBefore(intro,artWrap.firstElementChild);
+}
+var gnb=document.querySelector('.gnb');
+var tocList=document.querySelector('.toc-list');
+var tocBtn=document.querySelector('.gnb-toc-btn');
+var tocPanel=document.getElementById('toc-panel');
+var tocClose=document.querySelector('.toc-close');
+var tocOverlay=document.querySelector('.toc-overlay');
+var curEl=document.querySelector('.gnb-toc-progress .cur');
+var totEl=document.querySelector('.gnb-toc-progress .tot');
+var brand=document.querySelector('[data-gnb-top]');
+var dateEl=document.querySelector('.gnb-date');
+var DAYS=['일','월','화','수','목','금','토'];
+var pm=location.pathname.match(/(\d{4})-(\d{2})-(\d{2})/);
+if(pm&&dateEl){
+var y=parseInt(pm[1],10),mo=parseInt(pm[2],10),d=parseInt(pm[3],10);
+var dow=DAYS[new Date(y,mo-1,d).getDay()];
+dateEl.textContent=(y%100)+'.'+mo+'.'+d+' ('+dow+')';
+}
+function updateGnbH(){var g=document.querySelector('.gnb');if(g){document.documentElement.style.setProperty('--gnb-h',g.offsetHeight+'px');}}
+updateGnbH();
+window.addEventListener('resize',updateGnbH);
+var progressFill=document.querySelector('.gnb-progress-fill');
+function updateProgress(){
+if(!progressFill)return;
+var d=document.documentElement;
+var total=d.scrollHeight-window.innerHeight;
+var cur=window.scrollY||d.scrollTop;
+var pct=total>0?Math.min(100,(cur/total)*100):0;
+progressFill.style.width=pct+'%';
+}
+updateProgress();
+window.addEventListener('scroll',updateProgress,{passive:true});
+window.addEventListener('resize',updateProgress);
+arts.forEach(function(art,i){
+art.id='article-'+(i+1);
+var num='#'+(i+1);
+var lbl=art.querySelector('.article-label');
+if(lbl)lbl.textContent=num;
+var t=art.querySelector('.article-title');
+var title=t?t.textContent.trim():'Article '+(i+1);
+var li=document.createElement('li');
+var a=document.createElement('a');
+a.href='#article-'+(i+1);a.className='toc-item';
+var ns=document.createElement('span');ns.className='toc-num';ns.textContent=num;
+var ts=document.createElement('span');ts.className='toc-text';ts.textContent=title;
+a.appendChild(ns);a.appendChild(ts);li.appendChild(a);tocList.appendChild(li);
+// 제목/썸네일/요약 영역도 원문 링크로 이동
+var lk=art.querySelector('.article-link');
+var url=lk?lk.getAttribute('href'):'';
+if(url){
+var targets=['.article-title','.article-summary','.image-frame','.bullet-list'];
+for(var ti2=0;ti2<targets.length;ti2++){
+var el=art.querySelector(targets[ti2]);
+if(!el)continue;
+el.classList.add('clickable-link');
+el.addEventListener('click',function(u){return function(e){
+if(window.getSelection&&window.getSelection().toString().length>0)return;
+window.open(u,'_blank','noopener');
+};}(url));
+}
+}
+});
+totEl.textContent=arts.length;
+// 외부 hash 진입 / 페이지 내 목차 클릭 모두에서 타깃 카드 flash
+function flashTarget(){if(!location.hash)return;var t=document.querySelector(location.hash);if(!t||!t.classList||!t.classList.contains('article-item'))return;t.classList.remove('flash-target');void t.offsetWidth;t.classList.add('flash-target');}
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();flashTarget();},0);}
+window.addEventListener('hashchange',function(){setTimeout(flashTarget,50);});
+var items=document.querySelectorAll('.toc-item');
+function setOpen(o){
+if(o){
+items.forEach(function(it,i){var d=(0.06+i*0.045)+'s';it.style.transitionDelay=d+','+d+',0s,0s';});
+}else{
+items.forEach(function(it){it.style.transitionDelay='0s';});
+}
+tocPanel.classList.toggle('open',o);
+tocPanel.setAttribute('aria-hidden',!o);
+tocBtn.setAttribute('aria-expanded',o);
+document.body.classList.toggle('toc-open',o);
+}
+tocBtn.addEventListener('click',function(){setOpen(!tocPanel.classList.contains('open'));tocBtn.blur();});
+if(tocClose)tocClose.addEventListener('click',function(){setOpen(false);});
+if(tocOverlay)tocOverlay.addEventListener('click',function(){setOpen(false);});
+tocPanel.addEventListener('click',function(e){if(e.target.closest('a.toc-item'))setOpen(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&tocPanel.classList.contains('open'))setOpen(false);});
+if(brand){brand.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});brand.blur();});}
+function setActive(idx){
+curEl.textContent=idx+1;
+items.forEach(function(it,i){it.classList.toggle('active',i===idx);});
+}
+if('IntersectionObserver' in window){
+var io=new IntersectionObserver(function(entries){
+var vis=entries.filter(function(e){return e.isIntersecting;});
+if(vis.length){
+vis.sort(function(a,b){return a.target.getBoundingClientRect().top-b.target.getBoundingClientRect().top;});
+var idx=Array.prototype.indexOf.call(arts,vis[0].target);
+setActive(idx);
+}
+},{rootMargin:'-30% 0px -55% 0px',threshold:0});
+arts.forEach(function(a){io.observe(a);});
+}
+var cta=document.querySelector('.agit-cta');
+if(cta){
+var bt=document.createElement('button');
+bt.type='button';
+bt.className='back-to-top';
+bt.textContent='맨 위로';
+bt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});bt.blur();});
+cta.insertBefore(bt,cta.firstChild);
+var agitBtn=cta.querySelector('.agit-cta-btn');
+if(agitBtn)agitBtn.addEventListener('click',function(){agitBtn.blur();});
+}
+})();</script><!--GNB-JS-END--></body></html>
