@@ -1,47 +1,4 @@
 {
   "date": "2026-11-16",
-  "reserves": [
-    {
-      "title_ko": "우리는 왜 포토샵을 복제하고 있을까",
-      "one_line": "포토샵 복제보다 큰 기회.",
-      "summary_1": "10월 AI로 만든 오픈소스 포토샵 복제품 PhotoCraft가 나왔어요. 개발자 한 명과 AI 에이전트만으로 복잡한 제품을 싸게 만들 수 있게 됐어요.",
-      "summary_2": "가격 문제는 풀리지만 포토샵 방식의 작업이 모두에게 필요한지는 의문이라고 해요. 가끔 영상을 만드는 마케터는 복잡한 도구가 부담스러운 과잉 서비스 사용자예요.",
-      "summary_3": "크리스텐슨 파괴적 혁신 프레임워크와 JTBD 관점으로 보면 원하는 결과를 쉽게 주는 간단한 도구에 기회가 있어요. 통제권은 유지하면서요.",
-      "url": "https://uxdesign.cc/why-are-we-cloning-photoshop-52e6e165eef7?source=rss----138adf9c44c---4",
-      "link": "https://uxdesign.cc/why-are-we-cloning-photoshop-52e6e165eef7?source=rss----138adf9c44c---4",
-      "source": "uxdesign.cc",
-      "select_reason": "AI로 만든 오픈소스 포토샵 클론 PhotoCraft를 사례로, AI 시대에 도구를 복제하는 것보다 더 큰 기회가 있다고 짚는 프로덕트 에세이예요.",
-      "headline": "개발자 한 명이 AI 에이전트로 포토샵 복제품을 만들었다",
-      "so_what": "이제 복잡한 툴을 싸게 만드는 건 어렵지 않아요. 가끔 쓰는 사람이 원하는 결과를 쉽게 얻게 해주는 단순한 도구에 기회가 더 커요.",
-      "thumb": "reserve-thumb-1.webp"
-    },
-    {
-      "title_ko": "유튜브 데이터, 2027년 미국 빌보드 차트로 복귀",
-      "one_line": "유튜브, 2027년 빌보드 복귀.",
-      "summary_1": "2026년 1월 빌보드에서 빠졌던 유튜브 데이터가 2027년부터 미국 빌보드 차트에 다시 반영돼요. 유튜브가 11월 9일 밝혔어요.",
-      "summary_2": "유튜브는 광고 기반 스트림을 구독 스트림보다 낮게 치는 빌보드 공식이 낡았다고 주장하며 데이터를 중단했었어요.",
-      "summary_3": "이번에 복귀하는 이유는 빌보드의 새 방법론이 구독과 광고 기반 서비스 전반의 팬 참여를 더 잘 반영하기 때문이라고 해요.",
-      "url": "https://blog.youtube/news-and-events/youtube-billboard-chart-update/",
-      "link": "https://blog.youtube/news-and-events/youtube-billboard-chart-update/",
-      "source": "blog.youtube",
-      "select_reason": "유튜브 조회수가 미국 빌보드 차트에 반영되는 방식이 바뀐, 플랫폼과 업계 사이의 실제 정책 변화예요.",
-      "headline": "유튜브가 2027년부터 빌보드 차트에 데이터를 다시 낸다",
-      "so_what": "광고 스트림도 구독만큼 쳐달라는 요구가 받아들여진 셈이에요. 무료 이용자의 참여를 어떻게 셀지가 지표 설계의 쟁점이 됐어요.",
-      "thumb": "reserve-thumb-2.webp"
-    },
-    {
-      "title_ko": "애플 뮤직, 내 얼굴 위에 가사를 띄우는 '셀피 싱'",
-      "one_line": "얼굴 위에 가사 띄우는 셀피 싱.",
-      "summary_1": "애플 뮤직 '셀피 싱'은 아이폰 전면 카메라로 노래를 찍으면서 실시간 가사를 볼 수 있어요. iOS 27.3 베타에서 확인됐고 연내 일반 공개가 예고됐어요.",
-      "summary_2": "가사 화면의 카메라 버튼으로 시작하고, 박자에 맞춰 가사가 강조돼요. 원곡 보컬을 줄이거나 남길 수 있고, 지원 곡은 한글 발음도 보여줘요.",
-      "summary_3": "촬영 후 영상 길이를 다듬고 음성 효과를 더해 메시지나 소셜미디어로 공유해요. iOS 27에는 영어-한국어 가사 번역과 오토믹스 변화도 있어요.",
-      "url": "https://designcompass.org/2026/11/13/apple-music-selfie-sing-ios-27-3/",
-      "link": "https://designcompass.org/2026/11/13/apple-music-selfie-sing-ios-27-3/",
-      "source": "designcompass.org",
-      "select_reason": "애플 뮤직이 전면 카메라 화면 위에 실시간 가사를 띄우는 '셀피 싱'을 iOS 27.3 베타에 넣은 새 기능이에요.",
-      "headline": "애플 뮤직이 셀피 영상 위에 실시간 가사를 띄운다",
-      "so_what": "듣기만 하던 음악 앱이 따라 부르고 찍어서 공유하는 도구로 바뀌고 있어요. 감상을 콘텐츠 제작으로 잇는 흐름을 눈여겨볼 만해요.",
-      "thumb": "reserve-thumb-3.webp"
-    }
-  ]
+  "reserves": []
 }
