@@ -405,7 +405,7 @@ def _pw_available():
 def fetch_page_playwright(url, timeout=30000):
     """Playwright 헤드리스 브라우저로 페이지 접근 (JS 렌더링 지원)"""
     try:
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled"])
             page = browser.new_page(
@@ -415,7 +415,12 @@ def fetch_page_playwright(url, timeout=30000):
             )
             # 봇 감지 우회: webdriver 프로퍼티 제거
             page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            page.goto(url, wait_until="networkidle", timeout=timeout)
+            try:
+                page.goto(url, wait_until="networkidle", timeout=timeout)
+            except PlaywrightTimeout:
+                # 영상·분석 요청이 계속 도는 페이지(openai.com 등)는 네트워크가 조용해지지 않는다.
+                # 문서 자체는 이미 로드됐을 수 있으니 버리지 말고 지금 상태로 읽는다.
+                print("  ⏳ 네트워크 대기 시간 초과 — 지금까지 로드된 내용으로 진행")
             # SPA 렌더링 대기: body 내 텍스트가 충분히 로드될 때까지 추가 대기
             try:
                 page.wait_for_function(
