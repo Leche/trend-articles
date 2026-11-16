@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-17",
+  "reserves": [
+    {
+      "title_ko": "스페이스X, 영상 생성 AI '그록 이매진' 개발팀 대부분 해고…AI 코딩에 집중",
+      "one_line": "영상 AI 접고 코딩 AI로.",
+      "summary_1": "스페이스X가 그록 이매진 개발 인력 약 60명을 지난주 해고했다고 디 인포메이션이 보도했어요. 서비스는 유지되지만 향후 방향은 불투명해요.",
+      "summary_2": "오픈AI가 3월 소라를 종료하고 코덱스에 집중한 것과 닮았어요. 영상 생성은 연산 자원이 많이 들어 AI 기업들이 투입처를 고르고 있어요.",
+      "summary_3": "올해 1분기 월평균 영상 20억 개 이상을 만들 만큼 이용량이 많았지만, 이용량이 수익성을 보장하지는 않아요. 구체적인 해고 이유는 밝혀지지 않았어요.",
+      "url": "https://surfit.io/link/n7J81",
+      "link": "https://www.aitimes.com/news/articleView.html?idxno=217399&ref=surfit.io",
+      "source": "aitimes.com (via surfit)",
+      "select_reason": "스페이스X가 영상 생성 AI '그록 이매진' 팀 대부분을 내보내고 AI 코딩에 집중하기로 했어요. 이용량이 많아도 수익이 나지 않으면 접는다는 AI 사업의 현실을 보여 줘요.",
+      "headline": "스페이스X가 그록 이매진 개발팀 약 60명을 해고했다",
+      "so_what": "월 20억 개씩 영상이 만들어졌는데도 팀을 줄였어요. 이용량이 많다고 해서 연산 비용을 감당할 수 있는 건 아니라는 신호예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "AI는 새로운 오래된 디자인 재료다",
+      "one_line": "AI를 재료로 보는 시선.",
+      "summary_1": "피드 설명에 따르면 창작자와 메이커는 안료를 갈던 시절부터 HTML까지, 재료를 직접 다뤄 보며 그 매체를 익혀 왔어요.",
+      "summary_2": "이 관점에서 AI 모델도 디자이너가 다뤄 보며 익혀야 할 또 하나의 재료로 볼 수 있어요.",
+      "summary_3": "본문은 보안 인증 화면만 수집돼 세부 논지는 확인하지 못했어요. 위 내용은 피드 요약에만 근거해요.",
+      "url": "https://uxdesign.cc/ai-is-the-new-old-design-material-0e7f83540c9a?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/ai-is-the-new-old-design-material-0e7f83540c9a?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "AI 모델을 물감이나 HTML처럼 직접 다루며 익혀야 하는 디자인 재료로 본 에세이예요. 독자가 골랐던 '출시하는 재료로 디자인하기'와 결이 같아요.",
+      "headline": "AI 모델을 안료나 HTML처럼 디자인 재료로 보자는 글이 나왔다",
+      "so_what": "AI를 다루는 감각도 직접 써 보면서 익혀야 한다는 관점이에요. 도구 사용법보다 재료가 어떤 성질을 가졌는지에 먼저 관심을 두게 해 줘요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "타다 팀의 iPhone Duo 대응기",
+      "one_line": "폴더블 대응 레이아웃 원칙.",
+      "summary_1": "타다가 10월 공개된 첫 폴더블 iPhone Duo에 출시 일정에 맞춰 대응했어요. 접힘, 펼침, 반접힘 상태마다 화면 크기와 형태가 달라져요.",
+      "summary_2": "Apple 가이드에 따라 외부 스크린은 compact, 내부 스크린은 regular로 보고 설계했어요. 힌지 부분의 reserved region에는 상호작용 요소를 걸치지 않아요.",
+      "summary_3": "펼친 화면에서는 지도를 왼쪽, 결정이 이뤄지는 오버레이 카드를 오른쪽에 뒀어요. 정보 위계에 따른 선택이며, 기기 상태가 바뀌어도 주 활동 영역이 유지돼요.",
+      "url": "https://surfit.io/link/PpJbM",
+      "link": "https://blog-tech.tadatada.com/articles/2026-11-11-tada-iphone-duo-adaptation?ref=surfit.io",
+      "source": "blog-tech.tadatada.com (via surfit)",
+      "select_reason": "타다 팀이 iPhone Duo에 맞춰 레이아웃을 규칙 기반으로 정리한 대응기예요. 독자 관심이 높은 iPhone Duo를 국내 서비스가 실제로 어떻게 대응했는지 볼 수 있어요.",
+      "headline": "타다가 iPhone Duo 펼친 화면에서 지도는 왼쪽, 결정 카드는 오른쪽에 뒀다",
+      "so_what": "접거나 펼쳐도 사용자가 손을 두는 곳은 그대로예요. 폴더블 대응을 할 때 정보 위계를 기준으로 삼으면 좋다는 걸 보여 주는 사례예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
