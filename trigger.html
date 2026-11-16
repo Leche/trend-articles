@@ -2795,10 +2795,11 @@ function checkSettings() {
 }
 
 // ── 새 큐레이션 ──
-async function triggerWorkflow(inputs) {
+async function triggerWorkflow(inputs, _isRetry = false) {
   // trigger.html에서 호출하는 큐레이션·교체는 항상 손으로 누른 것이므로 force=true로 가드 우회.
   const url = `https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/curate.yml/dispatches`;
-  return fetch(url, {
+  const dispatchedAt = Date.now();
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${settings.token}`,
@@ -2807,6 +2808,34 @@ async function triggerWorkflow(inputs) {
     },
     body: JSON.stringify({ ref: 'main', inputs: { force_run: 'true', ...inputs } }),
   });
+  if (res.status === 204) watchStuckCurateRun(dispatchedAt, inputs, _isRetry);
+  return res;
+}
+
+// GitHub이 러너를 배정하지 않아 실행이 queued에 그대로 머무는 경우 감시 (2026-11-17 00:28 인트로 다시 쓰기가
+// 잡 0개로 50분 넘게 멈춤. 평소엔 호출 후 3~5초 안에 시작한다).
+// 90초 뒤에도 queued면 취소하고 한 번만 다시 호출한다. 다른 큐레이션이 돌고 있어 정상적으로 줄 선 경우는 건드리지 않는다.
+const STUCK_QUEUE_MS = 90 * 1000;
+function watchStuckCurateRun(dispatchedAt, inputs, isRetry) {
+  setTimeout(async () => {
+    const base = `https://api.github.com/repos/${settings.owner}/${settings.repo}`;
+    const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
+    try {
+      const r = await fetch(`${base}/actions/workflows/curate.yml/runs?per_page=10`, { headers, cache: 'no-store' });
+      if (!r.ok) return;
+      const runs = (await r.json()).workflow_runs || [];
+      const mine = runs.find(x => new Date(x.created_at).getTime() >= dispatchedAt - 5000);
+      if (!mine || mine.status !== 'queued') return;            // 이미 시작했거나 끝남
+      if (runs.some(x => x.id !== mine.id && x.status === 'in_progress')) return;  // 앞 실행 대기 중 — 정상
+      await fetch(`${base}/actions/runs/${mine.id}/cancel`, { method: 'POST', headers });
+      if (!isRetry) {
+        await triggerWorkflow(inputs, true);
+      } else {
+        alert('GitHub이 큐레이션 실행을 시작하지 않고 있어요(다시 호출해도 멈춤). GitHub 쪽 장애일 수 있어요 — 잠시 뒤 다시 눌러주세요.');
+      }
+      loadActivityLog();
+    } catch (_) {}
+  }, STUCK_QUEUE_MS);
 }
 
 async function runCuration() {
@@ -3219,7 +3248,10 @@ async function ghMultiFileCommit({ message, files }) {
   //    액션 쪽 push 가 충돌로 죽는다 (2026-10-29 03:54 순서 조정이 돌던 인트로 다시 쓰기를 깨뜨림).
   const curateRes = await fetch(`${base}/actions/workflows/curate.yml/runs?per_page=5`, { headers, cache: 'no-store' });
   if (curateRes.ok) {
-    const running = ((await curateRes.json()).workflow_runs || []).some(r => r.status !== 'completed');
+    // 10분 넘게 queued인 실행은 GitHub에서 상태가 꼬인 유령 실행이라 무시한다(취소 API도 거절함, 2026-11-17).
+    const running = ((await curateRes.json()).workflow_runs || []).some(r =>
+      r.status === 'in_progress' ||
+      (r.status !== 'completed' && Date.now() - new Date(r.created_at).getTime() < 10 * 60 * 1000));
     if (running) throw new Error('큐레이션 작업이 아직 돌고 있어요. 끝난 뒤(최근 활동에서 확인) 다시 눌러주세요');
   }
 
