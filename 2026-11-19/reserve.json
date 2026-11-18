@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-19",
+  "reserves": [
+    {
+      "title_ko": "스포티파이, 딥페이크 음악의 아티스트 도용 막는 도구 출시",
+      "one_line": "아티스트 프로필 보호 기능 전면 공개.",
+      "summary_1": "스포티파이가 '아티스트 프로필 보호'를 모든 아티스트에게 공개해요. 베타 시작 8개월 만이며, 자기 이름으로 올라오는 음악을 직접 통제할 수 있어요.",
+      "summary_2": "Spotify for Artists에서 켜면 새 음악이 등록될 때 알림을 받고, 본인 것이 아니면 연결을 해제할 수 있어요. 기본은 예정대로 공개되고, 고급 설정에서는 수동 승인도 가능해요.",
+      "summary_3": "소니뮤직이 딥페이크 곡 26만 건 넘게 삭제를 요청했다는 보도가 배경이에요. 사칭, 메타데이터 오류, 동명이인으로 엉뚱한 프로필에 음악이 붙는 문제를 겨냥해요.",
+      "url": "https://techcrunch.com/2026/11/17/spotifys-new-tool-aims-to-stop-deepfakes-from-being-attributed-to-real-artists/",
+      "link": "https://techcrunch.com/2026/11/17/spotifys-new-tool-aims-to-stop-deepfakes-from-being-attributed-to-real-artists/",
+      "source": "techcrunch.com",
+      "select_reason": "스포티파이가 딥페이크 곡이 실제 아티스트 이름으로 올라가지 않게 막는 도구를 도입했어요. AI 음악에 대한 플랫폼 대응이에요.",
+      "headline": "스포티파이가 아티스트에게 내 프로필 음악 차단권을 줬다",
+      "so_what": "플랫폼이 사칭 콘텐츠를 다 걸러내지 못하니, 당사자가 직접 확인하고 끊는 권한을 준 거예요. 신원 검증 UX의 현실적인 답이에요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "영국 등 일부 국가는 iCloud+로 Siri AI 사용량을 늘릴 수 없다",
+      "one_line": "iCloud+ Siri AI 확대, 일부 국가 제외.",
+      "summary_1": "애플이 iCloud+ 구독 시 Siri AI 사용량이 늘어난다고 밝혔어요. 200GB는 최대 2배, 2TB는 5배, 6TB는 10배, 12TB는 20배까지 늘어나요.",
+      "summary_2": "기본 사용 한도는 공개되지 않았고 기능과 수요에 따라 달라져요. 지원 문서에 따르면 늘어난 이용량은 브라질, EU, 영국, 한국에서는 제공되지 않아요.",
+      "summary_3": "애플은 이유를 밝히지 않았어요. 필자는 반독점 규제를 강하게 해온 국가들이라는 공통점에 주목하며, 경쟁 AI에 불리하다는 평가를 우려했거나 규제 당국에 대한 경고일 수 있다고 추측해요.",
+      "url": "https://9to5mac.com/2026/11/18/the-uk-and-some-other-countries-dont-get-more-siri-ai-usage-with-icloud/",
+      "link": "https://9to5mac.com/2026/11/18/the-uk-and-some-other-countries-dont-get-more-siri-ai-usage-with-icloud/",
+      "source": "9to5mac.com",
+      "select_reason": "애플이 iCloud+ 요금제에 따라 Siri AI 사용 한도를 늘리는 방식으로 AI를 수익화하는데, 일부 국가는 혜택에서 빠졌어요.",
+      "headline": "애플이 한국·EU·영국에서는 Siri AI 추가 사용량을 막았다",
+      "so_what": "같은 구독료를 내도 나라마다 받는 AI 혜택이 달라져요. 규제가 프로덕트 요금제 설계까지 바꾸고 있다는 신호예요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "베지어 다시 짓기 (1): 사람과 AI를 위한 디자인 시스템",
+      "one_line": "AI도 읽는 디자인 시스템 재구축기.",
+      "summary_1": "채널팀 디자인 시스템 '베지어'는 컴포넌트 사용 기준이 불명확하고 피그마 컴포넌트 detach가 잦아, 사람도 AI도 쓰기 어려웠어요. 채널웍스 리디자인을 계기로 재구축했어요.",
+      "summary_2": "설계 원칙은 'Readable by Humans, Runnable by AI', 'Extensible for Every Need', 'Clear by Default' 세 가지예요. 디자이너와 프런트엔드·iOS·안드로이드 개발자가 함께 확정했어요.",
+      "summary_3": "모든 컴포넌트에 사용 목적과 금지 기준을 담은 spec.md 기준 문서를 두고 피그마 컴포넌트에 링크했어요. 슬롯은 구현은 자유롭게, 정책과 피그마 네이밍으로 제한해요.",
+      "url": "https://surfit.io/link/YnkAP",
+      "link": "https://tech.channel.io/kr/articles/8029b017?ref=surfit.io",
+      "source": "tech.channel.io (via surfit)",
+      "select_reason": "채널톡이 사람과 AI가 함께 쓰도록 디자인 시스템 '베지어'를 다시 지은 과정이에요. 기업의 디자인 시스템 결정 사례예요.",
+      "headline": "채널팀이 모든 컴포넌트에 금지 기준을 적은 spec.md를 붙였다",
+      "so_what": "AI가 화면을 짜는 팀이라면 컴포넌트보다 '언제 쓰면 안 되는지' 문서가 먼저예요. 디자인 시스템을 다시 볼 때 참고할 만한 사례예요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
