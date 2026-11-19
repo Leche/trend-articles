@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-20",
+  "reserves": [
+    {
+      "title_ko": "연말에도 고삐 죄는 네이버, 데이터센터·AI 에이전트·물류 3대 승부수",
+      "one_line": "네이버의 데이터센터·에이전트·물류 전략.",
+      "summary_1": "네이버가 미국 AI 추론 기업과 약 2조원 규모 컴퓨팅 공급 계약을 맺었어요. 20MW를 4~5년간 공급하고, 2028년 200MW 목표 중 나머지 고객도 협의 중이에요.",
+      "summary_2": "연내 별도 AI 에이전트 앱을 출시해요. 결제·예약 확정은 이용자가 직접 결정하게 했고, 광고 과금도 클릭에서 거래 성과로 넓힐 계획이에요.",
+      "summary_3": "쇼핑 성장을 위해 물류 자회사를 세우고 2030년까지 1조원 가까이 투자해요. 무료배송·반품 강화 후 멤버십 구매 빈도가 27% 늘었어요.",
+      "url": "https://surfit.io/link/xPqp2",
+      "link": "https://byline.network/2026/11/12_naver_212/?ref=surfit.io",
+      "source": "byline.network (via surfit)",
+      "select_reason": "네이버가 연말에 데이터센터, AI 에이전트, 물류 세 축에 힘을 싣고 있습니다. 국내 빅테크의 전략 움직임을 정리한 기사입니다.",
+      "headline": "네이버가 미국 AI 추론 기업과 2조원 컴퓨팅 계약을 맺었다",
+      "so_what": "검색 회사가 데이터센터 임대로 돈을 벌기 시작했어요. 에이전트 앱도 결제 확정은 사용자에게 맡겨서, 자동화를 어디서 멈출지 보여주는 사례예요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "애플 iCloud·앱스토어·애플 뮤직 등 서비스 장애",
+      "one_line": "애플 주요 서비스 일시 장애.",
+      "summary_1": "11월 17일 애플 iCloud 계정·로그인 등 여러 서비스에 장애가 났어요. 앱스토어와 애플 뮤직도 영향을 받았고 새 아이폰 활성화가 안 된다는 보고도 있었어요.",
+      "summary_2": "애플은 사이버 공격이 아니라 내부 업데이트가 원인이라고 밝혔어요. 같은 주 마이크로소프트와 체이스 등의 장애가 이어져 추측이 많았어요.",
+      "summary_3": "뉴욕 시간 오후 6시경 모든 장애가 복구됐어요. 계정 로그인 장애는 애플 ID 재입력 요구처럼 사용자 경험에 바로 영향을 줘요.",
+      "url": "https://techcrunch.com/2026/11/17/apple-services-including-icloud-app-store-and-apple-music-hit-by-outage/",
+      "link": "https://techcrunch.com/2026/11/17/apple-services-including-icloud-app-store-and-apple-music-hit-by-outage/",
+      "source": "techcrunch.com",
+      "select_reason": "아이클라우드, 앱스토어, 애플 뮤직 등 애플 서비스가 한꺼번에 장애를 겪었습니다. 많은 사람이 겪은 서비스 사고입니다.",
+      "headline": "애플이 내부 업데이트 실수로 iCloud 로그인을 멈춰 세웠다",
+      "so_what": "계정 장애가 나면 앱스토어, 음악, 새 기기 활성화까지 줄줄이 멈춰요. 로그인 하나에 모든 걸 묶은 설계는 장애가 났을 때 어떻게 버틸지도 함께 설계해야 해요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "스냅챗, 클로드 코드·커서 같은 AI 코딩 도구로 AR 렌즈 제작 지원",
+      "one_line": "AI 코딩 도구로 만드는 스냅 렌즈.",
+      "summary_1": "스냅챗이 Easy Lens CLI를 내놨어요. 클로드 코드, 커서, 코덱스 같은 AI 코딩 도구에서 말로 설명하면 렌즈 제작부터 게시까지 맡겨요.",
+      "summary_2": "100개 넘는 AR 블록과 50개 AI 에셋 생성기를 써요. 웹 렌즈 게임, 카메라 효과, 뷰티 필터를 코드 없이 하루 만에 낼 수 있다고 해요.",
+      "summary_3": "크리에이터가 스냅 개발 도구를 따로 배울 필요가 없어요. Lens+ 페이아웃으로 수익도 낼 수 있고 맥, 윈도우, 리눅스에서 돼요.",
+      "url": "https://techcrunch.com/2026/11/18/snapchat-now-lets-developers-build-ar-lenses-with-ai-coding-assistants-like-claude-code-and-cursor/",
+      "link": "https://techcrunch.com/2026/11/18/snapchat-now-lets-developers-build-ar-lenses-with-ai-coding-assistants-like-claude-code-and-cursor/",
+      "source": "techcrunch.com",
+      "select_reason": "스냅챗이 클로드 코드, 커서 같은 AI 코딩 도구로 AR 렌즈를 만들 수 있게 열었습니다. 플랫폼이 제작 방식을 바꾼 실제 결정입니다.",
+      "headline": "스냅챗이 클로드 코드로 AR 렌즈를 만드는 CLI를 내놨다",
+      "so_what": "전용 툴을 배우지 않아도 평소 쓰던 AI 코딩 도구로 렌즈를 만들고 수익까지 낼 수 있어요. 플랫폼이 직접 창작자의 작업 환경으로 찾아간 셈이에요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
