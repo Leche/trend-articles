@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-24",
+  "reserves": [
+    {
+      "title_ko": "스타트업, 연락처 탭 공유 기능을 두고 인도에서 애플 제소",
+      "one_line": "NameDrop 특허 소송 인도 제기.",
+      "summary_1": "미국 스타트업 GG Technologies가 애플의 NameDrop이 자사 인도 특허를 침해했다며 소송을 냈어요. 약 1억 6,186만 달러 배상과 금지 명령을 요구해요.",
+      "summary_2": "StayTouch 앱을 만든 이 회사는 NameDrop이 탑재된 아이폰·애플워치의 인도 판매와 수입을 막아 달라고 했어요. 미국에서도 4월 소송을 냈고, ITC가 8월 조사를 시작했어요.",
+      "summary_3": "인도 사건은 아직 심리 일정이 잡히지 않았어요. 인도는 애플에게 성장 시장이자 중국 밖 제조 거점으로 중요해지고 있어요.",
+      "url": "https://techcrunch.com/2026/11/20/startup-sues-apple-in-india-over-tap-to-share-contacts-feature/",
+      "link": "https://techcrunch.com/2026/11/20/startup-sues-apple-in-india-over-tap-to-share-contacts-feature/",
+      "source": "techcrunch.com",
+      "select_reason": "미국 스타트업이 연락처 공유 기능(NameDrop)을 문제 삼아 인도에서 애플을 상대로 아이폰 수입 금지를 요구했어요. 기능 하나가 규제·분쟁으로 번진 소식이에요.",
+      "headline": "스타트업이 NameDrop 탑재 아이폰의 인도 판매 금지를 청구했다",
+      "so_what": "제조 거점으로 키우던 인도에서 판매와 수입이 막힐 수 있어요. 기기끼리 맞대는 인터랙션도 특허 리스크를 먼저 따져봐야 해요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "메타, 상업 서비스 약관 개정을 단계적 협의로 진행",
+      "one_line": "메타의 약관 개정 보류와 협의.",
+      "summary_1": "메타가 상업 서비스 약관 개정안을 보류하고, 이해관계자와 더 깊이 협의한 뒤 고치겠다고 밝혔어요. 뉴스 발행사들이 웹 크롤러 적용 방식을 우려한 데 따른 결정이에요.",
+      "summary_2": "협의는 세 단계예요. 우려 청취, 피드백 검토와 수정, 출시 전 추가 협의예요. 발행사와 업계 단체를 만나고 있고 대화는 앞으로 몇 달 이어질 예정이에요.",
+      "summary_3": "2027년 초 발행사와 규제 당국 등과 수정 약관을 다시 논의하고 설명 문서도 만들어요. 메타는 robots.txt라는 업계 표준을 따른다고 강조해요.",
+      "url": "https://about.fb.com/news/2026/11/our-approach-to-updating-our-commercial-terms-of-service/",
+      "link": "https://about.fb.com/news/2026/11/our-approach-to-updating-our-commercial-terms-of-service/",
+      "source": "about.fb.com",
+      "select_reason": "메타가 상업용 서비스 약관 개정을 보류하고 이해관계자 의견을 더 듣기로 했어요. 회사가 직접 밝힌 정책 번복 결정이에요.",
+      "headline": "메타가 웹 크롤러 조항을 담은 상업 약관 개정을 보류했다",
+      "so_what": "발행사가 반발하자 플랫폼이 한발 물러섰어요. AI 학습용 콘텐츠 수집 규칙은 이제 일방 통보가 아니라 협상으로 정해진다는 신호예요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "프로토타입은 늘 가장 효과적인 명세서였다, AI 시대에는 더욱",
+      "one_line": "AI 시대 명세서로서의 프로토타입.",
+      "summary_1": "요구사항 검토 전에 누군가 이미 동작하는 기능을 만들어 오는 일이 흔해졌어요. 직접 클릭해 보면 문서의 열린 질문 셋이 저절로 풀리고, 다른 둘은 잘못된 질문으로 드러나요.",
+      "summary_2": "명세서는 만드는 비용이 컸던 시절 확실성을 사려고 쓰던 비용 산물이에요. 빌드가 반나절이면 되자 명세서는 예측이 아니라 만들며 확정된 내용을 기록하는 역할로 바뀌었어요.",
+      "summary_3": "PM, 디자이너, 엔지니어 누구나 반나절에 프로토타입을 만들 수 있어요. 필자는 이를 막을 수 없다고 보고, 프레드 브룩스의 말처럼 고객은 돌아가는 버전을 봐야 원하는 걸 안다고 짚어요.",
+      "url": "https://uxdesign.cc/prototypes-have-always-been-the-most-effective-specification-10162107b2ee?source=rss----138adf9c44c---4",
+      "link": "https://uxdesign.cc/prototypes-have-always-been-the-most-effective-specification-10162107b2ee?source=rss----138adf9c44c---4",
+      "source": "uxdesign.cc",
+      "select_reason": "AI 시대에는 문서보다 작동하는 프로토타입이 가장 좋은 명세라는 디자인·프로덕트 에세이예요. 예비 디자인 글로 둬요.",
+      "headline": "반나절 만든 프로토타입이 요구사항 문서의 질문 다섯 개를 정리했다",
+      "so_what": "만드는 비용이 낮아지면서 문서로 먼저 합의하는 순서가 뒤집히고 있어요. 기획자는 써서 예측하기보다 만들어 보고 확정하는 쪽으로 일하게 돼요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
