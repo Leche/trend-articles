@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)"><title>2026. 11. 25 수요일 Trend Article Digest</title><style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --line:#ededed; --text:#191919; --text2:#333; --text3:#555; --text4:#888; --text5:#999;
+  --surface:#fff; --page:#f0f0f0; --link-bg:rgba(10,115,220,0.08); --link-border:rgba(10,115,220,0.08); --link-text:#0A73DC;
+  --img-bg:#fff; --cta-bg:#191919; --cta-text:#fff; --gnb-bg:rgba(255,255,255,0.85); --label-bg:#f5f5f5; --label-text:#999; --label-border:transparent;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --line:#2a2a2a; --text:#e8e8e8; --text2:#ccc; --text3:#aaa; --text4:#888; --text5:#777;
+    --surface:#1a1a1a; --page:#111; --link-bg:rgba(60,140,240,0.12); --link-border:rgba(60,140,240,0.15); --link-text:#6ab0ff;
+    --img-bg:#1a1a1a; --cta-bg:#e8e8e8; --cta-text:#111; --gnb-bg:rgba(26,26,26,0.85); --label-bg:#2a2a2a; --label-text:#777; --label-border:transparent;
+  }
+}
+html,body { width:100%; background:var(--surface); }
+body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; color:var(--text); }
+.page { width:100%; background:#fff; }
+.card { width:100%; max-width:100%; background:var(--surface); border-radius:8px; }
+.header { padding:28px 20px 24px; border-bottom:1px solid var(--line); }
+.header h1 { font-size:clamp(24px,3vw,30px); font-weight:600; line-height:1.2; letter-spacing:-0.02em; }
+.header-meta { margin-top:14px; font-size:16px; color:var(--text4); font-weight:500; line-height:1.6; }
+.article-wrap { padding:0 20px 0; }
+.article-item { padding:24px 0 28px; border-bottom:1px solid var(--line); }
+.article-item:last-of-type { border-bottom:0; padding-bottom:20px; }
+.article-label { display:inline-block; margin-bottom:14px; padding:7px 10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text5); }
+.article-title { font-size:clamp(24px,2.7vw,30px); font-weight:700; line-height:1.33; margin-bottom:10px; letter-spacing:-0.02em; word-break:keep-all; }
+.article-summary { font-size:clamp(15px,1.8vw,17px); font-weight:500; line-height:1.65; color:var(--text3); margin-bottom:18px; word-break:keep-all; }
+.image-frame { margin-bottom:18px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--img-bg); }
+.article-image { width:100%; height:auto; display:block; background:var(--img-bg); border:0; border-radius:8px; object-fit:contain; object-position:center center; }
+.no-thumb { width:100%; aspect-ratio:16/10; display:flex; align-items:center; justify-content:center; background:var(--page); color:var(--text5); font-size:14px; }
+.summary-label, .link-label { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text5); margin-bottom:10px; }
+.bullet-list { list-style:none; display:grid; gap:10px; margin-bottom:18px; }
+.bullet-item { font-size:clamp(14px,1.8vw,16px); line-height:1.72; color:var(--text2); padding-left:16px; position:relative; word-break:keep-all; }
+.bullet-item::before { content:'·'; position:absolute; left:0; top:0; color:var(--text4); font-weight:700; }
+.link-box { display:block; padding:14px 16px; border:1px solid var(--link-border); border-radius:8px; background:var(--link-bg); }
+.article-link { display:block; font-size:14px; line-height:1.75; color:var(--link-text); text-decoration:none; word-break:break-all; }
+.article-link:hover { text-decoration:underline; }
+@media (max-width:767px) { .article-summary,.bullet-item{font-size:17px;} }
+@media (min-width:768px) {
+  html,body{background:var(--page);} .page{background:var(--page);padding:28px;}
+  .card{max-width:980px;margin:0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;}
+  .header{padding:40px 32px 32px;} .article-wrap{padding:0 32px 0;} .article-item{padding:28px 0 32px;}
+  .article-item:last-of-type{padding-bottom:40px;}
+}
+@media (min-width:1200px) {
+  .page{padding:36px;}
+  .card{max-width:1320px;}
+  .header{padding:48px 40px 36px;}
+  .article-wrap{
+    padding:0 40px 40px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap: 40px;
+  }
+  .article-item{ padding:28px 0 32px; }
+  /* 데스크탑에서 인트로가 카드 전체 폭으로 늘어나 한 줄이 지나치게 길어지는 것 방지.
+     텍스트(.digest-summary)에만 폭을 제한해 행 길이를 읽기 좋게 줄인다.
+     컨테이너(.digest-intro)와 하단 디바이더(border-bottom)는 전체 폭을 유지해
+     아래 기사 행과 정렬되게 한다. */
+  .digest-summary{ max-width:900px; }
+}
+@media (min-width: 1200px) {
+  .image-frame { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 8px; background: var(--img-bg); }
+  .image-frame .article-image { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center center; }
+}
+@media (max-width: 1199px) {
+  .image-frame { aspect-ratio: auto; }
+  .image-frame .article-image { width: 100%; height: auto; display: block; object-fit: contain; object-position: center center; }
+}
+@media (min-width: 1200px) {
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+@media (min-width: 1600px) {
+  .card { max-width: 1800px; }
+  .article-wrap { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+  .article-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--line) !important; padding-bottom: 32px !important; margin-bottom: 0 !important; }
+  .article-item:nth-last-child(-n+2) { border-bottom: none !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
+}
+.link-box a, .link-url, .article-link, .url-text {
+  display: block !important; width: 100% !important; min-width: 0 !important;
+  overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important;
+}
+.agit-cta { margin: 0 20px; border-top: 1px solid var(--line); padding: 20px 0 28px; text-align: center; }
+.agit-cta-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: var(--cta-bg); color: var(--cta-text) !important; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+.agit-cta-btn:hover { opacity: 0.8; }
+@media (min-width: 768px) { .agit-cta { margin: 0 40px; padding: 40px 0 32px; } .agit-cta-btn { display: inline-flex; width: auto; padding: 0 24px; } }
+@media (min-width: 1200px) { .agit-cta { padding: 40px 0 36px; } }
+/*GNB-CSS-START*/html{scroll-padding-top:var(--gnb-h,55px);scroll-behavior:smooth;}html,body,.toc-list{scrollbar-width:none;-ms-overflow-style:none;}html::-webkit-scrollbar,body::-webkit-scrollbar,.toc-list::-webkit-scrollbar{display:none;width:0;height:0;}body{padding-top:var(--gnb-h,55px);}:root{--gnb-bg:rgba(255,255,255,0.32);--gnb-date-color:rgba(25,25,25,0.48);}@media (prefers-color-scheme:dark){:root{--gnb-bg:rgba(26,26,26,0.32);--gnb-date-color:rgba(232,232,232,0.48);}}.gnb{position:fixed;top:0;left:0;right:0;z-index:100;height:55px;background:var(--gnb-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none;}.gnb-inner{position:absolute;top:0;left:0;right:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:auto;}.gnb-brand{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);text-decoration:none;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}.gnb-brand-name{font-family:'Pretendard',inherit;font-weight:700;font-size:18px;line-height:normal;}.gnb-date{font-family:'Pretendard',inherit;font-weight:600;font-size:14px;line-height:normal;color:var(--gnb-date-color);font-variant-numeric:tabular-nums;}.gnb-toc-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;background:var(--text);border:0;border-radius:999px;box-shadow:0 0 32px rgba(0,0,0,0.02);cursor:pointer;font-family:inherit;color:var(--surface);line-height:1;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.gnb-toc-btn:hover{opacity:0.85;}}.gnb-toc-btn:active{opacity:0.75;}.gnb-toc-label{font-weight:500;font-size:13px;}.gnb-toc-progress{display:inline-flex;align-items:center;background:transparent;padding:0;border-radius:0;color:inherit;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;letter-spacing:0.28px;}.gnb-progress-fill{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--text);transition:width 0.1s linear;pointer-events:none;}body.toc-open{overflow:hidden;}.toc-panel{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none;}.toc-panel.open{visibility:visible;pointer-events:auto;}.toc-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s ease;}.toc-panel.open .toc-overlay{opacity:1;}.toc-drawer{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);}.toc-panel.open .toc-drawer{transform:translateY(0);}.toc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;}.toc-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}.toc-close{background:transparent;border:0;font-size:28px;cursor:pointer;color:var(--text2);padding:0 6px;line-height:1;font-family:inherit;}.toc-close:hover{color:var(--text);}.toc-list{list-style:none;padding:4px 12px 32px;margin:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}.toc-list li{margin:0;}.toc-item{display:flex;gap:14px;align-items:flex-start;padding:14px 14px;text-decoration:none;color:inherit;border-radius:10px;opacity:0;transform:translateY(20px);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.32,0.72,0,1),background-color 0.18s,color 0.18s;}.toc-panel.open .toc-item{opacity:1;transform:translateY(0);}.toc-item:hover{background:var(--page);}.toc-num{font-size:16px;line-height:1.5;font-weight:500;color:rgba(0,0,0,0.32);flex-shrink:0;min-width:24px;font-variant-numeric:tabular-nums;}.toc-text{font-size:16px;line-height:1.5;color:rgba(0,0,0,0.32);word-break:keep-all;font-weight:500;}@media (prefers-color-scheme:dark){.toc-num,.toc-text{color:rgba(255,255,255,0.32);}}.toc-item.active .toc-num,.toc-item.active .toc-text{color:var(--text);font-weight:700;}.article-label{display:block;margin-bottom:10px;padding:0;background:transparent;border:0;border-radius:0;font-size:15px;font-weight:700;letter-spacing:0.04em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;text-transform:none;}.link-box{padding:8px 12px;}.agit-cta{display:flex;gap:10px;margin:0 20px;border-top:1px solid var(--line);padding:20px 0 28px;text-align:left;}.back-to-top,.agit-cta-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;width:auto;height:44px;padding:0 16px;background:var(--text);color:var(--surface) !important;border:0;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;letter-spacing:-0.01em;transition:opacity 0.18s;-webkit-tap-highlight-color:transparent;}@media (hover:hover){.back-to-top:hover,.agit-cta-btn:hover{opacity:0.85;}}.back-to-top:active,.agit-cta-btn:active{opacity:0.75;}.back-to-top:focus,.agit-cta-btn:focus{outline:none;}.back-to-top:focus-visible,.agit-cta-btn:focus-visible{outline:2px solid var(--text2);outline-offset:2px;}@media (min-width:768px){html,body{background:var(--surface);}.card{border:0;border-radius:0;}}@media (min-width:768px){.gnb-inner{padding:14px 32px;}.toc-drawer{left:auto;width:420px;max-width:92vw;transform:translateX(100%);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,0.12);}.toc-panel.open .toc-drawer{transform:translateX(0);}.toc-item{transform:translateX(30px);}.toc-panel.open .toc-item{transform:translateX(0);}.toc-header{padding:22px 24px 16px;}.toc-title{font-size:20px;}.toc-list{padding:4px 16px 40px;}.agit-cta{margin:0 32px;padding:32px 0 32px;gap:12px;}.back-to-top,.agit-cta-btn{height:48px;font-size:14px;}}.digest-intro{padding:20px 0 28px;border-bottom:1px solid var(--line);}.digest-meta{display:flex;gap:8px;font-size:13px;color:var(--text4);margin:0 0 14px;font-weight:500;font-variant-numeric:tabular-nums;}.digest-summary{font-size:17px;line-height:1.6;color:var(--text);letter-spacing:-0.01em;word-break:keep-all;margin:0;}@media (min-width:768px){.digest-intro{padding:32px 0 36px;}.digest-summary{font-size:18px;}}.pc-fabs{display:none;}@media (min-width:1200px){.gnb-inner{max-width:1320px;margin-left:auto;margin-right:auto;padding:0 40px;bottom:0;}.agit-cta{display:none;}.pc-fabs{display:grid;grid-template-columns:max-content;justify-items:stretch;gap:10px;position:fixed;bottom:32px;right:max(32px,calc(50vw - 620px));z-index:50;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 0.25s,transform 0.25s;}.pc-fabs.visible{opacity:1;transform:translateY(0);pointer-events:auto;}.pc-fab{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px 0 18px;background:var(--text);color:var(--surface);border:0;border-radius:999px;font-family:'Pretendard',inherit;font-size:15px;font-weight:700;letter-spacing:-0.15px;cursor:pointer;text-decoration:none;box-shadow:0 6px 6px rgba(0,0,0,0.08);transition:opacity 0.18s,transform 0.18s,box-shadow 0.18s;-webkit-tap-highlight-color:transparent;}.pc-fab svg{flex-shrink:0;display:block;}.pc-fab:hover{opacity:0.92;transform:translateY(-1px);box-shadow:0 8px 12px rgba(0,0,0,0.12);}.pc-fab:active{opacity:0.85;transform:translateY(0);box-shadow:0 4px 4px rgba(0,0,0,0.06);}.digest-intro{grid-column:1 / -1;padding:36px 0 40px;}.article-item{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 8;}.article-item > *{min-width:0;}}@media (min-width:1600px){.gnb-inner{max-width:1800px;margin-left:auto;margin-right:auto;}.pc-fabs{right:max(32px,calc(50vw - 860px));}}@media (prefers-color-scheme:dark) and (min-width:1200px){.pc-fab{box-shadow:0 6px 12px rgba(0,0,0,0.5);}}.article-title.clickable-link,.article-summary.clickable-link,.image-frame.clickable-link,.bullet-list.clickable-link{cursor:pointer;}:root{--gnb-flash-bg:rgba(0,0,0,0.08);}@media (prefers-color-scheme:dark){:root{--gnb-flash-bg:rgba(255,255,255,0.08);}}@keyframes article-flash{0%{opacity:1;}100%{opacity:0;}}@media (min-width:1200px){.article-item{position:relative;isolation:isolate;}.article-item.flash-target::before{content:'';position:absolute;inset:0 -16px;background:var(--gnb-flash-bg);border-radius:8px;z-index:-1;pointer-events:none;animation:article-flash 2.5s ease-out forwards;}}/*GNB-CSS-END*/</style></head><body><!--GNB-HTML-START--><nav class="gnb"><div class="gnb-inner"><a href="#top" class="gnb-brand" data-gnb-top><span class="gnb-brand-name">트렌드림</span><span class="gnb-date"></span></a><button class="gnb-toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel"><span class="gnb-toc-label">목차</span><span class="gnb-toc-progress"><span class="cur">1</span>/<span class="tot">0</span></span></button></div><div class="gnb-progress-fill"></div></nav><aside id="toc-panel" class="toc-panel" aria-hidden="true"><div class="toc-overlay"></div><div class="toc-drawer"><div class="toc-header"><span class="toc-title">목차</span><button type="button" class="toc-close" aria-label="목차 닫기">×</button></div><ol class="toc-list"></ol></div></aside><!--GNB-HTML-END--><div class="card"><main class="article-wrap article-list">
+<section class="digest-intro" data-static-intro><div class="digest-meta"><span>8개 기사</span><span>·</span><span>약 4분 읽기</span></div><p class="digest-summary">구글이 검색 홈의 'Google Search' 버튼을 빼고, 그 자리에 이미지 만들기나 파일에 질문하기 같은 AI 작업 버튼을 넣었어요. 사용자가 검색창에 무엇을 칠지보다 어떤 일을 맡길지를 먼저 고르게 하겠다는 거예요. 우버가 녹화 라이드를 승객이 요청할 수 있는 옵션으로 만든 것도 같은 판단이에요. 이미 있는 기능이라도 첫 화면의 선택지로 꺼내야 사람들이 쓴다는 거죠.</p></section>
+<script id="agit-digest-data" type="application/json">{"intro": "구글이 검색 홈의 'Google Search' 버튼을 빼고, 그 자리에 이미지 만들기나 파일에 질문하기 같은 AI 작업 버튼을 넣었어요. 사용자가 검색창에 무엇을 칠지보다 어떤 일을 맡길지를 먼저 고르게 하겠다는 거예요. 우버가 녹화 라이드를 승객이 요청할 수 있는 옵션으로 만든 것도 같은 판단이에요. 이미 있는 기능이라도 첫 화면의 선택지로 꺼내야 사람들이 쓴다는 거죠.", "articles": [{"num": 1, "title": "구글 검색, 홈 화면의 검색 버튼 자리에 AI 도구를 놓다", "headline": "구글이 검색 홈에서 Google Search 버튼을 뺐다", "so_what": "대화가 제목별로 쌓이고 이어 물을 수 있게 되면서, 검색이 한 번 묻고 끝나는 창구에서 계속 돌아오는 작업 공간으로 바뀌고 있어요.", "link": "https://designcompass.org/2026/11/24/google-search-homepage-ai-redesign/", "thumb": "thumb-1.webp"}, {"num": 2, "title": "우버, 녹화를 더 쉽게: '녹화 라이드' 요청 옵션 테스트 시작", "headline": "우버가 승객이 녹화 라이드를 직접 요청하게 했다", "so_what": "심야·청소년 운행 자동 녹화와 사고 감지 연동까지 시험 중이라, 안전 기능을 사용자가 켜기 전에 상황이 먼저 켜는 방향으로 가고 있어요.", "link": "https://www.uber.com/us/en/newsroom/making-recording-easier/", "thumb": "thumb-2.webp"}, {"num": 3, "title": "네이버 멤버십, 로고에서 플러스를 빼고 초록색으로 통일", "headline": "네이버가 멤버십 로고에서 플러스를 지웠다", "so_what": "이름에서 뺀 단어를 로고와 혜택명까지 한꺼번에 정리했어요. 리브랜딩은 로고만이 아니라 이름 체계 전체를 맞출 때 완성된다는 사례예요.", "link": "https://designcompass.org/2026/11/24/naver-membership-logo-redesign/", "thumb": "thumb-3.webp"}, {"num": 4, "title": "배민, 통합 광고 서비스 '배민애즈' 출시…AI로 소재 최적화·상품 추천", "headline": "배민이 AI로 광고 소재를 다듬는 배민애즈를 내놨다", "so_what": "예약부터 성과 분석까지 한곳에 모으고 AI 소재 최적화를 붙였어요. 소상공인 광고도 이제 플랫폼 안에서 자동으로 돌아가는 흐름이에요.", "link": "https://industrynews.co.kr/news/articleView.html?idxno=90160", "thumb": "thumb-4.webp"}, {"num": 5, "title": "네이버·두나무 합병, 설계도 다시 그려야 하나", "headline": "새 지분 한도에 네이버·두나무 주식교환 구조가 막힐 수 있다", "so_what": "지분 한도 규제가 합병 구조 자체를 흔들 수 있어요. 핀테크와 가상자산을 잇는 서비스 기획은 당분간 규제 변수를 먼저 살펴야 해요.", "link": "https://byline.network/2026/11/24_29182773-2/", "thumb": "thumb-5.webp"}, {"num": 6, "title": "돌아온 당근 '붕어빵 지도', 올겨울도 북적", "headline": "당근 붕어빵 지도의 새 판매 장소 등록이 두 배로 늘었다", "so_what": "검색과 후기가 두 배 넘게 늘고 테마도 넷으로 넓혔어요. 주민이 채우는 지도가 계절마다 다시 살아나는 커뮤니티 콘텐츠의 힘을 보여줘요.", "link": "https://about.daangn.com/company/pr/archive/돌아온-당근-붕어빵-지도-올겨울도-북적/", "thumb": "thumb-6.webp"}, {"num": 7, "title": "구글 대안 Kagi, 이메일 서비스 'Kagi Mail' 공개 베타 출시", "headline": "Kagi가 연 99달러짜리 광고 없는 메일을 내놨다", "so_what": "검색과 브라우저에 이어 메일까지 유료로 묶었어요. 광고 대신 구독료를 내는 대안 생태계가 하나의 서비스에서 묶음으로 커지는 신호예요.", "link": "https://www.theverge.com/tech/1041000/kagi-mail-email-google-gmail-alternative", "thumb": "thumb-7.webp"}, {"num": 8, "title": "읽게 만들지 마세요: 사람들이 웹에서 읽는 방식", "headline": "UX 콜렉티브가 F자 읽기 패턴은 잊으라고 말한다", "so_what": "익숙한 F자 패턴을 잊으라는 주장이 나왔어요. 오래 믿어온 읽기 가정을 다시 점검하고 실제 사용자 데이터로 화면을 확인해볼 때예요.", "link": "https://uxdesign.cc/dont-make-me-read-a6821e418bb1?source=rss----138adf9c44c---4", "thumb": "thumb-8.webp"}]}</script>
+<article id="article-1" class="article-item">
+<div class="article-label">ARTICLE 01</div>
+<h2 class="article-title">구글 검색, 홈 화면의 검색 버튼 자리에 AI 도구를 놓다</h2>
+<p class="article-summary">검색 버튼 대신 AI 도구를 놓은 구글 홈.</p>
+<div class="image-frame"><img class="article-image" src="thumb-1.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">구글 데스크톱 검색 홈에서 'Google Search' 버튼 자리에 'Create images', 'Ask about files', 'Brainstorm'이 들어갔어요. 입력 전에 작업을 고를 수 있어요.</li>
+<li class="bullet-item">왼쪽 가장자리 막대를 누르면 AI 모드 대화가 제목별로 펼쳐지고, 로그인하면 지난 대화에 질문을 이어갈 수 있어요. 'I'm Feeling Lucky'는 남았어요.</li>
+<li class="bullet-item">로고와 검색창은 그대로 두고 주변 쓰임을 바꿨어요. 구글은 한 번의 질문으로 끝나지 않는 검색이 늘었다고 설명하며, 새 사이드바는 전 세계에 순차 적용 중이에요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/11/24/google-search-homepage-ai-redesign/" target="_blank">https://designcompass.org/2026/11/24/google-search-homepage-ai-redesign/</a></div>
+</article>
+<article id="article-2" class="article-item">
+<div class="article-label">ARTICLE 02</div>
+<h2 class="article-title">우버, 녹화를 더 쉽게: '녹화 라이드' 요청 옵션 테스트 시작</h2>
+<p class="article-summary">우버의 녹화 접근성 확대.</p>
+<div class="image-frame"><img class="article-image" src="thumb-2.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">우버가 볼티모어·롤리·인디애나폴리스·세인트루이스에서 '녹화 라이드'를 테스트해요. 승객이 Record My Ride를 쓰는 기사와의 운행을 처음부터 요청할 수 있어요.</li>
+<li class="bullet-item">미국 활성 기사의 절반 이상이 이미 Record My Ride를 써요. 심야·청소년 운행에 자동 활성화하는 방안도 테스트하고, 원치 않으면 설정에서 끌 수 있어요.</li>
+<li class="bullet-item">RideCheck가 사고나 경로 이탈을 감지하면 녹화를 켜는 방안도 검토해요. 녹화본은 암호화돼 기기에 저장되고, 신고나 보험 청구로 올리지 않으면 자동 삭제돼요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.uber.com/us/en/newsroom/making-recording-easier/" target="_blank">https://www.uber.com/us/en/newsroom/making-recording-easier/</a></div>
+</article>
+<article id="article-3" class="article-item">
+<div class="article-label">ARTICLE 03</div>
+<h2 class="article-title">네이버 멤버십, 로고에서 플러스를 빼고 초록색으로 통일</h2>
+<p class="article-summary">플러스를 뺀 네이버 멤버십 로고.</p>
+<div class="image-frame"><img class="article-image" src="thumb-3.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">네이버가 12월 1일부터 '네이버플러스 멤버십'을 '네이버 멤버십'으로 바꿔요. 이름에서 빠진 플러스는 로고에서도 사라지고, N과 '멤버십'이 바로 맞닿는 구성이 돼요.</li>
+<li class="bullet-item">혁신 로고는 N을 칸 밖으로 꺼내 초록색으로 쓰고, 밝은 초록 바탕에 '멤버십'을 붙였어요. 혜택 로고는 위에 서비스 로고, 아래에 혜택 이름을 두는 구조예요.</li>
+<li class="bullet-item">'슈퍼특가'는 '멤버십 슈퍼할인'으로, 단골 혜택은 '멤버십 슈퍼단골'로 통일돼요. 같은 날 이용약관도 개정되지만 기존 요금과 혜택, 이용 방법은 유지돼요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://designcompass.org/2026/11/24/naver-membership-logo-redesign/" target="_blank">https://designcompass.org/2026/11/24/naver-membership-logo-redesign/</a></div>
+</article>
+<article id="article-4" class="article-item">
+<div class="article-label">ARTICLE 04</div>
+<h2 class="article-title">배민, 통합 광고 서비스 '배민애즈' 출시…AI로 소재 최적화·상품 추천</h2>
+<p class="article-summary">배민의 통합 광고 서비스 출시.</p>
+<div class="image-frame"><img class="article-image" src="thumb-4.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">우아한형제들이 음식배달 광고주를 위한 통합 광고 관리 서비스 '배민애즈'를 24일 출시했어요. 광고 예약과 집행, 결과 확인을 한곳에서 할 수 있어요.</li>
+<li class="bullet-item">AI 기반 광고 소재 최적화와 상품 추천, 성과 분석 보고서도 출시일부터 제공해요. 코엑스 광고 콘퍼런스 'B:NEXT 2026'에서 공개했어요.</li>
+<li class="bullet-item">행사에서는 맘스터치, 육회바른연어, 스키니피그를 운영하는 서주의 광고 사례를 소개했어요. 서주의 매출은 전년 대비 3배 이상 늘었다고 해요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://industrynews.co.kr/news/articleView.html?idxno=90160" target="_blank">https://industrynews.co.kr/news/articleView.html?idxno=90160</a></div>
+</article>
+<article id="article-5" class="article-item">
+<div class="article-label">ARTICLE 05</div>
+<h2 class="article-title">네이버·두나무 합병, 설계도 다시 그려야 하나</h2>
+<p class="article-summary">지분 한도에 흔들리는 네이버·두나무 결합.</p>
+<div class="image-frame"><img class="article-image" src="thumb-5.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">금융위가 디지털자산법 제정안에서 거래소 대주주 지분 한도를 원칙 20%, 승인 시 최대 34%로 정했어요. 기존 거래소는 지정 후 3년간 적용이 유예돼요.</li>
+<li class="bullet-item">정부안대로면 네이버파이낸셜이 두나무 지분 100%를 갖는 포괄적 주식교환 구조가 한도와 충돌할 수 있어요. 지배구조 재설계가 필요할 수 있다는 전문가 의견이 나와요.</li>
+<li class="bullet-item">국회 논의가 남아 최종 내용은 달라질 수 있어요. 공정위 기업결합 심사도 아직이고, 주식교환 예정일은 세 차례 연기돼 내년 3월 31일이에요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://byline.network/2026/11/24_29182773-2/" target="_blank">https://byline.network/2026/11/24_29182773-2/</a></div>
+</article>
+<article id="article-6" class="article-item">
+<div class="article-label">ARTICLE 06</div>
+<h2 class="article-title">돌아온 당근 '붕어빵 지도', 올겨울도 북적</h2>
+<p class="article-summary">겨울 맞아 활발해진 붕어빵 지도.</p>
+<div class="image-frame"><img class="article-image" src="thumb-6.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">당근 동네지도의 '붕어빵' 검색량이 최근 2주간 직전 동기 대비 61% 늘었어요. 새로 등록된 판매 장소는 109%, 후기는 122% 증가했어요.</li>
+<li class="bullet-item">붕어빵 지도는 주민이 직접 장소를 등록해 채우는 오픈맵으로 2020년부터 운영돼요. 위치와 영업시간, 가격대, 방문 후기를 볼 수 있어요.</li>
+<li class="bullet-item">올해는 붕어빵에 호떡·타코야키·겨울간식을 더해 네 가지 테마로 넓혔어요. 후기에는 사장님의 따뜻한 사연도 담기며 동네 가게 발견으로 이어지고 있어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://about.daangn.com/company/pr/archive/돌아온-당근-붕어빵-지도-올겨울도-북적/" target="_blank">https://about.daangn.com/company/pr/archive/돌아온-당근-붕어빵-지도-올겨울도-북적/</a></div>
+</article>
+<article id="article-7" class="article-item">
+<div class="article-label">ARTICLE 07</div>
+<h2 class="article-title">구글 대안 Kagi, 이메일 서비스 'Kagi Mail' 공개 베타 출시</h2>
+<p class="article-summary">Kagi의 광고 없는 이메일 출시.</p>
+<div class="image-frame"><img class="article-image" src="thumb-7.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">검색과 Orion 브라우저를 내놓은 Kagi가 이메일 서비스 Kagi Mail 공개 베타를 시작했어요. 감시와 광고, 종속 없이 열린 표준을 쓴다고 내세워요.</li>
+<li class="bullet-item">@kagimail.com 주소와 무제한 별칭·도메인, 50GB 저장공간, 내장 캘린더를 지원해요. 연락처는 2027년 1분기, 모바일 앱은 3분기에 나올 예정이에요.</li>
+<li class="bullet-item">60일 무료 체험 뒤 연 99달러예요. 월 25달러 Kagi Ultimate 구독에도 포함돼요. Kagi는 Fastmail과 Tuta를 높게 평가한다고 밝혔어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://www.theverge.com/tech/1041000/kagi-mail-email-google-gmail-alternative" target="_blank">https://www.theverge.com/tech/1041000/kagi-mail-email-google-gmail-alternative</a></div>
+</article>
+<article id="article-8" class="article-item">
+<div class="article-label">ARTICLE 08</div>
+<h2 class="article-title">읽게 만들지 마세요: 사람들이 웹에서 읽는 방식</h2>
+<p class="article-summary">F자 읽기 패턴을 다시 보는 글.</p>
+<div class="image-frame"><img class="article-image" src="thumb-8.webp" alt="썸네일"></div>
+<div class="summary-label">SUMMARY</div>
+<ul class="bullet-list">
+<li class="bullet-item">UX 콜렉티브의 글이 사람들이 웹에서 어떻게 (읽지 않는지) 보여주는 최신 연구 결과를 다뤄요. 다음 제품을 만들 때 참고할 만하다고 소개해요.</li>
+<li class="bullet-item">먼저 Nielsen Norman Group이 아이트래킹으로 찾은 'F자 읽기 패턴'을 짚어요. 텍스트 블록 위쪽을 더 보고 아래로 갈수록 줄의 일부만 훑는다는 내용이에요.</li>
+<li class="bullet-item">저자는 이 F자 패턴을 잊으라고 말해요. 다만 제공된 본문이 유료 구간 앞에서 끊겨 구체적인 새 연구 결과는 확인할 수 없어요.</li>
+</ul>
+<div class="link-label">LINK</div>
+<div class="link-box"><a class="article-link" href="https://uxdesign.cc/dont-make-me-read-a6821e418bb1?source=rss----138adf9c44c---4" target="_blank">https://uxdesign.cc/dont-make-me-read-a6821e418bb1?source=rss----138adf9c44c---4</a></div>
+</article>
+
+</main><div class="agit-cta"><a class="agit-cta-btn" href="https://kakao.agit.in/g/300044281/wall">트렌드림 아지트</a></div></div><!--GNB-JS-START--><script>(function(){
+// Naver-style trick: set theme-color content to empty so iOS Safari renders
+// status bar transparent over page content (instead of solid theme-color tint).
+var tcs=document.querySelectorAll('meta[name="theme-color"]');
+for(var i=0;i<tcs.length;i++)tcs[i].setAttribute('content','');
+if(!tcs.length){
+var m=document.createElement('meta');m.setAttribute('name','theme-color');m.setAttribute('content','');document.head.appendChild(m);
+}
+var arts=document.querySelectorAll('.article-item');
+if(!arts.length)return;
+// PC FAB: 우하단 floating "맨위로" + "아지트로 →" (1200+ only, scroll-to-show)
+if(!document.querySelector('.pc-fabs')){
+var agitBtn=document.querySelector('.agit-cta-btn');
+var agitHref=agitBtn?agitBtn.getAttribute('href'):'#';
+var fabs=document.createElement('div');
+fabs.className='pc-fabs';
+fabs.setAttribute('aria-hidden','true');
+var upSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1V15M13 6L8 1L3 6"/></svg>';
+var returnSvg='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 5L6 8"/><path d="M3 5H10C10.7956 5 11.5587 5.31607 12.1213 5.87868C12.6839 6.44129 13 7.20435 13 8V14"/></svg>';
+fabs.innerHTML='<button class="pc-fab" type="button" data-pc-top>'+upSvg+'<span>맨 위로</span></button><a class="pc-fab" href="'+agitHref+'">'+returnSvg+'<span>아지트로</span></a>';
+document.body.appendChild(fabs);
+var pcTop=fabs.querySelector('[data-pc-top]');
+if(pcTop)pcTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});pcTop.blur();});
+function checkPcScroll(){if(window.scrollY>200){fabs.classList.add('visible');}else{fabs.classList.remove('visible');}}
+window.addEventListener('scroll',checkPcScroll,{passive:true});
+checkPcScroll();
+}
+// Insert digest intro at top of article-wrap (count + reading time)
+var artWrap=document.querySelector('.article-wrap');
+if(artWrap&&!document.querySelector('.digest-intro')){
+var totalChars=0;
+for(var ai=0;ai<arts.length;ai++)totalChars+=(arts[ai].textContent||'').length;
+var readMins=Math.max(1,Math.round(totalChars/700));
+var titles=[];
+for(var ti=0;ti<Math.min(arts.length,3);ti++){var tt=arts[ti].querySelector('.article-title');if(tt)titles.push(tt.textContent.trim());}
+var summaryText=titles.length>0?titles.join(', ')+' 등 '+arts.length+'개의 이야기를 담았어요.':'오늘의 '+arts.length+'개 기사를 확인해보세요.';
+var intro=document.createElement('section');
+intro.className='digest-intro';
+intro.innerHTML='<div class="digest-meta"><span>'+arts.length+'개 기사</span><span>·</span><span>약 '+readMins+'분 읽기</span></div><p class="digest-summary">'+summaryText+'</p>';
+artWrap.insertBefore(intro,artWrap.firstElementChild);
+}
+var gnb=document.querySelector('.gnb');
+var tocList=document.querySelector('.toc-list');
+var tocBtn=document.querySelector('.gnb-toc-btn');
+var tocPanel=document.getElementById('toc-panel');
+var tocClose=document.querySelector('.toc-close');
+var tocOverlay=document.querySelector('.toc-overlay');
+var curEl=document.querySelector('.gnb-toc-progress .cur');
+var totEl=document.querySelector('.gnb-toc-progress .tot');
+var brand=document.querySelector('[data-gnb-top]');
+var dateEl=document.querySelector('.gnb-date');
+var DAYS=['일','월','화','수','목','금','토'];
+var pm=location.pathname.match(/(\d{4})-(\d{2})-(\d{2})/);
+if(pm&&dateEl){
+var y=parseInt(pm[1],10),mo=parseInt(pm[2],10),d=parseInt(pm[3],10);
+var dow=DAYS[new Date(y,mo-1,d).getDay()];
+dateEl.textContent=(y%100)+'.'+mo+'.'+d+' ('+dow+')';
+}
+function updateGnbH(){var g=document.querySelector('.gnb');if(g){document.documentElement.style.setProperty('--gnb-h',g.offsetHeight+'px');}}
+updateGnbH();
+window.addEventListener('resize',updateGnbH);
+var progressFill=document.querySelector('.gnb-progress-fill');
+function updateProgress(){
+if(!progressFill)return;
+var d=document.documentElement;
+var total=d.scrollHeight-window.innerHeight;
+var cur=window.scrollY||d.scrollTop;
+var pct=total>0?Math.min(100,(cur/total)*100):0;
+progressFill.style.width=pct+'%';
+}
+updateProgress();
+window.addEventListener('scroll',updateProgress,{passive:true});
+window.addEventListener('resize',updateProgress);
+arts.forEach(function(art,i){
+art.id='article-'+(i+1);
+var num='#'+(i+1);
+var lbl=art.querySelector('.article-label');
+if(lbl)lbl.textContent=num;
+var t=art.querySelector('.article-title');
+var title=t?t.textContent.trim():'Article '+(i+1);
+var li=document.createElement('li');
+var a=document.createElement('a');
+a.href='#article-'+(i+1);a.className='toc-item';
+var ns=document.createElement('span');ns.className='toc-num';ns.textContent=num;
+var ts=document.createElement('span');ts.className='toc-text';ts.textContent=title;
+a.appendChild(ns);a.appendChild(ts);li.appendChild(a);tocList.appendChild(li);
+// 제목/썸네일/요약 영역도 원문 링크로 이동
+var lk=art.querySelector('.article-link');
+var url=lk?lk.getAttribute('href'):'';
+if(url){
+var targets=['.article-title','.article-summary','.image-frame','.bullet-list'];
+for(var ti2=0;ti2<targets.length;ti2++){
+var el=art.querySelector(targets[ti2]);
+if(!el)continue;
+el.classList.add('clickable-link');
+el.addEventListener('click',function(u){return function(e){
+if(window.getSelection&&window.getSelection().toString().length>0)return;
+window.open(u,'_blank','noopener');
+};}(url));
+}
+}
+});
+totEl.textContent=arts.length;
+// 외부 hash 진입 / 페이지 내 목차 클릭 모두에서 타깃 카드 flash
+function flashTarget(){if(!location.hash)return;var t=document.querySelector(location.hash);if(!t||!t.classList||!t.classList.contains('article-item'))return;t.classList.remove('flash-target');void t.offsetWidth;t.classList.add('flash-target');}
+if(location.hash){var tgt=document.querySelector(location.hash);if(tgt)setTimeout(function(){tgt.scrollIntoView();flashTarget();},0);}
+window.addEventListener('hashchange',function(){setTimeout(flashTarget,50);});
+var items=document.querySelectorAll('.toc-item');
+function setOpen(o){
+if(o){
+items.forEach(function(it,i){var d=(0.06+i*0.045)+'s';it.style.transitionDelay=d+','+d+',0s,0s';});
+}else{
+items.forEach(function(it){it.style.transitionDelay='0s';});
+}
+tocPanel.classList.toggle('open',o);
+tocPanel.setAttribute('aria-hidden',!o);
+tocBtn.setAttribute('aria-expanded',o);
+document.body.classList.toggle('toc-open',o);
+}
+tocBtn.addEventListener('click',function(){setOpen(!tocPanel.classList.contains('open'));tocBtn.blur();});
+if(tocClose)tocClose.addEventListener('click',function(){setOpen(false);});
+if(tocOverlay)tocOverlay.addEventListener('click',function(){setOpen(false);});
+tocPanel.addEventListener('click',function(e){if(e.target.closest('a.toc-item'))setOpen(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&tocPanel.classList.contains('open'))setOpen(false);});
+if(brand){brand.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});brand.blur();});}
+function setActive(idx){
+curEl.textContent=idx+1;
+items.forEach(function(it,i){it.classList.toggle('active',i===idx);});
+}
+if('IntersectionObserver' in window){
+var io=new IntersectionObserver(function(entries){
+var vis=entries.filter(function(e){return e.isIntersecting;});
+if(vis.length){
+vis.sort(function(a,b){return a.target.getBoundingClientRect().top-b.target.getBoundingClientRect().top;});
+var idx=Array.prototype.indexOf.call(arts,vis[0].target);
+setActive(idx);
+}
+},{rootMargin:'-30% 0px -55% 0px',threshold:0});
+arts.forEach(function(a){io.observe(a);});
+}
+var cta=document.querySelector('.agit-cta');
+if(cta){
+var bt=document.createElement('button');
+bt.type='button';
+bt.className='back-to-top';
+bt.textContent='맨 위로';
+bt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});bt.blur();});
+cta.insertBefore(bt,cta.firstChild);
+var agitBtn=cta.querySelector('.agit-cta-btn');
+if(agitBtn)agitBtn.addEventListener('click',function(){agitBtn.blur();});
+}
+})();</script><!--GNB-JS-END--></body></html>

@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-25",
+  "reserves": [
+    {
+      "title_ko": "20억 건 자격 증명 공개 노출, 신원 도용에 필요한 정보까지",
+      "one_line": "20억 건 자격 증명 노출.",
+      "summary_1": "보안 연구원 Jeremiah Fowler가 비밀번호도 암호화도 없이 공개된 약 20억 건 규모의 자격 증명 데이터베이스를 발견했어요. 토르 .onion 계정 정보도 들어 있었어요.",
+      "summary_2": "가장 위험한 건 피해자별 폴더로 정리된 약 40만 개 문서예요. 앱, 쿠키, 클립보드, 비밀번호 파일 등이 있어 계정과 기기 전반을 공격할 경로가 열려요.",
+      "summary_3": "고급 악성코드로 수집된 것으로 보이지만 정확한 출처는 알 수 없어요. Fowler가 호스팅 업체에 삭제를 요청했지만 얼마나 많은 사람이 접근했는지는 몰라요.",
+      "url": "https://9to5mac.com/2026/11/24/two-billion-credentials-publicly-exposed-including-everything-needed-for-identity-theft/",
+      "link": "https://9to5mac.com/2026/11/24/two-billion-credentials-publicly-exposed-including-everything-needed-for-identity-theft/",
+      "source": "9to5mac.com",
+      "select_reason": "암호도 없이 공개돼 있던 데이터베이스에서 계정 정보 약 20억 건과 신원 도용에 쓰일 수 있는 문서가 드러난 대형 보안 사고예요.",
+      "headline": "보안 연구원이 암호 없이 열린 20억 건 자격 증명 DB를 찾았다",
+      "so_what": "쿠키·클립보드까지 피해자별로 묶인 자료라 비밀번호만 바꿔선 부족해요. 로그인 세션과 기기 보안까지 함께 점검해야 해요.",
+      "thumb": "reserve-thumb-1.webp"
+    },
+    {
+      "title_ko": "[요즘 채용] 스타트업 취직, 어떤 직군을 노리는 게 유리할까",
+      "one_line": "개발은 줄고 마케팅·영업 채용 증가.",
+      "summary_1": "원티드 공고를 분석하니 개발·디자인·마케팅·영업 4개 직무 중 개발 비중이 47.5%에서 39.9%로 줄었어요. 마케팅·광고는 25.5%에서 31.6%로 늘었어요.",
+      "summary_2": "디자인은 13.7%에서 12.8%로 소폭 줄었어요. AI 도구로 기획·개발·디자인을 한 사람이 맡는 '프로덕트 빌더'형 직무가 늘고 있다는 해석이 나와요.",
+      "summary_3": "제품 출시가 빨라지고 매출 증명 부담이 커져 마케팅·영업 수요가 늘었다고 봐요. 다만 원티드 공고 수 기준이라 실제 채용 인원은 반영하지 않았어요.",
+      "url": "https://byline.network/2026/11/849852093482048230/",
+      "link": "https://byline.network/2026/11/849852093482048230/",
+      "source": "byline.network",
+      "select_reason": "올해 스타트업 채용에서 개발·디자인 공고 비중은 줄고 마케팅·영업이 늘었다는 분석으로, AI가 직군 구조를 어떻게 바꾸는지 보여줘요.",
+      "headline": "원티드 스타트업 공고에서 개발 직무 비중이 39.9%로 줄었다",
+      "so_what": "AI로 혼자 기획부터 디자인까지 맡는 '프로덕트 빌더'가 늘고 있어요. 한 분야보다 출시 전 과정을 다루는 역량이 더 중요해져요.",
+      "thumb": "reserve-thumb-2.webp"
+    },
+    {
+      "title_ko": "수년 만의 새 브라우저 엔진 Ladybird, 알파 테스트 시작",
+      "one_line": "Ladybird 브라우저 알파 공개.",
+      "summary_1": "독립 브라우저 Ladybird가 4년 넘는 개발 끝에 macOS와 리눅스에서 알파로 공개됐어요. 개발자 Andreas Kling가 월요일에 발표했어요.",
+      "summary_2": "현재 주요 브라우저는 Gecko, Blink, WebKit 세 엔진을 써요. 완전히 새로 만든 엔진을 가진 브라우저가 나온 건 수년 만이에요. 윈도우 버전은 나중 단계에 나와요.",
+      "summary_3": "Ladybird는 독립적이고 빠르며 안전하고 프라이버시를 존중하는 열린 웹을 목표로 하는 비영리 단체가 후원해요. 개발진은 코드를 AI로 C++에서 Rust로 옮기기 시작했어요.",
+      "url": "https://www.theverge.com/tech/1040872/ladybird-indie-browser-engine-alpha-testing",
+      "link": "https://www.theverge.com/tech/1040872/ladybird-indie-browser-engine-alpha-testing",
+      "source": "theverge.com",
+      "select_reason": "엔진을 처음부터 새로 만든 독립 브라우저 Ladybird가 macOS와 리눅스에서 알파 테스트를 시작했어요.",
+      "headline": "Ladybird가 새로 만든 브라우저 엔진으로 알파 버전을 공개했다",
+      "so_what": "웹이 사실상 세 엔진에 기대 온 만큼, 네 번째 엔진은 웹 표준이 특정 회사에 덜 묶일 수 있다는 신호예요. 호환성 테스트 대상도 늘 수 있어요.",
+      "thumb": "reserve-thumb-3.webp"
+    }
+  ]
+}
