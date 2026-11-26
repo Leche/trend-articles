@@ -1,5 +1,5 @@
 {
- "note": "Pixabay 실사 클립 라이브러리. 리체 승인분만 쓴다. cat: open·desk·music·design·phone·people·server·code·finance·transit·ending. 빨간 상의 클로즈업(204527)처럼 상체·얼굴 구도가 오해를 살 클립은 넣지 않는다.",
+ "note": "Pixabay 실사 클립 라이브러리(리체 승인, 2026-11-27 1차 28개 + 확장 120개). cat: open·ending·transit(구성용) / ai·phone·social·message·shopping·stream·music·design·office·code·cloud·server·security·law·finance·family·game·mobility·health·camera·chip·city·news·desk. people=true 는 사람이 화면에 크게 나오는 컷. 상체·얼굴 클로즈업, 화면을 덮는 글자·로고는 넣지 않는다(204527 제외 사례).",
  "clips": [
   {
    "id": 2337,
@@ -163,13 +163,14 @@
   },
   {
    "id": 202277,
-   "cat": "people",
+   "cat": "social",
    "desc": "카페에서 태블릿 보며 웃는 여성(얼굴 나옴)",
    "ss": 0.5,
    "dur": 11.3,
    "fps": 23.98,
    "page": "https://pixabay.com/videos/id-202277/",
-   "user": "dejika8929"
+   "user": "dejika8929",
+   "people": true
   },
   {
    "id": 377882,
@@ -280,6 +281,1096 @@
    "fps": 29.97,
    "page": "https://pixabay.com/videos/id-130331/",
    "user": "blackmarketmusic"
+  },
+  {
+   "id": 88223,
+   "cat": "ai",
+   "desc": "연구실 자동화 로봇 설비",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-88223/",
+   "user": "Digital_Expert"
+  },
+  {
+   "id": 8197,
+   "cat": "ai",
+   "desc": "어두운 쇼룸 로봇팔 테이블",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-8197/",
+   "user": "lino123abc"
+  },
+  {
+   "id": 232538,
+   "cat": "ai",
+   "desc": "키보드 치는 손 클로즈업",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-232538/",
+   "user": "Darioguzben"
+  },
+  {
+   "id": 21536,
+   "cat": "ai",
+   "desc": "검은 배경 잉크 번짐",
+   "ss": 1.0,
+   "dur": 60,
+   "page": "https://pixabay.com/videos/id-21536/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 26493,
+   "cat": "ai",
+   "desc": "유막 색 매크로 추상",
+   "ss": 1.0,
+   "dur": 74,
+   "page": "https://pixabay.com/videos/id-26493/",
+   "user": "StefWithAnF"
+  },
+  {
+   "id": 736,
+   "cat": "phone",
+   "desc": "따뜻한 배경 폰 스크롤 손",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-736/",
+   "user": "elchao"
+  },
+  {
+   "id": 3176,
+   "cat": "phone",
+   "desc": "책상 위 폰 화면 탭",
+   "ss": 1.0,
+   "dur": 11,
+   "page": "https://pixabay.com/videos/id-3176/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 148493,
+   "cat": "phone",
+   "desc": "두 손으로 쥔 폰 근접",
+   "ss": 1.0,
+   "dur": 9,
+   "page": "https://pixabay.com/videos/id-148493/",
+   "user": "Henhen1"
+  },
+  {
+   "id": 142641,
+   "cat": "phone",
+   "desc": "코트 차림 폰 쥔 손",
+   "ss": 1.0,
+   "dur": 8,
+   "page": "https://pixabay.com/videos/id-142641/",
+   "user": "u_etjkkdz15b"
+  },
+  {
+   "id": 8255,
+   "cat": "phone",
+   "desc": "폰으로 도시 촬영 화면",
+   "ss": 1.0,
+   "dur": 15,
+   "page": "https://pixabay.com/videos/id-8255/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 34485,
+   "cat": "social",
+   "desc": "어두운 방 노트북 영상통화",
+   "ss": 1.0,
+   "dur": 36,
+   "page": "https://pixabay.com/videos/id-34485/",
+   "user": "rec_muns"
+  },
+  {
+   "id": 86866,
+   "cat": "social",
+   "desc": "노트북 앞 통화하는 남성",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-86866/",
+   "user": "atiqurrahman0047",
+   "people": true
+  },
+  {
+   "id": 130213,
+   "cat": "social",
+   "desc": "계단에 앉아 폰 보는 원경",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-130213/",
+   "user": "Amorn_mimi",
+   "people": true
+  },
+  {
+   "id": 129291,
+   "cat": "social",
+   "desc": "정원 테이블 폰 보는 뒷모습",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-129291/",
+   "user": "Amorn_mimi",
+   "people": true
+  },
+  {
+   "id": 169446,
+   "cat": "message",
+   "desc": "어둠 속 폰 키보드 입력",
+   "ss": 1.0,
+   "dur": 16,
+   "page": "https://pixabay.com/videos/id-169446/",
+   "user": "magicmore"
+  },
+  {
+   "id": 387303,
+   "cat": "message",
+   "desc": "청록 조명 문자 치는 손",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-387303/",
+   "user": "raitton"
+  },
+  {
+   "id": 348444,
+   "cat": "message",
+   "desc": "두 손으로 폰 타이핑",
+   "ss": 1.0,
+   "dur": 25,
+   "page": "https://pixabay.com/videos/id-348444/",
+   "user": "JonathanSlatterMusic"
+  },
+  {
+   "id": 9490,
+   "cat": "message",
+   "desc": "폰 쥔 손 클로즈업",
+   "ss": 1.0,
+   "dur": 9,
+   "page": "https://pixabay.com/videos/id-9490/",
+   "user": "chayka1270"
+  },
+  {
+   "id": 24527,
+   "cat": "message",
+   "desc": "따뜻한 조명 기계식 키보드",
+   "ss": 1.0,
+   "dur": 25,
+   "page": "https://pixabay.com/videos/id-24527/",
+   "user": "arthurreeder"
+  },
+  {
+   "id": 47600,
+   "cat": "shopping",
+   "desc": "장보기 카트 시점 샷",
+   "ss": 1.0,
+   "dur": 59,
+   "page": "https://pixabay.com/videos/id-47600/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 59139,
+   "cat": "shopping",
+   "desc": "지폐 세는 손 클로즈업",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-59139/",
+   "user": "Hassas_Arts"
+  },
+  {
+   "id": 3735,
+   "cat": "shopping",
+   "desc": "금빛 쇼핑몰 엘리베이터",
+   "ss": 1.0,
+   "dur": 46,
+   "page": "https://pixabay.com/videos/id-3735/",
+   "user": "Skylent"
+  },
+  {
+   "id": 23759,
+   "cat": "shopping",
+   "desc": "야간 컨테이너 항만 물류",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-23759/",
+   "user": "bellergy"
+  },
+  {
+   "id": 26537,
+   "cat": "stream",
+   "desc": "어두운 방송 송출 콘솔",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-26537/",
+   "user": "ninosouza"
+  },
+  {
+   "id": 26531,
+   "cat": "stream",
+   "desc": "행사장 카메라 촬영 뒷모습",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-26531/",
+   "user": "ninosouza",
+   "people": true
+  },
+  {
+   "id": 1058,
+   "cat": "stream",
+   "desc": "흑백 노트북 위 손",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-1058/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 1028,
+   "cat": "stream",
+   "desc": "선풍기 옆 노트북 보는 방",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-1028/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 84583,
+   "cat": "music",
+   "desc": "나뭇가지에 걸린 이어폰",
+   "ss": 1.0,
+   "dur": 39,
+   "page": "https://pixabay.com/videos/id-84583/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 139,
+   "cat": "music",
+   "desc": "어두운 기타 연주 손",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-139/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 255818,
+   "cat": "music",
+   "desc": "믹싱 콘솔 만지는 손",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-255818/",
+   "user": "blackmarketmusic"
+  },
+  {
+   "id": 255816,
+   "cat": "music",
+   "desc": "작곡 프로그램 화면 근접",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-255816/",
+   "user": "blackmarketmusic"
+  },
+  {
+   "id": 1630,
+   "cat": "music",
+   "desc": "공연장 무대 조명과 관객",
+   "ss": 1.0,
+   "dur": 15,
+   "page": "https://pixabay.com/videos/id-1630/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 123072,
+   "cat": "music",
+   "desc": "따뜻한 빛망울 보케",
+   "ss": 1.0,
+   "dur": 60,
+   "page": "https://pixabay.com/videos/id-123072/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 2294,
+   "cat": "design",
+   "desc": "흐린 태블릿 화면 보케",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-2294/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 31385,
+   "cat": "design",
+   "desc": "따뜻한 빛 보케 매크로",
+   "ss": 1.0,
+   "dur": 15,
+   "page": "https://pixabay.com/videos/id-31385/",
+   "user": "Danil_Shostak"
+  },
+  {
+   "id": 3132,
+   "cat": "office",
+   "desc": "나무 책상 위 노트북들",
+   "ss": 1.0,
+   "dur": 33,
+   "page": "https://pixabay.com/videos/id-3132/",
+   "user": "Life-Of-Vids"
+  },
+  {
+   "id": 8252,
+   "cat": "office",
+   "desc": "역광 속 회의 실루엣",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-8252/",
+   "user": "Coverr-Free-Footage",
+   "people": true
+  },
+  {
+   "id": 131989,
+   "cat": "office",
+   "desc": "펜으로 메모하는 손",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-131989/",
+   "user": "Dx21"
+  },
+  {
+   "id": 3161,
+   "cat": "office",
+   "desc": "화이트보드에 쓰는 손",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-3161/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 6389,
+   "cat": "office",
+   "desc": "흐린 사무실 조명 보케",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-6389/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 52823,
+   "cat": "code",
+   "desc": "어두운 노트북 타이핑 손",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-52823/",
+   "user": "dayanandgarg"
+  },
+  {
+   "id": 117,
+   "cat": "code",
+   "desc": "나무 책상 맥북 타이핑",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-117/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 3145,
+   "cat": "code",
+   "desc": "검은 책상 노트북 부감",
+   "ss": 1.0,
+   "dur": 43,
+   "page": "https://pixabay.com/videos/id-3145/",
+   "user": "Life-Of-Vids"
+  },
+  {
+   "id": 10822,
+   "cat": "code",
+   "desc": "키보드 매크로 클로즈업",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-10822/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 215189,
+   "cat": "code",
+   "desc": "어두운 방 개발자 작업",
+   "ss": 1.0,
+   "dur": 51,
+   "page": "https://pixabay.com/videos/id-215189/",
+   "user": "conte_public",
+   "people": true
+  },
+  {
+   "id": 377884,
+   "cat": "cloud",
+   "desc": "어둠 속 서버 랙 LED",
+   "ss": 1.0,
+   "dur": 52,
+   "page": "https://pixabay.com/videos/id-377884/",
+   "user": "mignic"
+  },
+  {
+   "id": 378976,
+   "cat": "cloud",
+   "desc": "푸른 랙과 손, 어두운 톤",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-378976/",
+   "user": "computergottyt"
+  },
+  {
+   "id": 197208,
+   "cat": "cloud",
+   "desc": "스위치에 꽂힌 랜선",
+   "ss": 1.0,
+   "dur": 24,
+   "page": "https://pixabay.com/videos/id-197208/",
+   "user": "ListosParaRodar"
+  },
+  {
+   "id": 14907,
+   "cat": "cloud",
+   "desc": "네트워크 스위치 클로즈업",
+   "ss": 1.0,
+   "dur": 15,
+   "page": "https://pixabay.com/videos/id-14907/",
+   "user": "cipnt"
+  },
+  {
+   "id": 20459,
+   "cat": "security",
+   "desc": "낡은 나무문 자물쇠",
+   "ss": 1.0,
+   "dur": 11,
+   "page": "https://pixabay.com/videos/id-20459/",
+   "user": "Matthias_Groeneveld"
+  },
+  {
+   "id": 214736,
+   "cat": "security",
+   "desc": "보케 앞 폰 쥔 손",
+   "ss": 1.0,
+   "dur": 11,
+   "page": "https://pixabay.com/videos/id-214736/",
+   "user": "u_l60ths3fo3"
+  },
+  {
+   "id": 43559,
+   "cat": "security",
+   "desc": "노트북 키보드 클로즈업",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-43559/",
+   "user": "PhotoDhaba"
+  },
+  {
+   "id": 11721,
+   "cat": "security",
+   "desc": "나뭇가지 사이 밤의 달",
+   "ss": 1.0,
+   "dur": 29,
+   "page": "https://pixabay.com/videos/id-11721/",
+   "user": "Iconikmg"
+  },
+  {
+   "id": 162047,
+   "cat": "law",
+   "desc": "어두운 나무 위 의사봉",
+   "ss": 1.0,
+   "dur": 21,
+   "page": "https://pixabay.com/videos/id-162047/",
+   "user": "Eaktas06"
+  },
+  {
+   "id": 198889,
+   "cat": "law",
+   "desc": "저울과 펜, 어두운 책상",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-198889/",
+   "user": "Roque_dg"
+  },
+  {
+   "id": 198896,
+   "cat": "law",
+   "desc": "정의의 여신상과 책",
+   "ss": 1.0,
+   "dur": 23,
+   "page": "https://pixabay.com/videos/id-198896/",
+   "user": "Roque_dg"
+  },
+  {
+   "id": 349087,
+   "cat": "law",
+   "desc": "서류철 넘기는 손",
+   "ss": 1.0,
+   "dur": 17,
+   "page": "https://pixabay.com/videos/id-349087/",
+   "user": "MuhammadAhmad10"
+  },
+  {
+   "id": 72883,
+   "cat": "law",
+   "desc": "해질녘 법원 건물",
+   "ss": 1.0,
+   "dur": 41,
+   "page": "https://pixabay.com/videos/id-72883/",
+   "user": "Sapphoto"
+  },
+  {
+   "id": 148596,
+   "cat": "finance",
+   "desc": "차트 띄운 노트북과 손",
+   "ss": 1.0,
+   "dur": 21,
+   "page": "https://pixabay.com/videos/id-148596/",
+   "user": "Domka_1611"
+  },
+  {
+   "id": 127341,
+   "cat": "finance",
+   "desc": "어두운 배경 코인 클로즈업",
+   "ss": 1.0,
+   "dur": 15,
+   "page": "https://pixabay.com/videos/id-127341/",
+   "user": "Bernard_Townsend"
+  },
+  {
+   "id": 50622,
+   "cat": "finance",
+   "desc": "지폐 세는 손",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-50622/",
+   "user": "Hassas_Arts"
+  },
+  {
+   "id": 50628,
+   "cat": "finance",
+   "desc": "나무 탁자 위 지폐",
+   "ss": 1.0,
+   "dur": 8,
+   "page": "https://pixabay.com/videos/id-50628/",
+   "user": "Hassas_Arts"
+  },
+  {
+   "id": 202749,
+   "cat": "family",
+   "desc": "축구장 부감, 아이들 작게",
+   "ss": 1.0,
+   "dur": 30,
+   "page": "https://pixabay.com/videos/id-202749/",
+   "user": "Matthias_Groeneveld"
+  },
+  {
+   "id": 218793,
+   "cat": "family",
+   "desc": "멀리서 본 해변 아이",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-218793/",
+   "user": "JayShawflybydrones"
+  },
+  {
+   "id": 64597,
+   "cat": "game",
+   "desc": "어둠 속 패드 쥔 두 손",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-64597/",
+   "user": "Josh_Malic"
+  },
+  {
+   "id": 26619,
+   "cat": "game",
+   "desc": "패드에 끼운 폰 모바일게임",
+   "ss": 1.0,
+   "dur": 24,
+   "page": "https://pixabay.com/videos/id-26619/",
+   "user": "ninosouza"
+  },
+  {
+   "id": 31806,
+   "cat": "game",
+   "desc": "어두운 책상 푸른 키보드 불빛",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-31806/",
+   "user": "computergottyt"
+  },
+  {
+   "id": 21985,
+   "cat": "mobility",
+   "desc": "서울 밤 도로 타임랩스",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-21985/",
+   "user": "SAHN_VIT"
+  },
+  {
+   "id": 28860,
+   "cat": "mobility",
+   "desc": "철망 너머 밤 차량 빛망울",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-28860/",
+   "user": "FreeCreativeStuff"
+  },
+  {
+   "id": 133698,
+   "cat": "mobility",
+   "desc": "운전대 잡은 두 손",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-133698/",
+   "user": "blackmarketmusic"
+  },
+  {
+   "id": 11490,
+   "cat": "mobility",
+   "desc": "노을 진 숲길 도로 항공",
+   "ss": 1.0,
+   "dur": 11,
+   "page": "https://pixabay.com/videos/id-11490/",
+   "user": "invisiblepower"
+  },
+  {
+   "id": 336253,
+   "cat": "mobility",
+   "desc": "강 위 고가도로 항공",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-336253/",
+   "user": "slava_film"
+  },
+  {
+   "id": 4053,
+   "cat": "mobility",
+   "desc": "차량 대시보드와 내비 화면",
+   "ss": 1.0,
+   "dur": 31,
+   "page": "https://pixabay.com/videos/id-4053/",
+   "user": "VariousPhotography"
+  },
+  {
+   "id": 49815,
+   "cat": "health",
+   "desc": "혈압계 재는 손 클로즈업",
+   "ss": 1.0,
+   "dur": 21,
+   "page": "https://pixabay.com/videos/id-49815/",
+   "user": "Hassas_Arts"
+  },
+  {
+   "id": 10809,
+   "cat": "health",
+   "desc": "해변 달리는 사람 부감",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-10809/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 54162,
+   "cat": "health",
+   "desc": "운동화 옆 폰 든 손",
+   "ss": 1.0,
+   "dur": 23,
+   "page": "https://pixabay.com/videos/id-54162/",
+   "user": "10p18pd0069"
+  },
+  {
+   "id": 120683,
+   "cat": "health",
+   "desc": "가로수길 마라톤 원경",
+   "ss": 1.0,
+   "dur": 59,
+   "page": "https://pixabay.com/videos/id-120683/",
+   "user": "Matthias_Groeneveld"
+  },
+  {
+   "id": 49809,
+   "cat": "health",
+   "desc": "모니터로 뇌 영상 보는 의사",
+   "ss": 1.0,
+   "dur": 17,
+   "page": "https://pixabay.com/videos/id-49809/",
+   "user": "Hassas_Arts",
+   "people": true
+  },
+  {
+   "id": 24496,
+   "cat": "camera",
+   "desc": "어둠 속 캠코더 만지는 손",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-24496/",
+   "user": "ninosouza"
+  },
+  {
+   "id": 189979,
+   "cat": "camera",
+   "desc": "정면으로 DSLR 겨눈 사진가",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-189979/",
+   "user": "ninosouza",
+   "people": true
+  },
+  {
+   "id": 184146,
+   "cat": "camera",
+   "desc": "필름카메라 든 손 어깨너머",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-184146/",
+   "user": "blackmarketmusic"
+  },
+  {
+   "id": 190153,
+   "cat": "camera",
+   "desc": "짐벌 카메라 든 촬영자",
+   "ss": 1.0,
+   "dur": 10,
+   "page": "https://pixabay.com/videos/id-190153/",
+   "user": "ninosouza"
+  },
+  {
+   "id": 23676,
+   "cat": "camera",
+   "desc": "행사장 캠코더 따뜻한 빛망울",
+   "ss": 1.0,
+   "dur": 23,
+   "page": "https://pixabay.com/videos/id-23676/",
+   "user": "ninosouza"
+  },
+  {
+   "id": 992,
+   "cat": "camera",
+   "desc": "촬영장 모니터 너머 현장",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-992/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 13370,
+   "cat": "chip",
+   "desc": "검은 배경 칩 보드 매크로",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-13370/",
+   "user": "Art-Production"
+  },
+  {
+   "id": 72326,
+   "cat": "chip",
+   "desc": "메인보드 부품 매크로",
+   "ss": 1.0,
+   "dur": 33,
+   "page": "https://pixabay.com/videos/id-72326/",
+   "user": "RoyBuri"
+  },
+  {
+   "id": 47217,
+   "cat": "chip",
+   "desc": "녹색 기판 위 칩 클로즈업",
+   "ss": 1.0,
+   "dur": 50,
+   "page": "https://pixabay.com/videos/id-47217/",
+   "user": "nanoslavic"
+  },
+  {
+   "id": 53774,
+   "cat": "chip",
+   "desc": "현미경 아래 기판 납땜",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-53774/",
+   "user": "wj_adbrt"
+  },
+  {
+   "id": 3616,
+   "cat": "city",
+   "desc": "지하철 손잡이 잡은 손(흑백)",
+   "ss": 1.0,
+   "dur": 11,
+   "page": "https://pixabay.com/videos/id-3616/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 3608,
+   "cat": "city",
+   "desc": "플랫폼 지나는 열차와 승객",
+   "ss": 1.0,
+   "dur": 9,
+   "page": "https://pixabay.com/videos/id-3608/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 9005,
+   "cat": "city",
+   "desc": "지하철 터널 질주 시점",
+   "ss": 1.0,
+   "dur": 17,
+   "page": "https://pixabay.com/videos/id-9005/",
+   "user": "tiburi"
+  },
+  {
+   "id": 1003,
+   "cat": "city",
+   "desc": "빈 지하철 플랫폼(흑백)",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-1003/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 211100,
+   "cat": "city",
+   "desc": "도심 거리 항공 부감",
+   "ss": 1.0,
+   "dur": 21,
+   "page": "https://pixabay.com/videos/id-211100/",
+   "user": "phlyingdoctor"
+  },
+  {
+   "id": 29552,
+   "cat": "news",
+   "desc": "어둠 속 낡은 TV 화면",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-29552/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 250774,
+   "cat": "news",
+   "desc": "가을 숲 속 방송 송신탑",
+   "ss": 1.0,
+   "dur": 18,
+   "page": "https://pixabay.com/videos/id-250774/",
+   "user": "Bernhard_Schuermann"
+  },
+  {
+   "id": 209424,
+   "cat": "news",
+   "desc": "핸드드립 커피 내리는 아침",
+   "ss": 1.0,
+   "dur": 36,
+   "page": "https://pixabay.com/videos/id-209424/",
+   "user": "NGUYENTHONG7997"
+  },
+  {
+   "id": 27230,
+   "cat": "news",
+   "desc": "책 위 커피잔 아침 정물",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-27230/",
+   "user": "jeffjacobs1990"
+  },
+  {
+   "id": 185092,
+   "cat": "news",
+   "desc": "역광 해변 위 펼친 책",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-185092/",
+   "user": "stefaniejockschat"
+  },
+  {
+   "id": 169445,
+   "cat": "social",
+   "desc": "어둠 속 폰 화면 터치하는 손",
+   "ss": 1.0,
+   "dur": 25,
+   "page": "https://pixabay.com/videos/id-169445/",
+   "user": "magicmore"
+  },
+  {
+   "id": 3168,
+   "cat": "social",
+   "desc": "흑백 폰 화면 손끝 터치",
+   "ss": 1.0,
+   "dur": 14,
+   "page": "https://pixabay.com/videos/id-3168/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 9597,
+   "cat": "stream",
+   "desc": "영사기 필름 구동부 근접",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-9597/",
+   "user": "artista_sk"
+  },
+  {
+   "id": 28014,
+   "cat": "stream",
+   "desc": "어두운 방 영사 스크린 빛",
+   "ss": 1.0,
+   "dur": 36,
+   "page": "https://pixabay.com/videos/id-28014/",
+   "user": "B_A"
+  },
+  {
+   "id": 29483,
+   "cat": "stream",
+   "desc": "따뜻한 조명 속 레트로 TV",
+   "ss": 1.0,
+   "dur": 30,
+   "page": "https://pixabay.com/videos/id-29483/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 130210,
+   "cat": "design",
+   "desc": "태블릿에 스타일러스 스케치",
+   "ss": 1.0,
+   "dur": 17,
+   "page": "https://pixabay.com/videos/id-130210/",
+   "user": "Amorn_mimi",
+   "people": true
+  },
+  {
+   "id": 11283,
+   "cat": "family",
+   "desc": "아이 그림 들어 보이는 손",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-11283/",
+   "user": "GreenCardShow"
+  },
+  {
+   "id": 172667,
+   "cat": "family",
+   "desc": "정원 가족 식탁 원경",
+   "ss": 1.0,
+   "dur": 23,
+   "page": "https://pixabay.com/videos/id-172667/",
+   "user": "Eaktas06",
+   "people": true
+  },
+  {
+   "id": 109146,
+   "cat": "finance",
+   "desc": "스탠드 불빛 아래 지폐 세는 손",
+   "ss": 1.0,
+   "dur": 16,
+   "page": "https://pixabay.com/videos/id-109146/",
+   "user": "RoyBuri"
+  },
+  {
+   "id": 41121,
+   "cat": "finance",
+   "desc": "만년필과 문서 근접",
+   "ss": 1.0,
+   "dur": 13,
+   "page": "https://pixabay.com/videos/id-41121/",
+   "user": "wonderlandwoo"
+  },
+  {
+   "id": 10711,
+   "cat": "finance",
+   "desc": "어두운 도시 불빛 보케",
+   "ss": 1.0,
+   "dur": 34,
+   "page": "https://pixabay.com/videos/id-10711/",
+   "user": "MakinoSena"
+  },
+  {
+   "id": 21188,
+   "cat": "security",
+   "desc": "카메라 렌즈 근접(감시 은유)",
+   "ss": 1.0,
+   "dur": 16,
+   "page": "https://pixabay.com/videos/id-21188/",
+   "user": "easyprovids"
+  },
+  {
+   "id": 46688,
+   "cat": "game",
+   "desc": "조명 들어온 게이밍 마우스 쥔 손",
+   "ss": 1.0,
+   "dur": 19,
+   "page": "https://pixabay.com/videos/id-46688/",
+   "user": "computergottyt"
+  },
+  {
+   "id": 44857,
+   "cat": "game",
+   "desc": "키보드 두드리는 손가락 근접",
+   "ss": 1.0,
+   "dur": 12,
+   "page": "https://pixabay.com/videos/id-44857/",
+   "user": "FlorenceCdeM"
+  },
+  {
+   "id": 344181,
+   "cat": "city",
+   "desc": "서울 한강 야경 하이퍼랩스",
+   "ss": 1.0,
+   "dur": 8,
+   "page": "https://pixabay.com/videos/id-344181/",
+   "user": "YounStudios"
+  },
+  {
+   "id": 336755,
+   "cat": "city",
+   "desc": "서울 야간 도로 부감 타임랩스",
+   "ss": 1.0,
+   "dur": 22,
+   "page": "https://pixabay.com/videos/id-336755/",
+   "user": "YounStudios"
+  },
+  {
+   "id": 180386,
+   "cat": "city",
+   "desc": "밤 교차로 횡단보도 부감",
+   "ss": 1.0,
+   "dur": 31,
+   "page": "https://pixabay.com/videos/id-180386/",
+   "user": "Kanenori"
+  },
+  {
+   "id": 3138,
+   "cat": "city",
+   "desc": "밤 다리와 강물 반사",
+   "ss": 1.0,
+   "dur": 27,
+   "page": "https://pixabay.com/videos/id-3138/",
+   "user": "Life-Of-Vids"
+  },
+  {
+   "id": 34594,
+   "cat": "news",
+   "desc": "인쇄기 종이 흐르는 근접",
+   "ss": 1.0,
+   "dur": 20,
+   "page": "https://pixabay.com/videos/id-34594/",
+   "user": "Erkut2"
+  },
+  {
+   "id": 1335,
+   "cat": "news",
+   "desc": "타자기 활자대 근접",
+   "ss": 1.0,
+   "dur": 32,
+   "page": "https://pixabay.com/videos/id-1335/",
+   "user": "LisaRedfern"
+  },
+  {
+   "id": 142370,
+   "cat": "news",
+   "desc": "노트북 옆 커피잔 책상",
+   "ss": 1.0,
+   "dur": 33,
+   "page": "https://pixabay.com/videos/id-142370/",
+   "user": "u_50q7hv51at"
+  },
+  {
+   "id": 7711,
+   "cat": "mobility",
+   "desc": "밤 정체 차량 불빛 보케",
+   "ss": 1.0,
+   "dur": 16,
+   "page": "https://pixabay.com/videos/id-7711/",
+   "user": "Coverr-Free-Footage"
   }
  ]
 }

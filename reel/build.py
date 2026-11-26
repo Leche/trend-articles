@@ -90,7 +90,7 @@ def write_script(dg, clips, date):
     from llm import create, client, log_usage
     arts = dg["articles"]
     lib = [c for c in clips if c["cat"] not in ("open", "ending", "transit")]
-    lines = "\n".join(f"- {c['id']} [{c['cat']}] {c['desc']}" for c in lib)
+    lines = "\n".join(f"- {c['id']} [{c['cat']}{', 사람' if c.get('people') else ''}] {c['desc']}" for c in lib)
     art_txt = "\n".join(
         f"{a['num']}. 제목: {a.get('title','')}\n   헤드라인: {a.get('headline','')}\n   의미: {a.get('so_what','')}\n   출처: {a.get('link','')}"
         for a in arts)
@@ -115,8 +115,11 @@ def write_script(dg, clips, date):
   쉼표·마침표의 개수와 위치는 text 와 똑같이 유지한다(자막 시각을 맞추는 데 쓴다).
 - head: 화면 하단 타이틀. "주체, 핵심" 형식 22자 이하.
 - key: 기사의 핵심이 진짜 숫자일 때만(예: "2,900만 곡", "32%", "1시간"). 숫자가 아니면 빈 문자열. cap 은 그 숫자 설명 18자 이하(숫자 없으면 빈 문자열).
+  화면 첫 5초는 하단 타이틀이 차지하므로, key 숫자는 첫 문장보다 두 번째 문장 이후에 말하게 쓴다.
 - key_tts: key 가 있을 때 tts 안에서 그 숫자를 읽는 부분 문자열을 그대로 옮긴다(예: "이천구백만"). 없으면 빈 문자열.
-- clips: 라이브러리에서 내용과 어울리는 서로 다른 id 2개. 같은 클립을 여러 기사에 쓰지 않는다. people 분류는 꼭 맞을 때만.
+- clips: 라이브러리에서 서로 다른 id 2개. 먼저 기사 주제의 분류(예: 결제→shopping·finance, 법·규제→law, 보안·해킹→security, 반도체→chip, 스트리밍→stream, 메신저→message, AI 모델→ai·code·cloud)에서 고르고,
+  맞는 분류가 없거나 부족하면 가장 가까운 분류에서 고른다. 두 클립은 서로 다른 장면이어야 한다(같은 분류여도 다른 구도).
+  같은 클립을 여러 기사에 쓰지 않고, 이웃한 기사끼리 같은 분류가 이어지지 않게 한다. [사람] 표시 클립은 사람이 주제일 때만 쓴다.
 - num 은 기사 번호 그대로, 기사 순서대로 모두 쓴다."""
     resp = create(client(), model=LLM_MODEL, max_tokens=8000,
                   output_config={"format": {"type": "json_schema", "schema": SCRIPT_SCHEMA}, "effort": "medium"},
@@ -131,7 +134,7 @@ def write_script(dg, clips, date):
         for c in lib:                                    # 모자라면 라이브러리에서 안 쓴 것으로 채운다
             if len(ok) >= 2:
                 break
-            if c["id"] not in used and c["id"] not in ok and c["cat"] != "people":
+            if c["id"] not in used and c["id"] not in ok and not c.get("people"):
                 ok.append(c["id"])
         a["clips"] = ok; used.update(ok)
         if a["key"] and a["key_tts"] not in a["tts"]:
@@ -351,19 +354,16 @@ def plan(date, dg, sc, clips, work):
             if a["key"] and K and K >= s0 + title_end + 0.2:
                 seg.update({"key": a["key"], "cap": a["cap"], "K": round(K, 3)})
             if seg["thumb"]:
-                lo, dur = s0 + title_end + 0.3, 4.2
+                lo, hi = s0 + title_end + 0.3, s1 - 0.3          # 카드가 들어갈 수 있는 창
                 kw = (seg["K"] - 0.4, min(seg["K"] + 3.6, s1)) if "K" in seg else None
-                e0 = max(lo, s0 + (s1 - s0) * 0.55)
-                if kw and e0 < kw[1] and e0 + dur > kw[0]:
-                    e0 = kw[1] + 0.1 if kw[1] + 0.1 + dur <= s1 - 0.3 else lo
-                    if e0 == lo and kw[0] - 0.1 - lo >= 3.0:
-                        dur = kw[0] - 0.1 - lo
-                if kw and e0 < kw[1] and e0 + dur > kw[0]:
-                    for x in ("K", "key", "cap"):
-                        seg.pop(x, None)
-                    e0, dur = max(lo, s0 + (s1 - s0) * 0.55), 4.2
-                if e0 + 2.5 <= s1 - 0.3:
-                    seg["ev"] = [round(e0, 3), round(min(e0 + dur, s1 - 0.3), 3)]
+                if not kw:
+                    e0 = max(lo, s0 + (s1 - s0) * 0.55); win = (e0, min(e0 + 4.2, hi))
+                else:                                            # 큰 숫자를 우선, 카드는 그 뒤나 앞의 남는 시간에
+                    after, before = (kw[1] + 0.1, hi), (lo, kw[0] - 0.1)
+                    win = max((after, before), key=lambda w: w[1] - w[0])
+                    win = (win[0], min(win[1], win[0] + 4.2))
+                if win[1] - win[0] >= 2.5:
+                    seg["ev"] = [round(win[0], 3), round(win[1], 3)]
                 else:
                     seg["thumb"] = ""
             ids = a["clips"]
