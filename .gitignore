@@ -11,3 +11,7 @@ __pycache__/
 
 # Playwright MCP 산출물
 .playwright-mcp/
+
+# 요약 영상 생성기 작업 폴더·의존성
+reel/_work/
+reel/vendor/showreel/scripts/node_modules/

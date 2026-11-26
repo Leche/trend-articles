@@ -1,0 +1,285 @@
+{
+ "note": "Pixabay 실사 클립 라이브러리. 리체 승인분만 쓴다. cat: open·desk·music·design·phone·people·server·code·finance·transit·ending. 빨간 상의 클로즈업(204527)처럼 상체·얼굴 구도가 오해를 살 클립은 넣지 않는다.",
+ "clips": [
+  {
+   "id": 2337,
+   "cat": "open",
+   "desc": "해 뜨는 도시 실루엣, 역광",
+   "ss": 3.0,
+   "dur": 44.1,
+   "fps": 29.97,
+   "page": "https://pixabay.com/videos/id-2337/",
+   "user": "Life-Of-Vids"
+  },
+  {
+   "id": 38057,
+   "cat": "desk",
+   "desc": "노트북 옆 커피잔, 밝은 나무 책상",
+   "ss": 1.0,
+   "dur": 33.6,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-38057/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 2284,
+   "cat": "music",
+   "desc": "책상 위 헤드폰 클로즈업, 얕은 심도",
+   "ss": 1.0,
+   "dur": 17.3,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-2284/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 8437,
+   "cat": "music",
+   "desc": "턴테이블 바늘, 어두운 따뜻한 톤",
+   "ss": 1.0,
+   "dur": 17.6,
+   "fps": 23.98,
+   "page": "https://pixabay.com/videos/id-8437/",
+   "user": "Matthias_Groeneveld"
+  },
+  {
+   "id": 7382,
+   "cat": "music",
+   "desc": "턴테이블과 믹서, 손",
+   "ss": 1.0,
+   "dur": 19.8,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-7382/",
+   "user": "mrganso"
+  },
+  {
+   "id": 4942,
+   "cat": "music",
+   "desc": "릴 테이프 돌아가는 주황 조명(채도 높음)",
+   "ss": 1.0,
+   "dur": 17.7,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-4942/",
+   "user": "motion5"
+  },
+  {
+   "id": 1038,
+   "cat": "design",
+   "desc": "펜으로 앱 화면 와이어프레임 스케치, 에스프레소",
+   "ss": 1.0,
+   "dur": 17.5,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-1038/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 10824,
+   "cat": "design",
+   "desc": "연필로 노트에 스케치, 색연필",
+   "ss": 1.0,
+   "dur": 15.0,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-10824/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 10813,
+   "cat": "design",
+   "desc": "펜 스케치 클로즈업(끝부분 초점 나감)",
+   "ss": 0.5,
+   "dur": 16.2,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-10813/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 77021,
+   "cat": "design",
+   "desc": "종이에 와이어프레임 스케치",
+   "ss": 0.5,
+   "dur": 8.5,
+   "fps": 23.98,
+   "page": "https://pixabay.com/videos/id-77021/",
+   "user": "22004349"
+  },
+  {
+   "id": 1046,
+   "cat": "design",
+   "desc": "노트 스케치와 키보드, 커피",
+   "ss": 1.0,
+   "dur": 16.6,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-1046/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 344756,
+   "cat": "design",
+   "desc": "어두운 책상에서 흰 종이 접는 손",
+   "ss": 1.0,
+   "dur": 20.0,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-344756/",
+   "user": "Matias_Luge"
+  },
+  {
+   "id": 138541,
+   "cat": "phone",
+   "desc": "노트북 앞에서 폰 만지는 손, 따뜻한 빛",
+   "ss": 1.0,
+   "dur": 25.9,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-138541/",
+   "user": "u_3qf20kjyyr"
+  },
+  {
+   "id": 202987,
+   "cat": "phone",
+   "desc": "어두운 나무 책상 위 폰 타이핑하는 두 손",
+   "ss": 1.0,
+   "dur": 15.1,
+   "fps": 30.0,
+   "page": "https://pixabay.com/videos/id-202987/",
+   "user": "Natures_Embrace"
+  },
+  {
+   "id": 38084,
+   "cat": "phone",
+   "desc": "폰을 든 두 손, 밝은 배경 얕은 심도",
+   "ss": 0.5,
+   "dur": 8.0,
+   "fps": 29.97,
+   "page": "https://pixabay.com/videos/id-38084/",
+   "user": "mephala1980"
+  },
+  {
+   "id": 47743,
+   "cat": "phone",
+   "desc": "밝은 실내, 폰 들고 스크롤하는 손",
+   "ss": 0.5,
+   "dur": 7.0,
+   "fps": 23.98,
+   "page": "https://pixabay.com/videos/id-47743/",
+   "user": "crew_jak"
+  },
+  {
+   "id": 202277,
+   "cat": "people",
+   "desc": "카페에서 태블릿 보며 웃는 여성(얼굴 나옴)",
+   "ss": 0.5,
+   "dur": 11.3,
+   "fps": 23.98,
+   "page": "https://pixabay.com/videos/id-202277/",
+   "user": "dejika8929"
+  },
+  {
+   "id": 377882,
+   "cat": "server",
+   "desc": "어두운 서버랙 LED",
+   "ss": 2.0,
+   "dur": 34.6,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-377882/",
+   "user": "mignic"
+  },
+  {
+   "id": 14900,
+   "cat": "server",
+   "desc": "파란 네트워크 케이블과 깜빡이는 LED",
+   "ss": 1.0,
+   "dur": 23.6,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-14900/",
+   "user": "cipnt"
+  },
+  {
+   "id": 4733,
+   "cat": "code",
+   "desc": "어두운 화면 위 코드 스크롤",
+   "ss": 1.0,
+   "dur": 15.0,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-4733/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 1021,
+   "cat": "code",
+   "desc": "모니터 코드와 사람 반사",
+   "ss": 1.0,
+   "dur": 12.3,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-1021/",
+   "user": "Coverr-Free-Footage"
+  },
+  {
+   "id": 308077,
+   "cat": "finance",
+   "desc": "주식 차트 노트북 옆 펜 든 손, 밝음",
+   "ss": 1.0,
+   "dur": 16.8,
+   "fps": 30.0,
+   "page": "https://pixabay.com/videos/id-308077/",
+   "user": "gofurxp"
+  },
+  {
+   "id": 227133,
+   "cat": "desk",
+   "desc": "노트북 키보드 타이핑, 따뜻한 빛",
+   "ss": 1.0,
+   "dur": 18.0,
+   "fps": 29.97,
+   "page": "https://pixabay.com/videos/id-227133/",
+   "user": "kurt_BID"
+  },
+  {
+   "id": 78640,
+   "cat": "desk",
+   "desc": "노트북 타이핑과 머그컵",
+   "ss": 1.0,
+   "dur": 15.8,
+   "fps": 29.97,
+   "page": "https://pixabay.com/videos/id-78640/",
+   "user": "Engin_Akyurt"
+  },
+  {
+   "id": 32000,
+   "cat": "transit",
+   "desc": "철도역 분기점, 회색 도시 톤",
+   "ss": 2.0,
+   "dur": 34.5,
+   "fps": 30.0,
+   "page": "https://pixabay.com/videos/id-32000/",
+   "user": "MEISTERvideo"
+  },
+  {
+   "id": 50458,
+   "cat": "transit",
+   "desc": "숲 사이 휘어진 철길 항공샷(초록 채도 높음)",
+   "ss": 2.0,
+   "dur": 43.7,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-50458/",
+   "user": "svetjekolem"
+  },
+  {
+   "id": 22354,
+   "cat": "ending",
+   "desc": "노트북을 덮는 손",
+   "ss": 0.5,
+   "dur": 12.5,
+   "fps": 25.0,
+   "page": "https://pixabay.com/videos/id-22354/",
+   "user": "Viditek"
+  },
+  {
+   "id": 130331,
+   "cat": "ending",
+   "desc": "밤 도시 불빛 보케",
+   "ss": 1.0,
+   "dur": 29.6,
+   "fps": 29.97,
+   "page": "https://pixabay.com/videos/id-130331/",
+   "user": "blackmarketmusic"
+  }
+ ]
+}

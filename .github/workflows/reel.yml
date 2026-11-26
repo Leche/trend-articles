@@ -1,0 +1,93 @@
+name: 요약 영상 생성
+
+# 트렌드림 아침 브리핑 영상(reel/build.py). 평일 08:00 KST 에 그날 다이제스트로 만들고,
+# 8시 이후 다이제스트가 바뀌면(기사 교체·인트로 다시 쓰기 커밋) 진행 중인 생성을 취소하고 최신본으로 다시 만든다.
+# 결과 mp4 는 액션 아티팩트(reel-YYYY-MM-DD)로 보관한다 — 공개 주소 없음, 레포에 안 쌓임.
+# 아지트 업로드는 맥(사내망·크롬 로그인)이 아티팩트를 받아 한다(3단계).
+
+on:
+  schedule:
+    - cron: '0 23 * * 0-4'        # 일~목 23:00 UTC = 월~금 08:00 KST
+  push:
+    branches: [main]
+    paths: ['20*/index.html']
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '만들 날짜 YYYY-MM-DD (비우면 오늘 KST)'
+        required: false
+        default: ''
+
+concurrency:
+  group: reel
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 대상 날짜와 실행 여부
+        id: guard
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_DATE: ${{ github.event.inputs.date || '' }}
+        run: |
+          python3 << 'PYEOF' >> "$GITHUB_OUTPUT"
+          import datetime, os, sys
+          now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+          date = os.environ.get("INPUT_DATE", "").strip() or now.date().isoformat()
+          ev = os.environ["EVENT"]
+          run, why = True, ""
+          if not os.path.exists(f"{date}/index.html"):
+              run, why = False, f"{date} 다이제스트 없음"
+          elif ev != "workflow_dispatch":
+              if now.weekday() >= 5:
+                  run, why = False, "주말"
+              elif ev == "push" and not (datetime.time(7, 55) <= now.time() <= datetime.time(11, 0)):
+                  run, why = False, f"8시 전후 창 밖의 커밋({now:%H:%M})"
+          print(f"date={date}")
+          print(f"run={'true' if run else 'false'}")
+          print(f"[guard] {ev} {date} → {'실행' if run else '건너뜀: ' + why}", file=sys.stderr)
+          PYEOF
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.run == 'true'
+        with:
+          python-version: '3.11'
+
+      - name: 의존성
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          pip install --quiet numpy
+          npm install -g @anthropic-ai/claude-code > /dev/null
+          (cd reel/vendor/showreel/scripts && npm ci --no-audit --no-fund > /dev/null)
+          ffmpeg -version | head -1; google-chrome --version; claude --version
+
+      - name: 영상 생성
+        if: steps.guard.outputs.run == 'true'
+        env:
+          LLM_BACKEND: cli
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          REEL_SUB: '2'
+          REEL_CLIP_CACHE: ${{ runner.temp }}/clips
+        run: python3 reel/build.py --date "${{ steps.guard.outputs.date }}" --work "${{ runner.temp }}/reel"
+
+      - name: 아티팩트 보관
+        if: steps.guard.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reel-${{ steps.guard.outputs.date }}
+          path: |
+            ${{ runner.temp }}/reel/out/reel.mp4
+            ${{ runner.temp }}/reel/out/meta.json
+          retention-days: 3
+          if-no-files-found: error
