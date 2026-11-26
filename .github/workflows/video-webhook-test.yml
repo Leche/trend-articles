@@ -1,0 +1,36 @@
+name: 영상 웹훅 시험(임시)
+# 아지트 웹훅 본문의 {VIDEO:<id>} 자리표시가 플레이어로 바뀌는지 확인하는 일회성 시험. 확인 뒤 삭제한다.
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: "secure_upload 로 받은 영상 stash id"
+        required: true
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 테스트 웹훅으로 발행
+        env:
+          AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
+          VIDEO_ID: ${{ inputs.video_id }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request
+          vid = os.environ['VIDEO_ID'].strip()
+          assert vid.isdigit()
+          text = "\n".join([
+              "# 🎬 트렌드림 11/26 아침 브리핑",
+              "",
+              "> *오늘 다이제스트 8개 기사를 영상으로 정리했어요*",
+              f"{{VIDEO:{vid}}}",
+              "",
+              "*01* 타이달, AI로만 만든 곡을 지운다",
+              "*02* 구글 번역, 11년 만의 아이콘 리디자인",
+          ])
+          req = urllib.request.Request(os.environ['AGIT_TEST_WEBHOOK_URL'], data=json.dumps({"text": text}).encode(), headers={"Content-Type": "application/json"}, method="POST")
+          with urllib.request.urlopen(req, timeout=20) as r:
+              body = r.read().decode()
+          d = json.loads(body)
+          print("status:", d.get("status"), "| id:", d.get("id"), "| keys:", list(d.keys()))
+          PYEOF
