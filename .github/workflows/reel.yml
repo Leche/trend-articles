@@ -78,6 +78,7 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           REEL_SUB: '2'
+          REEL_WORKERS: '4'
           REEL_CLIP_CACHE: ${{ runner.temp }}/clips
         run: python3 reel/build.py --date "${{ steps.guard.outputs.date }}" --work "${{ runner.temp }}/reel"
 
@@ -91,3 +92,21 @@ jobs:
             ${{ runner.temp }}/reel/out/meta.json
           retention-days: 3
           if-no-files-found: error
+
+      - name: 카웍 알림
+        if: always() && steps.guard.outputs.run == 'true'
+        env:
+          KAKAOWORK_WEBHOOK_URL: ${{ secrets.KAKAOWORK_WEBHOOK_URL }}
+          OK: ${{ job.status }}
+          DATE: ${{ steps.guard.outputs.date }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          META: ${{ runner.temp }}/reel/out/meta.json
+        run: |
+          [ -z "$KAKAOWORK_WEBHOOK_URL" ] && exit 0
+          if [ "$OK" = "success" ] && [ -f "$META" ]; then
+            MSG=$(python3 -c "import json,os;m=json.load(open(os.environ['META']));print(f\"🎬 {os.environ['DATE']} 요약 영상 완료 — {m['duration']:.0f}초, {m['size']/1048576:.1f}MB, {m['elapsed_sec']//60}분 걸림\")")
+          else
+            MSG="⚠️ ${DATE} 요약 영상 생성 실패(${OK})"
+          fi
+          jq -n --arg t "$MSG
+          👉 $RUN_URL" '{text: $t}' | curl -sS -X POST "$KAKAOWORK_WEBHOOK_URL" -H 'Content-Type: application/json' -d @- || true

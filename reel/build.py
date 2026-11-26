@@ -420,7 +420,10 @@ def render(work):
         sh(["npm", "ci", "--no-audit", "--no-fund"], cwd=V)
     sub = os.environ.get("REEL_SUB", "2")
     out = work / "out"; out.mkdir(exist_ok=True)
-    print(sh(["node", str(V / "render.mjs"), "--dir", str(work / "reel"), "--out", str(out / "video.mp4"), "--sub", sub, "--format", "png"]).strip().splitlines()[-1])
+    cmd = ["node", str(V / "render.mjs"), "--dir", str(work / "reel"), "--out", str(out / "video.mp4"), "--sub", sub, "--format", "png"]
+    if os.environ.get("REEL_WORKERS"):                     # 러너(4코어)는 기본값이 1이라 직접 준다
+        cmd += ["--workers", os.environ["REEL_WORKERS"]]
+    print(sh(cmd).strip().splitlines()[-1])
     print(sh([sys.executable, str(V / "mix.py"), str(work / "timeline.json"), "--tp", "-3.0"]).strip().splitlines()[-2])
     sh(["ffmpeg", "-v", "error", "-y", "-i", str(out / "video.mp4"), "-i", str(work / "audio/mix.wav"), "-map", "0:v", "-map", "1:a",
         "-c:v", "libx264", "-preset", "slow", "-crf", "25", "-pix_fmt", "yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709",
