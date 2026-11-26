@@ -21,6 +21,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 # 2026-10-29: 10:00 cron 발행이 도는 1분 사이에 트리거 "즉시 게시"가 겹쳐 같은 글이 두 번 올라갔다.
 # 한 번에 하나만 돌게 줄 세우고(뒤 실행은 앞 실행이 끝난 뒤 시작), 아래 checkout 을 main 최신으로 받아
@@ -32,7 +33,7 @@ concurrency:
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 80   # 요약 영상 대기(최대 11:00 KST) 포함
 
     steps:
       - name: Checkout repository
@@ -257,12 +258,84 @@ jobs:
                 f"intro {'있음' if (data.get('intro') or '').strip() else '없음'}")
           PYEOF
 
+      # 요약 영상(reel.yml → 맥 reel_upload.py)이 아지트에 올려 둔 영상 ID 를 기다린다(2026-11-27).
+      # 본 발행은 레포 변수 REEL_ENABLED=true 일 때만, 테스트 발행은 늘 확인한다. ID 는 reel/ready/<날짜>-<그룹>.json.
+      # 기다리는 조건: 그날 reel.yml 이 돌고 있거나 성공했는데 아직 업로드 전 → 최대 REEL_WAIT_UNTIL(11:00 KST)까지 1분마다.
+      # 그날 reel.yml 이 없거나 실패·취소로 끝났으면 기다리지 않고 영상 없이 발행한다.
+      - name: Wait for reel video
+        id: reel
+        if: steps.params.outputs.skip != 'true'
+        env:
+          TARGET_DATE: ${{ steps.params.outputs.target_date }}
+          TEST_MODE: ${{ steps.params.outputs.test_mode }}
+          SKIP_WAIT: ${{ github.event.inputs.skip_wait || 'false' }}
+          REEL_ENABLED: ${{ vars.REEL_ENABLED || 'false' }}
+          REEL_WAIT_UNTIL: ${{ vars.REEL_WAIT_UNTIL || '11:00' }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 << 'PYEOF'
+          import os, re, json, hashlib, subprocess, time, datetime, urllib.request
+          kst = datetime.timezone(datetime.timedelta(hours=9))
+          now = lambda: datetime.datetime.now(kst)
+          test = os.environ.get('TEST_MODE', '').lower() == 'true'
+          out = lambda k, v: open(os.environ['GITHUB_OUTPUT'], 'a').write(f"{k}={v}\n")
+          if not test and os.environ.get('REEL_ENABLED', '').lower() != 'true':
+              print("[reel] REEL_ENABLED 꺼짐 — 영상 없이 발행"); out("note", "off"); raise SystemExit(0)
+          date = os.environ.get('TARGET_DATE', '').strip() or now().date().isoformat()
+          group = '300073740' if test else '300044281'
+          html = open(f'{date}/index.html', encoding='utf-8').read()
+          dg = json.loads(re.search(r'<script id="agit-digest-data" type="application/json">(.*?)</script>', html, re.S).group(1))
+          want = hashlib.sha1(json.dumps([a.get('title') for a in dg['articles']], ensure_ascii=False).encode()).hexdigest()[:12]
+          hh, mm = map(int, os.environ.get('REEL_WAIT_UNTIL', '11:00').split(':'))
+          until = now().replace(hour=hh, minute=mm, second=0, microsecond=0)
+          skip_wait = os.environ.get('SKIP_WAIT', '').lower() == 'true'
+
+          def ready():
+              subprocess.run(['git', 'fetch', '-q', 'origin', 'main'])
+              r = subprocess.run(['git', 'show', f'origin/main:reel/ready/{date}-{group}.json'], capture_output=True, text=True)
+              if r.returncode:
+                  return None
+              d = json.loads(r.stdout)
+              if d.get('titles_hash') != want:
+                  print(f"[reel] 기록된 영상은 옛 다이제스트 기준({d.get('titles_hash')} ≠ {want})")
+                  return None
+              return d
+
+          def reel_state():
+              req = urllib.request.Request(f"https://api.github.com/repos/{os.environ['REPO']}/actions/workflows/reel.yml/runs?per_page=15",
+                                           headers={'Authorization': f"Bearer {os.environ['GH_TOKEN']}", 'Accept': 'application/vnd.github+json'})
+              runs = json.load(urllib.request.urlopen(req, timeout=20))['workflow_runs']
+              today = [r for r in runs if datetime.datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).astimezone(kst).date().isoformat() == date]
+              if not today:
+                  return 'none'
+              if any(r['status'] != 'completed' for r in today):
+                  return 'running'
+              return 'success' if any(r['conclusion'] == 'success' for r in today) else 'failed'
+
+          vid, note = '', ''
+          while True:
+              d = ready()
+              if d:
+                  vid, note = str(d['video_id']), 'ok'; print(f"[reel] 영상 ID {vid}"); break
+              if skip_wait:
+                  note = 'not_ready'; print("[reel] 즉시 게시 — 영상 없이"); break
+              st = reel_state()
+              if st in ('none', 'failed'):
+                  note = f'reel_{st}'; print(f"[reel] 오늘 영상 생성 {st} — 기다리지 않음"); break
+              if now() >= until:
+                  note = 'timeout'; print(f"[reel] {os.environ.get('REEL_WAIT_UNTIL')} 까지 영상 없음 — 영상 없이 발행"); break
+              print(f"[reel] {now():%H:%M} 대기 중(생성 상태 {st})"); time.sleep(60)
+          out("video_id", vid); out("note", note)
+          PYEOF
+
       - name: Post digest to Agit
         id: post
         if: steps.params.outputs.skip != 'true'
         env:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
           AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
+          REEL_VIDEO_ID: ${{ steps.reel.outputs.video_id }}
           TARGET_DATE: ${{ steps.params.outputs.target_date }}
           TEST_MODE: ${{ steps.params.outputs.test_mode }}
         run: |
@@ -340,6 +413,10 @@ jobs:
               parts.append(f"{date_label} 트렌드림 다이제스트")
           if intro_text:
               parts += ["", f"> {intro_text}"]
+          # 요약 영상: 맥이 미리 올려 둔 영상 ID → 아지트가 본문 플레이어로 바꾼다(2026-11-27 실험 확인)
+          reel_vid = os.environ.get('REEL_VIDEO_ID', '').strip()
+          if reel_vid.isdigit():
+              parts += ["", f"{{VIDEO:{reel_vid}}}"]
           for a in arts[:FULL_COUNT]:
               num = a.get('num')
               title = (a.get('title') or '').strip()
@@ -464,6 +541,7 @@ jobs:
           THREAD_URL: ${{ steps.post.outputs.thread_url }}
           DATE_LABEL: ${{ steps.post.outputs.date_label }}
           TEST_MODE: ${{ steps.params.outputs.test_mode }}
+          REEL_NOTE: ${{ steps.reel.outputs.note }}
         run: |
           python3 << 'PYEOF'
           import os, json, urllib.request, urllib.error
@@ -478,9 +556,11 @@ jobs:
           date_label = os.environ.get('DATE_LABEL', '').strip()
 
           title = f"{'🧪 ' if test_mode else ''}Agit 발행 완료"
+          reel_note = {'ok': ' 요약 영상도 함께 들어갔어요.', 'timeout': ' 요약 영상은 시간 안에 못 올라와 빠졌어요.',
+                       'reel_failed': ' 오늘 요약 영상 생성이 실패해 빠졌어요.', 'not_ready': ' 요약 영상은 아직 준비 전이라 빠졌어요.'}.get(os.environ.get('REEL_NOTE', ''), '')
           desc = (
               f"{date_label} 다이제스트가 "
-              f"{'개인 아지트(테스트)' if test_mode else '트렌드림 아지트'}에 올라갔어요."
+              f"{'개인 아지트(테스트)' if test_mode else '트렌드림 아지트'}에 올라갔어요.{reel_note}"
           )
           payload = {
               "text": f"✅ {title}\n👉 {thread_url}",  # blocks 미지원 시 text fallback
