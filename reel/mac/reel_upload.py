@@ -50,6 +50,8 @@ def _osa(script, timeout=90):
         r = subprocess.run(["osascript", "-"], input=script, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return None
+    if r.returncode:
+        log("osascript 오류:", r.stderr.strip()[-200:])
     return r.stdout.strip() if r.returncode == 0 else None
 
 
@@ -216,7 +218,10 @@ def write_ready(date, group, rec):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date"); ap.add_argument("--group", default=GROUP_REAL); ap.add_argument("--force", action="store_true")
+    ap.add_argument("--check-chrome", action="store_true", help="크롬 아지트 탭 연결만 확인")
     a = ap.parse_args()
+    if a.check_chrome:
+        log("크롬 확인:", chrome_js("localStorage.getItem('u_token') ? 'login ok' : 'login no'") or "탭 없음"); return
     now = datetime.datetime.now(KST)
     date = a.date or now.date().isoformat()
     if not a.force and (now.weekday() >= 5 or not (datetime.time(7, 30) <= now.time() <= datetime.time(11, 5))):
