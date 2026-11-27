@@ -7,7 +7,7 @@ name: 요약 영상 생성
 
 on:
   schedule:
-    - cron: '0 23 * * 0-4'        # 일~목 23:00 UTC = 월~금 08:00 KST
+    - cron: '2 23 * * 0-4'        # 월~금 08:02 KST. 깃헙 스케줄은 자주 빠져서 맥 업로더가 08:10에 실행이 없으면 대신 띄운다
   push:
     branches: [main]
     paths: ['20*/index.html']

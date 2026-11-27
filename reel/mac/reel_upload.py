@@ -201,6 +201,18 @@ def find_video(date, want_hash):
     return None
 
 
+def kick_if_missing(date, now):
+    """깃헙 자체 스케줄(08:00)은 자주 빠진다. 08:10 이 지나도 오늘 reel.yml 실행이 하나도 없으면 맥이 대신 한 번 띄운다."""
+    if now.time() < datetime.time(8, 10):
+        return
+    runs = json.loads(gh("run", "list", "-R", REPO, "-w", "reel.yml", "-L", "10", "--json", "createdAt"))
+    today = [r for r in runs if datetime.datetime.fromisoformat(r["createdAt"].replace("Z", "+00:00")).astimezone(KST).date() == now.date()]
+    if today:
+        return
+    gh("workflow", "run", "reel.yml", "-R", REPO, "-f", f"date={date}")
+    log(f"오늘 영상 생성 실행이 없어 대신 띄움({date})")
+
+
 def write_ready(date, group, rec):
     path = f"reel/ready/{date}-{group}.json"
     sha = None
@@ -238,6 +250,7 @@ def main():
         return                                              # 이미 올림
     found = find_video(date, want)
     if not found:
+        kick_if_missing(date, now)
         log("아직 최신 영상 없음"); return
     mp4, meta, run_id = found
     tok = chrome_js("localStorage.getItem('u_token') ? 'yes' : 'no'")
