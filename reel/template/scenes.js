@@ -144,15 +144,15 @@ REEL.scene({
       const ws = split(hd, 'word', { mask: true });
       let key = null, kc = null, cap = null;
       if (s.key) {
-        key = h('div', 'center', el, s.key); css(key, { top: '330px', fontSize: s.key.length > 4 ? '170px' : '210px', fontWeight: 800, letterSpacing: '-0.045em', lineHeight: '1', color: '#fff', textShadow: SH, fontVariantNumeric: 'tabular-nums' });
+        key = h('div', 'center', el, s.key); css(key, { zIndex: 3, top: '330px', fontSize: s.key.length > 4 ? '170px' : '210px', fontWeight: 800, letterSpacing: '-0.045em', lineHeight: '1', color: '#fff', textShadow: SH, fontVariantNumeric: 'tabular-nums' });
         kc = split(key, 'char', { mask: true });
-        cap = h('div', 'center', el, s.cap); css(cap, { top: '572px', fontSize: '46px', fontWeight: 600, letterSpacing: '-0.02em', color: 'rgba(255,255,255,.9)', textShadow: SH });
+        cap = h('div', 'center', el, s.cap); css(cap, { zIndex: 3, top: '572px', fontSize: '46px', fontWeight: 600, letterSpacing: '-0.02em', color: 'rgba(255,255,255,.9)', textShadow: SH });
       }
-      const card = h('div', 'a', el); css(card, { left: '512px', top: '128px', width: '896px', height: '560px',  /* 하단 타이틀(730px~)과 함께 떠도 안 겹치게 */ borderRadius: '18px', overflow: 'hidden',
+      const card = h('div', 'a', el); css(card, { left: '360px', top: '140px', width: '1200px', height: '750px', zIndex: 1,  /* 타이틀이 빠진 뒤에 뜨므로 크게(기존 1080×675보다 살짝) */ borderRadius: '18px', overflow: 'hidden',
         boxShadow: '0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.14)', transformOrigin: '50% 60%' });
       const im = thumbs[s.id]; card.appendChild(im); css(im, { width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(.8) brightness(.88) contrast(.97)' });
       const clab = null;
-      return { s, box, meta, bar: meta.querySelector('.bar'), ws, key, kc, cap, card, clab };
+      return { s, box, meta, bar: meta.querySelector('.bar'), ws, key, kc, cap, card, clab, im };
     });
     this.subEl = h('div', 'center', el, ''); css(this.subEl, { top: '948px', fontSize: '48px', fontWeight: 600, letterSpacing: '-0.015em', color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,.6)' });
   },
@@ -186,6 +186,9 @@ REEL.scene({
       // 기사 이미지 카드
       const ev = prog(t, s.ev[0], 0.55, ease.snap), evo = prog(t, s.ev[1] - 0.35, 0.35, ease.exit);
       const life = clamp((t - s.ev[0]) / (s.ev[1] - s.ev[0]));
+      // 카드 위에 핵심 숫자가 얹히는 동안은 카드를 어둡게 눌러 숫자를 읽히게 한다
+      const kd = s.K ? prog(t, s.K - 0.25, 0.35) * (1 - prog(t, Math.min(s.K + 3.1, s.end - 0.5), 0.38)) : 0;
+      o.im.style.filter = `saturate(${lerp(0.8, 0.5, kd).toFixed(3)}) brightness(${lerp(0.88, 0.22, kd).toFixed(3)}) contrast(.97) blur(${(kd * 6).toFixed(2)}px)`;
       css(o.card, { opacity: (ev * (1 - evo)).toFixed(3),
         transform: `perspective(1800px) translateY(${((1 - ev) * 40 - evo * 24).toFixed(1)}px) rotateY(${lerp(-7, 5, life).toFixed(2)}deg) rotateX(${lerp(3, -1, life).toFixed(2)}deg) scale(${lerp(0.97, 1.01, life).toFixed(4)})` });
     });

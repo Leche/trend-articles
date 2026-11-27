@@ -354,10 +354,10 @@ def plan(date, dg, sc, clips, work):
             if a["key"] and K and K >= s0 + title_end + 0.2:
                 seg.update({"key": a["key"], "cap": a["cap"], "K": round(K, 3)})
             if seg["thumb"]:
-                # 리체 지적(2026-11-27): 카드가 기사 8~10초 지점에 떠서 너무 늦음 → 하단 타이틀과 함께 기사 시작에 띄운다.
-                # 카드는 타이틀 위 영역(scenes.js)에 작게 놓이고, 핵심 숫자가 있으면 그 직전에 빠진다.
-                c0 = s0 + 0.5
-                c1 = min(c0 + 5.0, s1 - 0.3, seg["K"] - 0.3 if "K" in seg else s1)
+                # 리체 지적(2026-11-27): 카드가 기사 8~10초 지점에 떠서 너무 늦음, 타이틀과 같이 뜨면 복잡함
+                # → 하단 타이틀이 빠지자마자(5.2초) 띄운다. 핵심 숫자가 그 사이에 나오면 카드를 어둡게 눌러 그 위에 숫자를 얹는다(scenes.js).
+                c0 = s0 + title_end
+                c1 = min(max(c0 + 4.2, seg["K"] + 3.3 if "K" in seg else 0), s1 - 0.3)
                 if c1 - c0 >= 2.5:
                     seg["ev"] = [round(c0, 3), round(c1, 3)]
                 else:
