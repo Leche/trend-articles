@@ -500,6 +500,11 @@ jobs:
           python3 << 'PYEOF'
           import json, os, pathlib, sys
           published = os.environ.get('PUBLISHED_DATE','').strip()
+          # 테스트 게시(업무수첩)는 실제 발행 예약을 건드리지 않는다 — 미룬 날짜 다이제스트를 미리 테스트하면
+          # 그 날짜 예약이 지워져 본 발행이 빠질 뻔했다(2026-11-27).
+          if os.environ.get('TEST_MODE', '').lower() == 'true':
+              print("테스트 게시 — 발행 예약 보존")
+              sys.exit(0)
           p = pathlib.Path('pending-publish.json')
           if not p.exists():
               print("pending-publish.json 없음 — 비울 것도 없음")
