@@ -446,7 +446,12 @@ jobs:
               parts += ["", "cc. @@moretab @@platform.pd @@trenddaily"]
           message = "\n".join(parts)
 
-          data = json.dumps({"text": message, "expire_type": "P5Y"}).encode("utf-8")
+          payload = {"text": message, "expire_type": "P5Y"}
+          # 아지트 앱은 본문 {VIDEO:...} 표기가 아니라 글의 첨부 목록에서 영상을 그린다(웹 편집기 방식 글만 앱에서 재생됨, 2026-11-27 폰 확인).
+          # 웹훅도 같은 첨부 필드를 받는지 시험한다.
+          if reel_vid.isdigit():
+              payload["image_ids"] = [int(reel_vid)]
+          data = json.dumps(payload).encode("utf-8")
           req = urllib.request.Request(
               webhook,
               data=data,
