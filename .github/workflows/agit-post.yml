@@ -313,11 +313,11 @@ jobs:
                   return 'running'
               return 'success' if any(r['conclusion'] == 'success' for r in today) else 'failed'
 
-          vid, note, play = '', '', ''
+          vid, note = '', ''
           while True:
               d = ready()
               if d:
-                  vid, note, play = str(d['video_id']), 'ok', (d.get('play_url') or ''); print(f"[reel] 영상 ID {vid}"); break
+                  vid, note = str(d['video_id']), 'ok'; print(f"[reel] 영상 ID {vid}"); break
               if skip_wait:
                   note = 'not_ready'; print("[reel] 즉시 게시 — 영상 없이"); break
               st = reel_state()
@@ -326,7 +326,7 @@ jobs:
               if now() >= until:
                   note = 'timeout'; print(f"[reel] {os.environ.get('REEL_WAIT_UNTIL')} 까지 영상 없음 — 영상 없이 발행"); break
               print(f"[reel] {now():%H:%M} 대기 중(생성 상태 {st})"); time.sleep(60)
-          out("video_id", vid); out("note", note); out("play_url", play)
+          out("video_id", vid); out("note", note)
           PYEOF
 
       - name: Post digest to Agit
@@ -336,7 +336,6 @@ jobs:
           AGIT_WEBHOOK_URL: ${{ secrets.AGIT_WEBHOOK_URL }}
           AGIT_TEST_WEBHOOK_URL: ${{ secrets.AGIT_TEST_WEBHOOK_URL }}
           REEL_VIDEO_ID: ${{ steps.reel.outputs.video_id }}
-          REEL_PLAY_URL: ${{ steps.reel.outputs.play_url }}
           TARGET_DATE: ${{ steps.params.outputs.target_date }}
           TEST_MODE: ${{ steps.params.outputs.test_mode }}
         run: |
@@ -417,10 +416,8 @@ jobs:
           reel_vid = os.environ.get('REEL_VIDEO_ID', '').strip()
           if reel_vid.isdigit():
               parts += ["", f"{{VIDEO:{reel_vid}}}"]
-              # 아지트 앱은 웹훅 글의 본문 영상을 못 그린다(하얀 칸) → 바로 아래에 재생 링크 한 줄(시험 중)
-              play_url = os.environ.get('REEL_PLAY_URL', '').strip()
-              if play_url.startswith('https://kakao.agit.in/'):
-                  parts.append(f"*[▶ 앱에서는 여기를 눌러 영상 보기]({play_url})*")
+              # 아지트 앱은 웹훅 글의 본문 영상을 못 그린다(빈 칸). 재생 링크 한 줄도 앱에서 안 열려서 뺐다.
+              # 리체 결정(2026-11-27): 영상은 PC 웹에서만, 앱에서는 글만 읽는다.
           elif intro_text:
               parts += ["", f"> {intro_text}"]
           for a in arts[:FULL_COUNT]:
