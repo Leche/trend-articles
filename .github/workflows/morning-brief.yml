@@ -132,3 +132,33 @@ jobs:
                   print("[ERROR] 카웍이 메시지를 거부했습니다"); raise SystemExit(1)
           print(f"[OK] 아침 브리핑 발송 ({target}, 본문 {len(text)}자)")
           PYEOF
+
+  # 요약 영상 생성(reel.yml)의 깃헙 자체 스케줄(08:02)은 자주 빠진다(2026-11-27 누락). 이 잡은 cron-job.org 가
+  # 08:50 에 확실히 깨우므로, 오늘 발행 예약이 있는데 영상 생성 실행이 아직 없으면 여기서 띄운다.
+  # 맥은 리체 출근(9시 반 전후) 뒤 켜지므로 그 전에 영상이 끝나 있어야 한다. 맥 업로더의 08:10 대신 띄우기는 맥이 켜져 있을 때만 의미가 있다.
+  reel-kick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: 오늘 영상 생성이 없으면 띄우기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REEL_ENABLED: ${{ vars.REEL_ENABLED || 'false' }}
+        run: |
+          today=$(TZ=Asia/Seoul date +%F)
+          pending=$(jq -r '.date // ""' pending-publish.json 2>/dev/null)
+          test=$(jq -r '.test_mode // false' pending-publish.json 2>/dev/null)
+          if [ "$REEL_ENABLED" != "true" ] || [ "$pending" != "$today" ] || [ "$test" = "true" ]; then
+            echo "[SKIP] 영상 대상 아님 (REEL_ENABLED=$REEL_ENABLED pending=$pending test=$test)"; exit 0
+          fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" -w reel.yml -L 10 --json createdAt \
+              | jq --arg t "$today" '[.[] | select((.createdAt | fromdateiso8601 + 32400 | strftime("%Y-%m-%d")) == $t)] | length')
+          if [ "$n" -gt 0 ]; then echo "[OK] 오늘 영상 생성 실행 이미 있음($n)"; exit 0; fi
+          gh workflow run reel.yml -R "$GITHUB_REPOSITORY" -f date="$today"
+          echo "[KICK] 오늘 영상 생성이 없어 띄움 ($today)"

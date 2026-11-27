@@ -1552,11 +1552,21 @@ async function loadDashboard() {
     const headers = { 'Authorization': `Bearer ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' };
     // GitHub API/브라우저 HTTP 캐시(Cache-Control max-age) 때문에 예약 커밋 직후 옛 값(예약 없음)을
     // 읽어 "예약 취소" 버튼이 "발행 예약"으로 되돌아가던 문제 → no-store + 캐시버스트로 항상 최신 읽기.
-    const [contentsRes, runsRes, pendingRes] = await Promise.all([
+    const [contentsRes, runsRes, pendingRes, lastPubRes] = await Promise.all([
       fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/`, { headers, cache: 'no-store' }),
       fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/actions/workflows/agit-post.yml/runs?per_page=20`, { headers, cache: 'no-store' }),
-      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main&_=${Date.now()}`, { headers, cache: 'no-store' })
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/pending-publish.json?ref=main&_=${Date.now()}`, { headers, cache: 'no-store' }),
+      fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/last-published.json?ref=main&_=${Date.now()}`, { headers, cache: 'no-store' })
     ]);
+    // 테스트 게시(업무수첩)도 'Post digest to Agit' 단계가 성공으로 끝나서, 그것만 보면 오늘 발행된 걸로 오인한다
+    // (2026-11-27 새벽 영상 테스트 게시 뒤 미루기가 막힘). 실제 발행만 last-published.json 에 오늘 날짜를 남기므로 함께 본다.
+    let lastPublishedDate = null;
+    if (lastPubRes.ok) {
+      try {
+        const lp = JSON.parse(decodeURIComponent(escape(atob(((await lastPubRes.json()).content || '').replace(/\n/g, '')))) || '{}');
+        lastPublishedDate = lp.date || null;
+      } catch(_) {}
+    }
     if (contentsRes.ok) {
       const items = await contentsRes.json();
       const dateDirs = items
@@ -1594,7 +1604,7 @@ async function loadDashboard() {
               break;
             }
           }
-          if (actuallyPosted) {
+          if (actuallyPosted && lastPublishedDate === today) {
             agitStatus = 'posted';
             agitTime   = new Date(run.updated_at);
             break;
