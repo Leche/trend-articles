@@ -411,12 +411,13 @@ jobs:
           ]
           if headline:
               parts.append(f"{date_label} 트렌드림 다이제스트")
-          if intro_text:
-              parts += ["", f"> {intro_text}"]
           # 요약 영상: 맥이 미리 올려 둔 영상 ID → 아지트가 본문 플레이어로 바꾼다(2026-11-27 실험 확인)
+          # 영상이 있으면 인트로 인용 블록은 뺀다 — 영상이 그 역할을 한다(2026-11-27 리체). 영상이 없는 날만 인트로를 넣는다.
           reel_vid = os.environ.get('REEL_VIDEO_ID', '').strip()
           if reel_vid.isdigit():
               parts += ["", f"{{VIDEO:{reel_vid}}}"]
+          elif intro_text:
+              parts += ["", f"> {intro_text}"]
           for a in arts[:FULL_COUNT]:
               num = a.get('num')
               title = (a.get('title') or '').strip()
