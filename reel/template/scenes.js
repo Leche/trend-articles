@@ -148,7 +148,7 @@ REEL.scene({
         kc = split(key, 'char', { mask: true });
         cap = h('div', 'center', el, s.cap); css(cap, { top: '572px', fontSize: '46px', fontWeight: 600, letterSpacing: '-0.02em', color: 'rgba(255,255,255,.9)', textShadow: SH });
       }
-      const card = h('div', 'a', el); css(card, { left: '420px', top: '150px', width: '1080px', height: '675px', borderRadius: '18px', overflow: 'hidden',
+      const card = h('div', 'a', el); css(card, { left: '512px', top: '128px', width: '896px', height: '560px',  /* 하단 타이틀(730px~)과 함께 떠도 안 겹치게 */ borderRadius: '18px', overflow: 'hidden',
         boxShadow: '0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.14)', transformOrigin: '50% 60%' });
       const im = thumbs[s.id]; card.appendChild(im); css(im, { width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(.8) brightness(.88) contrast(.97)' });
       const clab = null;

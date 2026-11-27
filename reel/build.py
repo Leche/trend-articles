@@ -354,16 +354,12 @@ def plan(date, dg, sc, clips, work):
             if a["key"] and K and K >= s0 + title_end + 0.2:
                 seg.update({"key": a["key"], "cap": a["cap"], "K": round(K, 3)})
             if seg["thumb"]:
-                lo, hi = s0 + title_end + 0.3, s1 - 0.3          # 카드가 들어갈 수 있는 창
-                kw = (seg["K"] - 0.4, min(seg["K"] + 3.6, s1)) if "K" in seg else None
-                if not kw:
-                    e0 = max(lo, s0 + (s1 - s0) * 0.55); win = (e0, min(e0 + 4.2, hi))
-                else:                                            # 큰 숫자를 우선, 카드는 그 뒤나 앞의 남는 시간에
-                    after, before = (kw[1] + 0.1, hi), (lo, kw[0] - 0.1)
-                    win = max((after, before), key=lambda w: w[1] - w[0])
-                    win = (win[0], min(win[1], win[0] + 4.2))
-                if win[1] - win[0] >= 2.5:
-                    seg["ev"] = [round(win[0], 3), round(win[1], 3)]
+                # 리체 지적(2026-11-27): 카드가 기사 8~10초 지점에 떠서 너무 늦음 → 하단 타이틀과 함께 기사 시작에 띄운다.
+                # 카드는 타이틀 위 영역(scenes.js)에 작게 놓이고, 핵심 숫자가 있으면 그 직전에 빠진다.
+                c0 = s0 + 0.5
+                c1 = min(c0 + 5.0, s1 - 0.3, seg["K"] - 0.3 if "K" in seg else s1)
+                if c1 - c0 >= 2.5:
+                    seg["ev"] = [round(c0, 3), round(c1, 3)]
                 else:
                     seg["thumb"] = ""
             ids = a["clips"]
